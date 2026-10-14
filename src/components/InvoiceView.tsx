@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { 
   doc, 
-  getDoc, 
   onSnapshot 
 } from 'firebase/firestore';
 import { 
@@ -9,11 +8,7 @@ import {
   ArrowLeft, 
   CheckCircle2, 
   Clock, 
-  AlertTriangle, 
-  FileText, 
-  Camera, 
-  ShieldCheck, 
-  Calendar 
+  AlertTriangle 
 } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { Loan } from '../types';
@@ -135,7 +130,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8 print:max-w-[148mm] print:p-0 print:m-0">
       {/* Top Action Bar (Hidden when printing) */}
       <div className="flex items-center justify-between gap-4 mb-6 no-print">
         <button
@@ -151,97 +146,94 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 transition-all cursor-pointer"
         >
           <Printer className="w-4 h-4" />
-          <span>Cetak / Simpan PDF</span>
+          <span>Cetak / Simpan PDF (A5)</span>
         </button>
       </div>
 
-      {/* Printable Invoice Container */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-900/5 p-8 sm:p-12 print-card">
-        {/* Document Header */}
-        <div className="border-b-2 border-slate-900 pb-6 mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* Printable Invoice Container (Sized for A5 on print, centered on A4) */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-900/5 p-8 sm:p-12 print-a5-container">
+        
+        {/* 1. KOP SURAT */}
+        <div className="border-b-2 border-slate-900 pb-6 mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print-kop print:flex-row print:justify-between print:items-start">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-2xl font-black tracking-tight text-slate-950">
+            <div className="flex items-center gap-2 mb-1 print:mb-0">
+              <span className="text-2xl font-black tracking-tight text-slate-950 print-brand">
                 Pinjam<span className="text-amber-500">In</span>
               </span>
-              <span className="text-slate-400 font-light text-xl">|</span>
-              <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">
+              <span className="text-slate-400 font-light text-xl print:text-[9pt] print:mx-1">|</span>
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-widest print:text-[8pt] print:tracking-normal">
                 Laboratorium FIT
               </span>
             </div>
-            <p className="text-xs font-medium text-slate-500 italic">
+            <p className="text-xs font-medium text-slate-500 italic print-tagline">
               "Pinjam alat, tanpa ribet"
             </p>
-            <p className="text-[11px] text-slate-400 mt-1">
+            <p className="text-[11px] text-slate-400 mt-1 print:text-[7pt] print:mt-0.5">
               Fakultas Ilmu Terapan • Gedung Selaru Lt. 1 • WA: 0851-7208-8181
             </p>
           </div>
 
-          <div className="text-left sm:text-right">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <div className="text-left sm:text-right print:text-right">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block print:text-[7pt]">
               Bukti Peminjaman Alat
             </span>
-            <span className="font-mono text-base font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-200 inline-block mt-1">
+            <span className="font-mono text-base font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-200 inline-block mt-1 print:text-[8.5pt] print:px-1.5 print:py-0.5 print:mt-0.5 print:bg-slate-100 print:text-slate-900 print:border-slate-300">
               {loan.noInvoice}
             </span>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 mt-1 print:text-[7pt] print:mt-0.5">
               Tanggal Terbit: <span className="font-semibold text-slate-800">{loan.tglPinjam}</span>
             </p>
           </div>
         </div>
 
         {/* Status Callout (Screen & Print) */}
-        <div className="mb-6 flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-600">Status Peminjaman:</span>
+        <div className="mb-6 flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200 print:mb-2 print:p-1.5 print:border-slate-300 print:rounded-lg print:text-[7.5pt]">
+          <div className="flex items-center gap-2 print:gap-1.5">
+            <span className="text-xs font-semibold text-slate-600 print:text-[7.5pt]">Status:</span>
             {loan.status === 'dikembalikan' ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 print:text-[7.5pt] print:px-1.5 print:py-0.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 print:w-3 print:h-3" />
                 Sudah Dikembalikan
               </span>
             ) : isOverdue ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200 animate-pulse">
-                <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200 animate-pulse print:text-[7.5pt] print:px-1.5 print:py-0.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-600 print:w-3 print:h-3" />
                 Terlambat Pengembalian
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                <Clock className="w-3.5 h-3.5 text-amber-600" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 print:text-[7.5pt] print:px-1.5 print:py-0.5">
+                <Clock className="w-3.5 h-3.5 text-amber-600 print:w-3 print:h-3" />
                 Sedang Dipinjam (Aktif)
               </span>
             )}
           </div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-slate-500 print:text-[7.5pt]">
             Batas Kembali: <span className="font-bold text-slate-900">{loan.tglRencanaKembali}</span>
           </div>
         </div>
 
-        {/* Peminjam Data & Schedule Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 text-xs">
-          {/* Box 1: Data Peminjam */}
-          <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
-            <div className="font-bold text-slate-900 text-sm border-b border-slate-200 pb-1.5 flex items-center justify-between">
+        {/* 2 & 3 & 4. DATA PEMINJAM & JADWAL (DUA KOLOM HEMAT RUANG A5) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 text-xs print-info-grid">
+          {/* Kolom 1: Data Peminjam */}
+          <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2 print-info-card">
+            <div className="font-bold text-slate-900 text-sm border-b border-slate-200 pb-1.5 flex items-center justify-between print:text-[8pt] print:pb-0.5">
               <span>Data Peminjam</span>
-              <span className="uppercase text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">
+              <span className="uppercase text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 print:text-[7pt] print:px-1 print:py-0">
                 {loan.peminjam.tipePeminjam}
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-1 pt-1">
+            <div className="grid grid-cols-3 gap-1 pt-1 print:pt-0.5 print:gap-0.5">
               <span className="text-slate-500">Nama:</span>
-              <span className="col-span-2 font-semibold text-slate-800">{loan.peminjam.nama}</span>
+              <span className="col-span-2 font-semibold text-slate-900">{loan.peminjam.nama}</span>
 
               <span className="text-slate-500">{getIdentitasLabel(loan.peminjam.tipePeminjam)}:</span>
               <span className="col-span-2 font-semibold text-slate-800">{loan.peminjam.nomorIdentitas}</span>
 
               <span className="text-slate-500">Unit / Prodi:</span>
-              <span className="col-span-2 font-semibold text-slate-800">{loan.peminjam.unitAsal}</span>
-
-              {loan.peminjam.angkatan && (
-                <>
-                  <span className="text-slate-500">Angkatan:</span>
-                  <span className="col-span-2 font-semibold text-slate-800">{loan.peminjam.angkatan}</span>
-                </>
-              )}
+              <span className="col-span-2 font-semibold text-slate-800">
+                {loan.peminjam.unitAsal}
+                {loan.peminjam.angkatan ? ` (${loan.peminjam.angkatan})` : ''}
+              </span>
 
               <span className="text-slate-500">No. HP / WA:</span>
               <span className="col-span-2 font-semibold text-slate-800">{loan.peminjam.noHp}</span>
@@ -250,40 +242,40 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
               <span className="col-span-2 font-semibold text-slate-800 truncate">{loan.peminjam.email}</span>
             </div>
 
-            {/* Penanggung Jawab untuk Mahasiswa */}
+            {/* Dosen Penanggung Jawab jika Mahasiswa */}
             {loan.penanggungJawab && (
-              <div className="mt-3 pt-2 border-t border-slate-200/80">
-                <span className="text-[10px] font-bold text-indigo-800 uppercase tracking-wider block mb-1">
+              <div className="mt-2 pt-1.5 border-t border-slate-200/80 print:mt-1 print:pt-1">
+                <span className="text-[10px] font-bold text-indigo-900 uppercase tracking-wider block print:text-[7pt]">
                   Dosen Penanggung Jawab:
                 </span>
-                <p className="font-semibold text-slate-800">{loan.penanggungJawab.nama}</p>
-                <p className="text-slate-500 text-[11px]">NIP: {loan.penanggungJawab.nip}</p>
+                <p className="font-semibold text-slate-800 print:text-[7.5pt]">{loan.penanggungJawab.nama}</p>
+                <p className="text-slate-500 text-[10px] print:text-[6.5pt]">NIP: {loan.penanggungJawab.nip}</p>
               </div>
             )}
           </div>
 
-          {/* Box 2: Detail Keperluan & Jadwal */}
-          <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2 flex flex-col justify-between">
+          {/* Kolom 2: Keperluan & Jadwal */}
+          <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2 flex flex-col justify-between print-info-card">
             <div>
-              <div className="font-bold text-slate-900 text-sm border-b border-slate-200 pb-1.5">
-                Keperluan & Jadwal
+              <div className="font-bold text-slate-900 text-sm border-b border-slate-200 pb-1.5 print:text-[8pt] print:pb-0.5">
+                Keperluan & Jadwal Peminjaman
               </div>
-              <div className="grid grid-cols-3 gap-1 pt-2">
+              <div className="grid grid-cols-3 gap-1 pt-1 print:pt-0.5 print:gap-0.5">
                 <span className="text-slate-500">Jenis:</span>
                 <span className="col-span-2 font-semibold text-slate-800">{formatJenisKeperluan(loan.jenisKeperluan)}</span>
 
-                <span className="text-slate-500">Deskripsi:</span>
+                <span className="text-slate-500">Keperluan:</span>
                 <span className="col-span-2 text-slate-700 italic">"{loan.keperluan}"</span>
 
                 <span className="text-slate-500">Tgl Pinjam:</span>
                 <span className="col-span-2 font-semibold text-slate-800">{loan.tglPinjam}</span>
 
                 <span className="text-slate-500">Batas Kembali:</span>
-                <span className="col-span-2 font-bold text-indigo-700">{loan.tglRencanaKembali}</span>
+                <span className="col-span-2 font-bold text-indigo-800 print:text-slate-900">{loan.tglRencanaKembali}</span>
 
                 {loan.tglKembaliAktual && (
                   <>
-                    <span className="text-slate-500">Tgl Aktual Kembali:</span>
+                    <span className="text-slate-500">Tgl Aktual:</span>
                     <span className="col-span-2 font-bold text-emerald-700">{loan.tglKembaliAktual}</span>
                   </>
                 )}
@@ -291,7 +283,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
             </div>
 
             {loan.catatanPengembalian && (
-              <div className="mt-2 pt-2 border-t border-slate-200 text-[11px] bg-emerald-50/70 p-2 rounded-xl text-emerald-950">
+              <div className="mt-2 pt-1.5 border-t border-slate-200 text-[11px] bg-emerald-50/70 p-2 rounded-xl text-emerald-950 print:p-1 print:text-[7pt] print:mt-1">
                 <span className="font-bold">Catatan Pengembalian (Admin):</span>
                 <p>{loan.catatanPengembalian}</p>
               </div>
@@ -299,42 +291,43 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
           </div>
         </div>
 
-        {/* Tabel Barang Dipinjam */}
-        <div className="mb-8">
-          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
-            Daftar Peralatan Laboratorium
+        {/* 5. TABEL BARANG */}
+        <div className="mb-8 print:mb-2 print-avoid-break">
+          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2 print:text-[7.5pt] print:mb-1">
+            Daftar Peralatan Laboratorium ({loan.items.length} Barang)
           </h4>
-          <div className="border border-slate-200 rounded-xl overflow-hidden">
-            <table className="w-full text-left text-xs">
+          <div className="border border-slate-200 rounded-xl overflow-hidden print:border-none print:rounded-none">
+            <table className="w-full text-left text-xs print-table">
               <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                 <tr>
-                  <th className="py-2.5 px-3 w-10 text-center">No</th>
-                  <th className="py-2.5 px-3 w-28">Kode Aset</th>
-                  <th className="py-2.5 px-3">Nama Alat</th>
-                  <th className="py-2.5 px-3">Kelengkapan Paket</th>
-                  <th className="py-2.5 px-3 w-32">Kondisi Pinjam</th>
+                  <th className="py-2.5 px-3 w-10 text-center print:w-7 print:text-center print:py-1">No</th>
+                  <th className="py-2.5 px-3 w-28 print:w-20 print:py-1">Kode Aset</th>
+                  <th className="py-2.5 px-3 print:py-1">Nama Barang</th>
+                  <th className="py-2.5 px-3 print:py-1">Kelengkapan Paket</th>
+                  <th className="py-2.5 px-3 w-28 print:w-20 print:py-1">Kondisi Pinjam</th>
                   {loan.status === 'dikembalikan' && (
-                    <th className="py-2.5 px-3 w-32">Kondisi Kembali</th>
+                    <th className="py-2.5 px-3 w-28 print:w-20 print:py-1">Kondisi Kembali</th>
                   )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
                 {loan.items.map((it, idx) => (
                   <tr key={it.itemId || idx} className="hover:bg-slate-50/50 align-top">
-                    <td className="py-2.5 px-3 text-center text-slate-500">{idx + 1}</td>
-                    <td className="py-2.5 px-3 font-mono font-bold text-slate-800">{it.kodeAset}</td>
-                    <td className="py-2.5 px-3">
-                      <p className="font-semibold text-slate-900">{it.nama}</p>
+                    <td className="py-2.5 px-3 text-center text-slate-500 print:text-center print:py-1">{idx + 1}</td>
+                    <td className="py-2.5 px-3 font-mono font-bold text-slate-800 print:py-1 print:text-[7.5pt]">{it.kodeAset}</td>
+                    <td className="py-2.5 px-3 print:py-1">
+                      <p className="font-semibold text-slate-900 print:text-[8pt]">{it.nama}</p>
                       {(it.merek || it.model) && (
-                        <p className="text-[10px] text-indigo-700 font-medium">
+                        <p className="text-[10px] text-indigo-700 font-medium print:text-[7pt] print:text-slate-600">
                           {[it.merek, it.model].filter(Boolean).join(' • ')}
                         </p>
                       )}
                     </td>
-                    <td className="py-2.5 px-3">
-                      {it.kelengkapan && it.kelengkapan.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {it.kelengkapan.map((acc, aIdx) => {
+                    <td className="py-2.5 px-3 print:py-1">
+                      {/* On-screen visual badge list */}
+                      <div className="print:hidden flex flex-wrap gap-1">
+                        {it.kelengkapan && it.kelengkapan.length > 0 ? (
+                          it.kelengkapan.map((acc, aIdx) => {
                             const isReturned = it.kelengkapanKembali ? it.kelengkapanKembali.includes(acc) : true;
                             return (
                               <span
@@ -351,14 +344,21 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
                                 {acc}
                               </span>
                             );
-                          })}
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 text-[11px] italic">Unit standar</span>
-                      )}
+                          })
+                        ) : (
+                          <span className="text-slate-400 text-[11px] italic">Unit standar</span>
+                        )}
+                      </div>
+
+                      {/* Print mode: single line comma-separated text to save vertical space */}
+                      <div className="hidden print:block text-[7.5pt] text-slate-800 leading-snug">
+                        {it.kelengkapan && it.kelengkapan.length > 0
+                          ? it.kelengkapan.join(', ')
+                          : 'Unit standar'}
+                      </div>
                     </td>
-                    <td className="py-2.5 px-3">
-                      <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
+                    <td className="py-2.5 px-3 print:py-1">
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-semibold print:text-[7.5pt] print:p-0 print:border-none ${
                         it.kondisiPinjam === 'baik'
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           : 'bg-amber-50 text-amber-700 border border-amber-200'
@@ -367,8 +367,8 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
                       </span>
                     </td>
                     {loan.status === 'dikembalikan' && (
-                      <td className="py-2.5 px-3">
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
+                      <td className="py-2.5 px-3 print:py-1">
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-semibold print:text-[7.5pt] print:p-0 ${
                           it.kondisiKembali === 'baik'
                             ? 'bg-emerald-50 text-emerald-700'
                             : it.kondisiKembali === 'perlu_cek'
@@ -392,39 +392,47 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
           </div>
         </div>
 
-        {/* Ketentuan Singkat Peminjaman */}
-        <div className="mb-10 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] text-slate-600 space-y-1">
-          <p className="font-bold text-slate-800">Ketentuan & Tanggung Jawab Peminjam:</p>
-          <ol className="list-decimal pl-4 space-y-0.5">
-            <li>Peminjam wajib menjaga keutuhan, kebersihan, dan keselamatan seluruh perlengkapan yang dipinjam.</li>
-            <li>Keterlambatan pengembalian tanpa konfirmasi dikenakan sanksi/denda administratif sesuai tata tertib Lab FIT.</li>
-            <li>Kerusakan atau kehilangan peralatan menjadi tanggung jawab peminjam untuk mengganti sesuai unit yang sama atau yang setara.</li>
-          </ol>
+        {/* 6. KETENTUAN SINGKAT (2 SAMPAI 3 BARIS, FONT 7.5PT) */}
+        <div className="mb-10 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] text-slate-600 space-y-1 print-rules print-avoid-break">
+          <p className="font-bold text-slate-800 print:text-[7.5pt]">Ketentuan & Tanggung Jawab Peminjam:</p>
+          <p className="print:text-[7.5pt] leading-relaxed">
+            1. Peminjam wajib menjaga keutuhan, kebersihan, dan keselamatan seluruh perlengkapan yang dipinjam.<br />
+            2. Keterlambatan pengembalian tanpa konfirmasi dikenakan sanksi tata tertib Lab FIT.<br />
+            3. Kerusakan atau kehilangan perlengkapan menjadi tanggung jawab peminjam untuk mengganti unit yang setara.
+          </p>
         </div>
 
-        {/* Kolom Tanda Tangan */}
-        <div className="grid grid-cols-2 gap-8 text-center text-xs pt-4 border-t border-slate-200">
+        {/* 7. KOLOM TANDA TANGAN PEMINJAM DAN ADMIN (RUANG 15MM) */}
+        <div className="grid grid-cols-2 gap-8 text-center text-xs pt-4 border-t border-slate-200 print-signatures print-avoid-break">
           <div>
-            <p className="text-slate-500 mb-16">Peminjam,</p>
-            <p className="font-bold text-slate-900 underline underline-offset-4">
+            <p className="text-slate-500 mb-1 print:text-[8pt]">Peminjam,</p>
+            <div className="h-16 print-sig-space" />
+            <p className="font-bold text-slate-900 underline underline-offset-4 print:text-[8.5pt]">
               {loan.peminjam.nama}
             </p>
-            <p className="text-slate-500 text-[10px] mt-0.5">
+            <p className="text-slate-500 text-[10px] mt-0.5 print:text-[7pt]">
               {getIdentitasLabel(loan.peminjam.tipePeminjam)}: {loan.peminjam.nomorIdentitas}
             </p>
           </div>
 
           <div>
-            <p className="text-slate-500 mb-16">
+            <p className="text-slate-500 mb-1 print:text-[8pt]">
               Petugas / Laboran Lab FIT,
             </p>
-            <p className="font-bold text-slate-900 underline underline-offset-4">
+            <div className="h-16 print-sig-space" />
+            <p className="font-bold text-slate-900 underline underline-offset-4 print:text-[8.5pt]">
               {loan.dikembalikanOleh || '( Laboran Lab FIT )'}
             </p>
-            <p className="text-slate-500 text-[10px] mt-0.5">
+            <p className="text-slate-500 text-[10px] mt-0.5 print:text-[7pt]">
               Unit Pengelola Laboratorium
             </p>
           </div>
+        </div>
+
+        {/* Print Document Footer */}
+        <div className="hidden print:flex justify-between items-center text-[7pt] text-slate-400 pt-1.5 mt-2 border-t border-slate-200">
+          <span>PinjamIn • Sistem Peminjaman Alat Laboratorium FIT</span>
+          <span>Dokumen Resmi — Hal. 1</span>
         </div>
       </div>
     </div>
