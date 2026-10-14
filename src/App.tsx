@@ -25,11 +25,49 @@ function MainApp() {
   const [cart, setCart] = useState<Item[]>([]);
   const [isLoanModalOpen, setIsLoanModalOpen] = useState(false);
 
+  // Menyimpan UID user yang sudah selesai ditentukan rute awalnya setelah login
+  const resolvedUserUidRef = React.useRef<string | null>(null);
+
   // Handle URL hash and role-based initial route
   useEffect(() => {
-    if (!currentUser) return;
+    // 2. Selama status login masih dimuat (loading), jangan jalankan pengecekan admin
+    // dan jangan tampilkan pesan penolakan apapun.
+    if (loading) {
+      return;
+    }
 
-    const checkHashAndSetTab = () => {
+    // Jika belum login, reset state referensi dan bersihkan hash jika ada sisa #admin
+    if (!currentUser) {
+      resolvedUserUidRef.current = null;
+      if (window.location.hash.toLowerCase() === '#admin') {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+      setUnauthorizedMsg(null);
+      return;
+    }
+
+    // 1. Halaman tujuan setelah login ditentukan SETELAH status login dan email selesai dimuat:
+    // Cek apakah ini pertama kalinya rute ditentukan setelah user ini selesai login
+    if (resolvedUserUidRef.current !== currentUser.uid) {
+      resolvedUserUidRef.current = currentUser.uid;
+      setUnauthorizedMsg(null);
+
+      if (isAdmin) {
+        // Admin (email hafiyyanluthfii@gmail.com, terverifikasi) diarahkan ke dashboard admin
+        setCurrentTab('admin');
+        window.location.hash = 'admin';
+      } else {
+        // Semua user lain langsung diarahkan ke daftar barang (katalog), TANPA pesan apa pun
+        setCurrentTab('katalog');
+        // Pastikan hash di URL juga menjadi katalog (menghilangkan sisa hash #admin)
+        window.location.hash = 'katalog';
+      }
+      return;
+    }
+
+    // 4. Pesan "Anda tidak memiliki akses ke halaman ini." hanya boleh muncul jika
+    // user non-admin membuka URL halaman admin secara manual (mengetik atau menempel alamatnya).
+    const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '').toLowerCase();
       if (hash === 'admin') {
         if (!isAdmin) {
@@ -37,51 +75,32 @@ function MainApp() {
           setCurrentTab('katalog');
           setUnauthorizedMsg('Anda tidak memiliki akses ke halaman ini.');
         } else {
+          setUnauthorizedMsg(null);
           setCurrentTab('admin');
         }
       } else if (hash === 'riwayat') {
+        setUnauthorizedMsg(null);
         setCurrentTab('riwayat');
       } else if (hash === 'katalog') {
+        setUnauthorizedMsg(null);
         setCurrentTab('katalog');
-      } else {
-        // Default routing upon login
-        if (isAdmin && currentTab === 'katalog') {
-          setCurrentTab('admin');
-          window.location.hash = 'admin';
-        }
-      }
-    };
-
-    checkHashAndSetTab();
-
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '').toLowerCase();
-      if (hash === 'admin' && !isAdmin) {
-        window.location.hash = 'katalog';
-        setCurrentTab('katalog');
-        setUnauthorizedMsg('Anda tidak memiliki akses ke halaman ini.');
-      } else if (hash === 'admin' && isAdmin) {
-        setCurrentTab('admin');
-      } else if (hash === 'riwayat' || hash === 'katalog') {
-        setCurrentTab(hash as 'katalog' | 'riwayat');
       }
     };
 
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [currentUser, isAdmin]);
+  }, [currentUser, isAdmin, loading]);
 
   // Protected navigation tab handler
   const handleSelectTab = (tab: 'katalog' | 'riwayat' | 'admin') => {
+    setUnauthorizedMsg(null);
     if (tab === 'admin') {
       if (!isAdmin) {
         setCurrentTab('katalog');
         window.location.hash = 'katalog';
-        setUnauthorizedMsg('Anda tidak memiliki akses ke halaman ini.');
         return;
       }
     }
-    setUnauthorizedMsg(null);
     setCurrentTab(tab);
     window.location.hash = tab;
   };
@@ -227,7 +246,13 @@ function MainApp() {
         {currentTab === 'invoice' && activeInvoiceLoanId && (
           <InvoiceView
             loanId={activeInvoiceLoanId}
-            onBack={() => setCurrentTab('riwayat')}
+            onBack={() => {
+              if (isAdmin) {
+                handleSelectTab('admin');
+              } else {
+                handleSelectTab('riwayat');
+              }
+            }}
           />
         )}
       </main>

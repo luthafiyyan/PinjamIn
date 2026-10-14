@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle2, ShieldCheck, Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
 import { PinjamInIcon } from './PinjamInIcon';
 import { useAuth } from '../context/AuthContext';
@@ -8,10 +8,20 @@ export const LoginScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  useEffect(() => {
+    // Bersihkan hash URL saat berada di layar login agar sisa hash rute admin tidak tertinggal
+    if (window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }, []);
+
   const handleLogin = async () => {
     try {
       setLoading(true);
       setErrorMsg(null);
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
       await loginWithGoogle();
     } catch (err: any) {
       console.error(err);
