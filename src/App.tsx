@@ -227,7 +227,7 @@ function MainApp() {
         </div>
       )}
 
-      <main className="flex-1 pb-24 md:pb-16">
+      <main className="flex-1 pb-[calc(80px+env(safe-area-inset-bottom))] md:pb-16">
         {currentTab === 'katalog' && (
           <ItemCatalog
             cart={cart}

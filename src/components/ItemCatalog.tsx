@@ -28,6 +28,20 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [detailItem, setDetailItem] = useState<Item | null>(null);
+  const [detailImgError, setDetailImgError] = useState(false);
+  const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleOpenDetail = (item: Item) => {
+    setDetailImgError(false);
+    setDetailItem(item);
+  };
 
   // Real-time snapshot for Categories
   useEffect(() => {
@@ -73,34 +87,37 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
     return () => unsubscribeItems();
   }, []);
 
-  const getStatusBadge = (status: ItemStatus) => {
+  const getStatusBadge = (status: ItemStatus, isCompact = false) => {
+    const padClass = isCompact ? 'px-1.5 py-0.5 text-[10px] sm:text-xs' : 'px-2.5 py-1 text-xs';
+    const iconSize = isCompact ? 12 : 14;
+
     switch (status) {
       case 'tersedia':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-            <Icon name="CheckCircle" size={16} className="text-emerald-600" />
-            Tersedia
+          <span className={`inline-flex items-center gap-1 rounded-full font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 ${padClass}`}>
+            <Icon name="CheckCircle" size={iconSize} className="text-emerald-600 shrink-0" />
+            <span>Tersedia</span>
           </span>
         );
       case 'dipinjam':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-            <Icon name="HourglassSplit" size={16} className="text-amber-600" />
-            Dipinjam
+          <span className={`inline-flex items-center gap-1 rounded-full font-semibold bg-amber-100 text-amber-800 border border-amber-200 ${padClass}`}>
+            <Icon name="HourglassSplit" size={iconSize} className="text-amber-600 shrink-0" />
+            <span>Dipinjam</span>
           </span>
         );
       case 'perawatan':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">
-            <Icon name="Tools" size={16} className="text-slate-500" />
-            Perawatan
+          <span className={`inline-flex items-center gap-1 rounded-full font-semibold bg-slate-100 text-slate-700 border border-slate-300 ${padClass}`}>
+            <Icon name="Tools" size={iconSize} className="text-slate-500 shrink-0" />
+            <span>Perawatan</span>
           </span>
         );
       case 'rusak':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">
-            <Icon name="XCircle" size={16} className="text-rose-600" />
-            Rusak
+          <span className={`inline-flex items-center gap-1 rounded-full font-semibold bg-rose-100 text-rose-800 border border-rose-200 ${padClass}`}>
+            <Icon name="XCircle" size={iconSize} className="text-rose-600 shrink-0" />
+            <span>Rusak</span>
           </span>
         );
       default:
@@ -147,73 +164,65 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Hero Welcome Banner */}
-      <div className="mb-8 bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-indigo-950/10 relative overflow-hidden">
+      {/* Hero Welcome Banner (Ringkas di ponsel) */}
+      <div className="mb-4 sm:mb-8 bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-950 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xl shadow-indigo-950/10 relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-radial from-amber-500/10 to-transparent pointer-events-none" />
         <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-amber-300 text-xs font-semibold mb-3 border border-white/10">
+          <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-amber-300 text-xs font-semibold mb-3 border border-white/10">
             <Icon name="Stars" size={16} className="text-amber-400" />
             Laboratorium Fakultas Ilmu Terapan
           </div>
-          <h1 className="text-[22px] sm:text-[28px] font-bold tracking-normal mb-2 text-white">
+          <h1 className="text-[20px] sm:text-[28px] font-bold tracking-normal mb-1 sm:mb-2 text-white leading-tight">
             Katalog Peralatan & Aset Lab
           </h1>
-          <p className="text-sm font-normal text-indigo-100 leading-normal">
+          <p className="text-[13px] sm:text-sm font-normal text-indigo-100 leading-snug line-clamp-2">
             Pilih peralatan yang Anda butuhkan untuk praktikum, tugas akhir, penelitian, atau dokumentasi kegiatan.
           </p>
 
-          <div className="mt-5 flex flex-wrap items-center gap-3 text-xs">
-            <div className="bg-white/10 backdrop-blur-sm px-3.5 py-1.5 rounded-xl border border-white/10 font-medium">
+          <div className="mt-3 sm:mt-5 flex items-center gap-2 sm:gap-3 text-xs">
+            <div className="bg-white/10 backdrop-blur-sm px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl border border-white/10 font-medium text-[12px] whitespace-nowrap">
               Total Alat: <span className="font-bold text-white tabular-nums">{items.length}</span>
             </div>
-            <div className="bg-emerald-500/20 backdrop-blur-sm px-3.5 py-1.5 rounded-xl border border-emerald-400/30 text-emerald-300 font-medium">
+            <div className="bg-emerald-500/20 backdrop-blur-sm px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl border border-emerald-400/30 text-emerald-300 font-medium text-[12px] whitespace-nowrap">
               Siap Dipinjam: <span className="font-bold text-white tabular-nums">{availableCount}</span>
             </div>
-            {cart.length > 0 && (
-              <button
-                onClick={onOpenCart}
-                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold px-4 py-1.5 rounded-xl flex items-center gap-1.5 shadow transition-all cursor-pointer text-xs"
-              >
-                <Icon name="Bag" size={16} />
-                <span className="tabular-nums">Lihat Keranjang ({cart.length})</span>
-              </button>
-            )}
           </div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 sm:p-5 mb-8 space-y-4">
-        <div className="flex flex-col md:flex-row gap-3">
-          {/* Search Input */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 sm:p-5 mb-6 sm:mb-8 space-y-3 sm:space-y-4">
+        <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
+          {/* Search Input (44px height, 16px font on mobile) */}
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <Icon name="Search" size={16} />
+              <Icon name="Search" size={18} />
             </div>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari nama alat, kode aset, merek, atau model (contoh: Sony, A7III, CAM-001)..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50"
+              placeholder={isMobile ? "Cari alat atau kode aset" : "Cari nama alat, kode aset, merek, atau model (contoh: Sony, A7III, CAM-001)..."}
+              className="w-full h-[44px] pl-10 pr-4 rounded-xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-slate-50/50"
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-slate-400 hover:text-slate-600 cursor-pointer min-h-[44px] min-w-[44px] justify-center"
+                aria-label="Hapus kata kunci pencarian"
               >
                 Hapus
               </button>
             )}
           </div>
 
-          {/* Status Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500 shrink-0 hidden sm:inline">Status:</span>
+          {/* Status Filter (Dropdown di baris sama atau bawahnya dengan w-full) */}
+          <div className="w-full sm:w-auto">
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium bg-slate-50/50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+              className="w-full sm:w-auto h-[44px] px-3.5 py-2 rounded-xl border border-slate-200 text-base sm:text-xs font-medium bg-slate-50/50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 cursor-pointer"
             >
               <option value="all">Semua Status</option>
               <option value="tersedia">Tersedia</option>
@@ -224,49 +233,53 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
           </div>
         </div>
 
-        {/* 12 Category Filter Chips (Horizontal Scrollable on Mobile without scrollbar) */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 text-xs no-scrollbar">
-          <button
-            onClick={() => setSelectedCategory('all')}
-            className={`min-h-[44px] px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-colors cursor-pointer flex items-center justify-center shrink-0 ${
-              selectedCategory === 'all'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            Semua
-          </button>
-          {categories.map((cat) => (
+        {/* 12 Category Filter Chips with Right Gradient Fade & Scroll-Snap */}
+        <div className="relative">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar snap-x snap-mandatory scroll-smooth pr-6 sm:pr-0">
             <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`min-h-[44px] px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-colors cursor-pointer flex items-center justify-center shrink-0 ${
-                selectedCategory === cat.id
-                  ? 'bg-indigo-600 text-white shadow-sm'
+              onClick={() => setSelectedCategory('all')}
+              className={`min-h-[44px] px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-colors cursor-pointer flex items-center justify-center shrink-0 snap-start ${
+                selectedCategory === 'all'
+                  ? 'bg-indigo-600 text-white shadow-sm font-semibold'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
-              {cat.nama}
+              Semua
             </button>
-          ))}
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`min-h-[44px] px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-colors cursor-pointer flex items-center justify-center shrink-0 snap-start ${
+                  selectedCategory === cat.id
+                    ? 'bg-indigo-600 text-white shadow-sm font-semibold'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                {cat.nama}
+              </button>
+            ))}
+          </div>
+          {/* Gradient fade indicator on right edge */}
+          <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-white via-white/80 to-transparent sm:hidden" />
         </div>
       </div>
 
       {/* Items Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 min-[340px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-            <div key={n} className="bg-white rounded-2xl border border-slate-200 p-5 animate-pulse space-y-3">
-              <div className="h-36 bg-slate-200 rounded-xl" />
-              <div className="h-4 bg-slate-200 rounded w-1/3" />
-              <div className="h-6 bg-slate-200 rounded w-3/4" />
-              <div className="h-4 bg-slate-100 rounded w-1/2" />
-              <div className="h-10 bg-slate-100 rounded-xl mt-4" />
+            <div key={n} className="bg-white rounded-2xl border border-slate-200 p-3.5 animate-pulse space-y-3">
+              <div className="aspect-[4/3] bg-slate-200 rounded-xl" />
+              <div className="h-3.5 bg-slate-200 rounded w-1/3" />
+              <div className="h-5 bg-slate-200 rounded w-3/4" />
+              <div className="h-3.5 bg-slate-100 rounded w-1/2" />
+              <div className="h-10 bg-slate-100 rounded-xl mt-3" />
             </div>
           ))}
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center max-w-lg mx-auto shadow-sm">
+        <div className="bg-white rounded-3xl border border-slate-200 p-10 text-center max-w-lg mx-auto shadow-sm">
           <div className="w-14 h-14 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Icon name="Grid" size={32} />
           </div>
@@ -292,104 +305,105 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 min-[340px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
           {filteredItems.map((item) => {
             const isSelected = cart.some((c) => c.id === item.id);
             const isAvailable = item.status === 'tersedia';
+            const hasPhoto = !!item.fotoUrl && !brokenImages[item.id];
 
             return (
               <div
                 key={item.id}
-                className={`bg-white rounded-2xl border transition-all duration-200 flex flex-col justify-between overflow-hidden group ${
+                onClick={() => handleOpenDetail(item)}
+                className={`bg-white rounded-2xl border transition-all duration-200 flex flex-col justify-between overflow-hidden group cursor-pointer ${
+                  !isAvailable ? 'opacity-80 hover:opacity-100' : ''
+                } ${
                   isSelected
                     ? 'border-indigo-600 ring-2 ring-indigo-500/20 shadow-md'
                     : 'border-slate-200/90 hover:border-slate-300 hover:shadow-md'
                 }`}
               >
-                {/* Photo or Category Placeholder Banner */}
-                <div className="relative h-44 bg-slate-100 border-b border-slate-100 overflow-hidden flex items-center justify-center">
-                  {item.fotoUrl ? (
+                {/* Photo 4:3 Fixed Ratio with Contain and Small Padding */}
+                <div className="relative aspect-[4/3] w-full bg-slate-50 border-b border-slate-100 overflow-hidden flex items-center justify-center p-2 sm:p-2.5">
+                  {hasPhoto ? (
                     <img
                       src={item.fotoUrl}
                       alt={item.nama}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        // Fallback if image fails to load
-                        (e.target as HTMLElement).style.display = 'none';
-                        const parent = (e.target as HTMLElement).parentElement;
-                        if (parent) {
-                          parent.classList.add('bg-indigo-50');
-                        }
-                      }}
+                      loading="lazy"
+                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                      onError={() => setBrokenImages((prev) => ({ ...prev, [item.id]: true }))}
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center text-slate-300 group-hover:text-indigo-400 transition-colors">
-                      <Icon name={getCategoryIconName(item.kategoriNama)} size={32} className="mb-1" />
-                      <span className="text-xs font-semibold text-slate-400">
-                        {item.kategoriNama}
+                    <div className="w-full h-full bg-slate-100 rounded-lg flex flex-col items-center justify-center text-slate-400 group-hover:text-indigo-500 transition-colors">
+                      <Icon name={getCategoryIconName(item.kategoriNama)} size={28} className="mb-1" />
+                      <span className="text-[11px] font-semibold text-slate-500 line-clamp-1 px-2 text-center">
+                        {item.kategoriNama || 'Peralatan Lab'}
                       </span>
                     </div>
                   )}
 
-                  {/* Status Overlay */}
-                  <div className="absolute top-3 right-3 shadow-sm">
-                    {getStatusBadge(item.status)}
+                  {/* Status Overlay (Pojok kanan atas, ukuran lebih kecil) */}
+                  <div className="absolute top-2 right-2 shadow-xs">
+                    {getStatusBadge(item.status, true)}
                   </div>
 
-                  {/* Asset Code Overlay */}
-                  <div className="absolute top-3 left-3">
-                    <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-white/95 text-slate-800 shadow-sm border border-slate-200/80 backdrop-blur-sm tabular-nums">
+                  {/* Asset Code Overlay (Pojok kiri atas, 11px) */}
+                  <div className="absolute top-2 left-2">
+                    <span className="font-mono text-[11px] font-semibold px-1.5 py-0.5 rounded bg-white/95 text-slate-800 shadow-xs border border-slate-200/80 backdrop-blur-sm tabular-nums">
                       {item.kodeAset}
                     </span>
                   </div>
                 </div>
 
-                {/* Card Content */}
-                <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
+                {/* Card Content Ringkas */}
+                <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between">
                   <div>
-                    {/* Brand & Model subtitle */}
-                    {(item.merek || item.model) && (
-                       <p className="text-xs font-medium text-slate-500 mb-1 truncate">
+                    {/* Brand & Model (12px abu-abu) */}
+                    {item.merek || item.model ? (
+                      <p className="text-xs text-slate-500 mb-0.5 truncate font-normal">
                         {[item.merek, item.model].filter(Boolean).join(' • ')}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-slate-400 mb-0.5 truncate font-normal">
+                        Lab FIT Asset
                       </p>
                     )}
 
-                    {/* Item Name */}
-                    <h3 
-                      onClick={() => setDetailItem(item)}
-                      className="font-semibold text-slate-900 text-base mb-1.5 line-clamp-2 group-hover:text-indigo-600 transition-colors cursor-pointer"
-                      title="Klik untuk melihat spesifikasi lengkap"
+                    {/* Item Name (14px weight 600 dibatasi 2 baris) */}
+                    <h3
+                      className="font-semibold text-slate-900 text-sm mb-1 line-clamp-2 leading-snug group-hover:text-indigo-600 transition-colors"
+                      title={item.nama}
                     >
                       {item.nama}
                     </h3>
 
-                    {/* Category Pill */}
-                    <p className="text-xs text-slate-500 mb-3 flex items-center gap-1.5">
-                      <Icon name="Tag" size={16} className="text-slate-400" />
-                      <span>{item.kategoriNama || 'Peralatan Lab'}</span>
+                    {/* Category */}
+                    <p className="text-[11px] text-slate-500 mb-2 flex items-center gap-1 font-normal truncate">
+                      <Icon name="Tag" size={13} className="text-slate-400 shrink-0" />
+                      <span className="truncate">{item.kategoriNama || 'Peralatan Lab'}</span>
                     </p>
                   </div>
 
-                  {/* Conditions & Detail Link */}
+                  {/* Baris Bawah: Badge Kondisi */}
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                     {getKondisiBadge(item.kondisi)}
-                    <button
-                      type="button"
-                      onClick={() => setDetailItem(item)}
-                      className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 cursor-pointer min-h-[44px] min-w-[44px] justify-end"
-                    >
-                      <Icon name="InfoCircle" size={16} />
-                      <span>Detail</span>
-                    </button>
+                    <span className="hidden sm:inline-flex items-center gap-1 text-xs text-indigo-600 font-semibold">
+                      <Icon name="InfoCircle" size={14} />
+                      Detail
+                    </span>
                   </div>
                 </div>
 
-                {/* Bottom Action Button */}
-                <div className="p-3 sm:p-4 bg-slate-50/70 border-t border-slate-100">
+                {/* Bottom Action Button (Min-h 44px) */}
+                <div className="p-2.5 sm:p-3 bg-slate-50/70 border-t border-slate-100">
                   {isAvailable ? (
                     <button
-                      onClick={() => onToggleCart(item)}
-                      className={`w-full min-h-[44px] py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleCart(item);
+                      }}
+                      className={`w-full min-h-[44px] py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         isSelected
                           ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
                           : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-200'
@@ -408,7 +422,13 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                       )}
                     </button>
                   ) : (
-                    <div className="w-full min-h-[44px] py-2.5 px-3 rounded-xl text-xs font-medium flex items-center justify-center bg-slate-100 text-slate-400 border border-slate-200/60 cursor-not-allowed">
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenDetail(item);
+                      }}
+                      className="w-full min-h-[44px] py-2 px-2 rounded-xl text-[11px] sm:text-xs font-medium flex items-center justify-center bg-slate-100 text-slate-500 border border-slate-200/60"
+                    >
                       {item.status === 'dipinjam'
                         ? 'Sedang Dipinjam'
                         : item.status === 'perawatan'
@@ -423,54 +443,41 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
         </div>
       )}
 
-      {/* Floating Cart Button for Mobile */}
-      {cart.length > 0 && (
-        <div className="fixed bottom-6 right-6 z-30 sm:hidden">
-          <button
-            onClick={onOpenCart}
-            aria-label={`Lihat Keranjang (${cart.length} barang)`}
-            title={`Lihat Keranjang (${cart.length} barang)`}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-5 rounded-full shadow-lg shadow-indigo-900/20 transition-transform active:scale-95 cursor-pointer text-sm"
-          >
-            <Icon name="Bag" size={18} />
-            <span className="tabular-nums">Pinjam ({cart.length})</span>
-          </button>
-        </div>
-      )}
-
-      {/* DIALOG DETAIL BARANG (UNTUK PEMINJAM) */}
+      {/* DIALOG DETAIL BARANG (UNTUK PEMINJAM) - BOTTOM SHEET DI MOBILE, MODAL DI DESKTOP */}
       {detailItem && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
           <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-xl w-full border border-slate-200 overflow-hidden sm:my-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
-            {/* Header Photo or Placeholder */}
-            <div className="relative h-56 bg-slate-100 overflow-hidden flex items-center justify-center">
-              {detailItem.fotoUrl ? (
+            {/* Header Photo 4:3 fixed ratio with contain, background slate-50 and small padding */}
+            <div className="relative aspect-[4/3] w-full bg-slate-50 border-b border-slate-100 overflow-hidden flex items-center justify-center p-3 sm:p-4 shrink-0">
+              {detailItem.fotoUrl && !detailImgError ? (
                 <img
                   src={detailItem.fotoUrl}
                   alt={detailItem.nama}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
+                  onError={() => setDetailImgError(true)}
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center text-slate-300">
-                  <Icon name={getCategoryIconName(detailItem.kategoriNama)} size={32} className="mb-2" />
-                  <span className="text-xs uppercase font-medium tracking-wide">
+                <div className="w-full h-full bg-slate-100 rounded-xl flex flex-col items-center justify-center text-slate-400">
+                  <Icon name={getCategoryIconName(detailItem.kategoriNama)} size={40} className="mb-2" />
+                  <span className="text-xs uppercase font-semibold tracking-wide text-slate-500">
                     {detailItem.kategoriNama}
                   </span>
                 </div>
               )}
               <button
+                type="button"
                 onClick={() => setDetailItem(null)}
                 aria-label="Tutup detail barang"
                 title="Tutup detail barang"
-                className="absolute top-4 right-4 bg-slate-900/60 hover:bg-slate-900 text-white p-2 rounded-full backdrop-blur-sm transition-colors cursor-pointer"
+                className="absolute top-3 right-3 bg-slate-900/60 hover:bg-slate-900 text-white p-2 rounded-full backdrop-blur-sm transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 <Icon name="XLg" size={16} />
               </button>
-              <div className="absolute bottom-4 left-4 flex items-center gap-2">
-                <span className="font-mono text-xs font-semibold px-2.5 py-1 rounded-md bg-white text-slate-900 shadow tabular-nums">
+              <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-white text-slate-900 shadow tabular-nums border border-slate-200">
                   {detailItem.kodeAset}
                 </span>
-                {getStatusBadge(detailItem.status)}
+                {getStatusBadge(detailItem.status, true)}
               </div>
             </div>
 

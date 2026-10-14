@@ -40,20 +40,20 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 no-print transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo & Tagline */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentTab('katalog')}>
-            <PinjamInIcon className="w-10 h-10 shadow-md shadow-indigo-200" />
+        <div className="flex items-center justify-between h-[56px] md:h-16">
+          {/* Logo & Tagline (tagline hidden on mobile) */}
+          <div className="flex items-center gap-2.5 sm:gap-3 cursor-pointer" onClick={() => setCurrentTab('katalog')}>
+            <PinjamInIcon className="w-8 h-8 md:w-10 md:h-10 shadow-md shadow-indigo-200" />
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-xl font-bold tracking-tight text-slate-900">
+                <span className="text-lg md:text-xl font-bold tracking-tight text-slate-900">
                   Pinjam<span className="text-amber-500 font-extrabold">In</span>
                 </span>
                 <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200/60 uppercase">
                   Lab FIT
                 </span>
               </div>
-              <p className="text-xs text-slate-500 hidden sm:block font-medium">
+              <p className="text-xs text-slate-500 hidden md:block font-medium">
                 Pinjam alat, tanpa ribet
               </p>
             </div>
@@ -233,18 +233,21 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Mobile Bottom Navigation Bar (Katalog, Riwayat, Keranjang, Profil, Admin) */}
-      <nav aria-label="Navigasi Bawah Ponsel" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 safe-area-pb shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-        <div className="flex items-center justify-around px-2 py-1">
+      <nav
+        aria-label="Navigasi Bawah Ponsel"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] pb-[env(safe-area-inset-bottom)]"
+      >
+        <div className="flex items-center justify-around px-2 h-[56px]">
           {/* Katalog */}
           <button
             type="button"
             onClick={() => setCurrentTab('katalog')}
-            className={`flex-1 flex flex-col items-center justify-center min-h-[48px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
+            className={`flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
               currentTab === 'katalog' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-slate-900 font-medium'
             }`}
           >
-            <Icon name="Grid" size={20} />
-            <span className="text-[11px] mt-0.5">Katalog</span>
+            <Icon name="Grid" size={22} />
+            <span className="text-[11px] leading-tight mt-0.5">Katalog</span>
           </button>
 
           {/* Riwayat */}
@@ -252,12 +255,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => setCurrentTab('riwayat')}
-              className={`flex-1 flex flex-col items-center justify-center min-h-[48px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
+              className={`flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
                 currentTab === 'riwayat' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-slate-900 font-medium'
               }`}
             >
-              <Icon name="ClockHistory" size={20} />
-              <span className="text-[11px] mt-0.5">Riwayat</span>
+              <Icon name="ClockHistory" size={22} />
+              <span className="text-[11px] leading-tight mt-0.5">Riwayat</span>
             </button>
           )}
 
@@ -266,17 +269,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={openCart}
-              className="flex-1 flex flex-col items-center justify-center min-h-[48px] py-1 px-1 rounded-xl text-slate-500 hover:text-slate-900 font-medium transition-colors cursor-pointer relative"
+              className="flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl text-slate-500 hover:text-slate-900 font-medium transition-colors cursor-pointer relative"
             >
               <div className="relative">
-                <Icon name="Bag" size={20} />
+                <Icon name="Bag" size={22} />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 bg-amber-500 text-white font-bold text-[10px] min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center shadow">
+                  <span className="absolute -top-1.5 -right-2 bg-amber-500 text-white font-bold text-[10px] min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center shadow">
                     {cartCount}
                   </span>
                 )}
               </div>
-              <span className="text-[11px] mt-0.5">Keranjang</span>
+              <span className="text-[11px] leading-tight mt-0.5">Keranjang</span>
             </button>
           )}
 
@@ -285,12 +288,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => setCurrentTab('profil')}
-              className={`flex-1 flex flex-col items-center justify-center min-h-[48px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
+              className={`flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
                 currentTab === 'profil' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-slate-900 font-medium'
               }`}
             >
-              <Icon name="Person" size={20} />
-              <span className="text-[11px] mt-0.5">Profil</span>
+              <Icon name="Person" size={22} />
+              <span className="text-[11px] leading-tight mt-0.5">Profil</span>
             </button>
           )}
 
@@ -299,12 +302,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => setCurrentTab('admin')}
-              className={`flex-1 flex flex-col items-center justify-center min-h-[48px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
-                currentTab === 'admin' ? 'text-amber-700 font-semibold' : 'text-slate-500 hover:text-amber-700 font-medium'
+              className={`flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
+                currentTab === 'admin' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-indigo-600 font-medium'
               }`}
             >
-              <Icon name="Speedometer2" size={20} className={currentTab === 'admin' ? 'text-amber-600' : ''} />
-              <span className="text-[11px] mt-0.5">Admin</span>
+              <Icon name="Speedometer2" size={22} />
+              <span className="text-[11px] leading-tight mt-0.5">Admin</span>
             </button>
           )}
         </div>
