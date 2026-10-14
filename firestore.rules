@@ -1,0 +1,123 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == "hafiyyanluthfii@gmail.com";
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && (
+        isAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.terverifikasi == true)
+      );
+    }
+
+    // USERS COLLECTION
+    match /users/{userId} {
+      // User can read their own profile, admin can read all
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+
+      // Create profile: new users can create their own profile with role "peminjam" and terverifikasi false
+      allow create: if isOwner(userId) && (
+        isAdmin() || (
+          request.resource.data.role == "peminjam" &&
+          request.resource.data.terverifikasi == false &&
+          request.resource.data.email == request.auth.token.email
+        )
+      );
+
+      // Update profile: users can only update personal contact details, NOT role, terverifikasi, or tipePeminjam
+      // Admin can update all fields (including verification)
+      allow update: if isAdmin() || (
+        isOwner(userId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'terverifikasi', 'tipePeminjam', 'email'])
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // CATEGORIES
+    match /categories/{categoryId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // SETTINGS
+    match /settings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ITEMS
+    match /items/{itemId} {
+      allow read: if isSignedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        // Borrower can update status from "tersedia" to "dipinjam" with currentLoanId when verified
+        isVerifiedUser() &&
+        resource.data.status == "tersedia" &&
+        request.resource.data.status == "dipinjam" &&
+        request.resource.data.currentLoanId != null &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'currentLoanId'])
+      );
+    }
+
+    // LOANS
+    match /loans/{loanId} {
+      // Peminjam can read own loans, admin can read all
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.userId == request.auth.uid
+      );
+
+      // Create: verified user creating loan for themselves, or admin
+      allow create: if isVerifiedUser() && (
+        request.resource.data.userId == request.auth.uid || isAdmin()
+      );
+
+      // Update: admin can update loan status (e.g. for returns)
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // INVOICES
+    match /invoices/{invoiceId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.userId == request.auth.uid
+      );
+      // Create together with loan
+      allow create: if isVerifiedUser() && (
+        request.resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow update, delete: if isAdmin();
+    }
+
+    // COUNTERS
+    match /counters/{counterId} {
+      allow read: if isSignedIn();
+      // Any verified user or admin can update the invoice counter during loan transaction
+      allow write: if isVerifiedUser() || isAdmin();
+    }
+  }
+}

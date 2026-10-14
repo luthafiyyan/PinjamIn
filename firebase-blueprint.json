@@ -1,0 +1,141 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Profil pengguna sistem peminjaman",
+      "type": "object",
+      "properties": {
+        "nama": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 100 },
+        "noHp": { "type": "string", "maxLength": 20 },
+        "tipePeminjam": { "type": "string", "enum": ["mahasiswa", "dosen", "tendik"] },
+        "nomorIdentitas": { "type": "string", "maxLength": 50 },
+        "unitAsal": { "type": "string", "maxLength": 100 },
+        "angkatan": { "type": "string", "maxLength": 10 },
+        "role": { "type": "string", "enum": ["peminjam", "admin"] },
+        "terverifikasi": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["nama", "email", "noHp", "tipePeminjam", "nomorIdentitas", "unitAsal", "role", "terverifikasi"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Kategori alat laboratorium",
+      "type": "object",
+      "properties": {
+        "nama": { "type": "string", "maxLength": 50 },
+        "prefix": { "type": "string", "maxLength": 10 },
+        "urutan": { "type": "number" }
+      },
+      "required": ["nama", "prefix"]
+    },
+    "Item": {
+      "title": "Item",
+      "description": "Barang atau peralatan laboratorium",
+      "type": "object",
+      "properties": {
+        "kodeAset": { "type": "string", "maxLength": 50 },
+        "nama": { "type": "string", "maxLength": 100 },
+        "categoryId": { "type": "string", "maxLength": 100 },
+        "kategoriNama": { "type": "string", "maxLength": 50 },
+        "kondisi": { "type": "string", "enum": ["baik", "perlu_cek"] },
+        "status": { "type": "string", "enum": ["tersedia", "dipinjam", "perawatan", "rusak"] },
+        "currentLoanId": { "type": "string", "maxLength": 100 },
+        "merek": { "type": "string", "maxLength": 50 },
+        "model": { "type": "string", "maxLength": 50 },
+        "nomorSeri": { "type": "string", "maxLength": 50 },
+        "spesifikasi": { "type": "string", "maxLength": 2000 },
+        "kelengkapan": { "type": "array" },
+        "fotoUrl": { "type": "string", "maxLength": 1000 },
+        "tahunPerolehan": { "type": "number" },
+        "lokasiSimpan": { "type": "string", "maxLength": 100 },
+        "catatanAdmin": { "type": "string", "maxLength": 1000 }
+      },
+      "required": ["kodeAset", "nama", "categoryId", "kategoriNama", "kondisi", "status"]
+    },
+    "Loan": {
+      "title": "Loan",
+      "description": "Peminjaman peralatan laboratorium",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "peminjam": { "type": "object" },
+        "jenisKeperluan": { "type": "string", "enum": ["tugas_kuliah", "penelitian", "kegiatan_organisasi", "kegiatan_unit", "lainnya"] },
+        "keperluan": { "type": "string", "maxLength": 500 },
+        "penanggungJawab": { "type": "object" },
+        "tglPinjam": { "type": "string" },
+        "tglRencanaKembali": { "type": "string" },
+        "tglKembaliAktual": { "type": "string" },
+        "status": { "type": "string", "enum": ["dipinjam", "dikembalikan"] },
+        "items": { "type": "array" },
+        "noInvoice": { "type": "string", "maxLength": 50 },
+        "dikembalikanOleh": { "type": "string", "maxLength": 100 },
+        "catatanPengembalian": { "type": "string", "maxLength": 500 }
+      },
+      "required": ["userId", "peminjam", "jenisKeperluan", "keperluan", "tglPinjam", "tglRencanaKembali", "status", "items", "noInvoice"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Bukti peminjaman alat",
+      "type": "object",
+      "properties": {
+        "loanId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "noInvoice": { "type": "string", "maxLength": 50 },
+        "tglTerbit": { "type": "string" },
+        "catatan": { "type": "string", "maxLength": 500 }
+      },
+      "required": ["loanId", "userId", "noInvoice", "tglTerbit"]
+    },
+    "Counter": {
+      "title": "Counter",
+      "description": "Penghitung nomor urut invoice harian",
+      "type": "object",
+      "properties": {
+        "last": { "type": "number" }
+      },
+      "required": ["last"]
+    },
+    "SettingsPeminjaman": {
+      "title": "SettingsPeminjaman",
+      "description": "Aturan peminjaman alat per tipe peminjam",
+      "type": "object",
+      "properties": {
+        "mahasiswa": { "type": "object" },
+        "dosen": { "type": "object" },
+        "tendik": { "type": "object" }
+      },
+      "required": ["mahasiswa", "dosen", "tendik"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Data profil pengguna"
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Kategori peralatan"
+    },
+    "/items/{itemId}": {
+      "schema": "Item",
+      "description": "Daftar inventaris peralatan lab"
+    },
+    "/loans/{loanId}": {
+      "schema": "Loan",
+      "description": "Data transaksi peminjaman alat"
+    },
+    "/invoices/{invoiceId}": {
+      "schema": "Invoice",
+      "description": "Bukti invoice peminjaman"
+    },
+    "/counters/{counterId}": {
+      "schema": "Counter",
+      "description": "Counter penomoran invoice harian"
+    },
+    "/settings/{settingId}": {
+      "schema": "SettingsPeminjaman",
+      "description": "Konfigurasi aturan peminjaman"
+    }
+  }
+}

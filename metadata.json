@@ -1,0 +1,6 @@
+{
+  "name": "PinjamIn",
+  "description": "Sistem peminjaman alat di Laboratorium FIT - Pinjam alat, tanpa ribet",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
