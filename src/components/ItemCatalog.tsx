@@ -13,12 +13,16 @@ interface ItemCatalogProps {
   cart: Item[];
   onToggleCart: (item: Item) => void;
   onOpenCart: () => void;
+  detailItem?: Item | null;
+  onSelectDetailItem?: (item: Item | null) => void;
 }
 
 export const ItemCatalog: React.FC<ItemCatalogProps> = ({
   cart,
   onToggleCart,
   onOpenCart,
+  detailItem: controlledDetailItem,
+  onSelectDetailItem,
 }) => {
   const { isVerified } = useAuth();
   const [items, setItems] = useState<Item[]>([]);
@@ -27,10 +31,12 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [detailItem, setDetailItem] = useState<Item | null>(null);
+  const [internalDetailItem, setInternalDetailItem] = useState<Item | null>(null);
   const [detailImgError, setDetailImgError] = useState(false);
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
+
+  const activeDetail = controlledDetailItem !== undefined ? controlledDetailItem : internalDetailItem;
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -40,7 +46,19 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
 
   const handleOpenDetail = (item: Item) => {
     setDetailImgError(false);
-    setDetailItem(item);
+    if (onSelectDetailItem) {
+      onSelectDetailItem(item);
+    } else {
+      setInternalDetailItem(item);
+    }
+  };
+
+  const handleCloseDetail = () => {
+    if (onSelectDetailItem) {
+      onSelectDetailItem(null);
+    } else {
+      setInternalDetailItem(null);
+    }
   };
 
   // Real-time snapshot for Categories
@@ -444,29 +462,40 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
       )}
 
       {/* DIALOG DETAIL BARANG (UNTUK PEMINJAM) - BOTTOM SHEET DI MOBILE, MODAL DI DESKTOP */}
-      {detailItem && (
+      {activeDetail && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
           <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-xl w-full border border-slate-200 overflow-hidden sm:my-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
             {/* Header Photo 4:3 fixed ratio with contain, background slate-50 and small padding */}
             <div className="relative aspect-[4/3] w-full bg-slate-50 border-b border-slate-100 overflow-hidden flex items-center justify-center p-3 sm:p-4 shrink-0">
-              {detailItem.fotoUrl && !detailImgError ? (
+              {activeDetail.fotoUrl && !detailImgError ? (
                 <img
-                  src={detailItem.fotoUrl}
-                  alt={detailItem.nama}
+                  src={activeDetail.fotoUrl}
+                  alt={activeDetail.nama}
                   className="w-full h-full object-contain"
                   onError={() => setDetailImgError(true)}
                 />
               ) : (
                 <div className="w-full h-full bg-slate-100 rounded-xl flex flex-col items-center justify-center text-slate-400">
-                  <Icon name={getCategoryIconName(detailItem.kategoriNama)} size={40} className="mb-2" />
+                  <Icon name={getCategoryIconName(activeDetail.kategoriNama)} size={40} className="mb-2" />
                   <span className="text-xs uppercase font-semibold tracking-wide text-slate-500">
-                    {detailItem.kategoriNama}
+                    {activeDetail.kategoriNama}
                   </span>
                 </div>
               )}
+              {/* Mobile Back Button */}
               <button
                 type="button"
-                onClick={() => setDetailItem(null)}
+                onClick={handleCloseDetail}
+                aria-label="Kembali ke katalog"
+                title="Kembali ke katalog"
+                className="absolute top-3 left-3 bg-slate-900/60 hover:bg-slate-900 text-white p-2 rounded-full backdrop-blur-sm transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center sm:hidden"
+              >
+                <Icon name="ArrowLeft" size={18} />
+              </button>
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={handleCloseDetail}
                 aria-label="Tutup detail barang"
                 title="Tutup detail barang"
                 className="absolute top-3 right-3 bg-slate-900/60 hover:bg-slate-900 text-white p-2 rounded-full backdrop-blur-sm transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -475,26 +504,26 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
               </button>
               <div className="absolute bottom-3 left-3 flex items-center gap-2">
                 <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-white text-slate-900 shadow tabular-nums border border-slate-200">
-                  {detailItem.kodeAset}
+                  {activeDetail.kodeAset}
                 </span>
-                {getStatusBadge(detailItem.status, true)}
+                {getStatusBadge(activeDetail.status, true)}
               </div>
             </div>
 
             {/* Content Details */}
             <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto text-sm">
               <div>
-                {(detailItem.merek || detailItem.model) && (
+                {(activeDetail.merek || activeDetail.model) && (
                   <p className="text-xs font-medium text-slate-500 mb-1">
-                    {[detailItem.merek, detailItem.model].filter(Boolean).join(' • ')}
+                    {[activeDetail.merek, activeDetail.model].filter(Boolean).join(' • ')}
                   </p>
                 )}
                 <h3 className="text-lg font-semibold text-slate-900">
-                  {detailItem.nama}
+                  {activeDetail.nama}
                 </h3>
                 <p className="text-slate-500 text-xs mt-0.5 flex items-center gap-1.5 font-normal">
                   <Icon name="Tag" size={14} className="text-slate-400" />
-                  <span>Kategori: {detailItem.kategoriNama}</span>
+                  <span>Kategori: {activeDetail.kategoriNama}</span>
                 </p>
               </div>
 
@@ -507,7 +536,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                       Lokasi simpan di lab
                     </span>
                     <span className="font-semibold text-slate-800 text-sm">
-                      {detailItem.lokasiSimpan || 'Laboratorium FIT'}
+                      {activeDetail.lokasiSimpan || 'Laboratorium FIT'}
                     </span>
                   </div>
                 </div>
@@ -519,34 +548,34 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                       Tahun perolehan
                     </span>
                     <span className="font-semibold text-slate-800 text-sm tabular-nums">
-                      {detailItem.tahunPerolehan ? `Tahun ${detailItem.tahunPerolehan}` : 'Tersedia di Lab'}
+                      {activeDetail.tahunPerolehan ? `Tahun ${activeDetail.tahunPerolehan}` : 'Tersedia di Lab'}
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* Spesifikasi */}
-              {detailItem.spesifikasi && (
+              {activeDetail.spesifikasi && (
                 <div>
                   <h4 className="font-semibold text-slate-800 text-xs mb-2 flex items-center gap-1.5">
                     <Icon name="InfoCircle" size={16} className="text-indigo-600" />
                     <span>Spesifikasi Teknis</span>
                   </h4>
                   <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 whitespace-pre-line leading-relaxed text-sm">
-                    {detailItem.spesifikasi}
+                    {activeDetail.spesifikasi}
                   </div>
                 </div>
               )}
 
               {/* Kelengkapan */}
-              {detailItem.kelengkapan && detailItem.kelengkapan.length > 0 && (
+              {activeDetail.kelengkapan && activeDetail.kelengkapan.length > 0 && (
                 <div>
                   <h4 className="font-semibold text-slate-800 text-xs mb-2 flex items-center gap-1.5">
                     <Icon name="Grid" size={16} className="text-indigo-600" />
-                    <span>Paket Kelengkapan Barang ({detailItem.kelengkapan.length})</span>
+                    <span>Paket Kelengkapan Barang ({activeDetail.kelengkapan.length})</span>
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {detailItem.kelengkapan.map((acc, idx) => (
+                    {activeDetail.kelengkapan.map((acc, idx) => (
                       <div
                         key={idx}
                         className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-white"
@@ -567,26 +596,26 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
             <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between safe-area-pb shrink-0">
               <button
                 type="button"
-                onClick={() => setDetailItem(null)}
+                onClick={handleCloseDetail}
                 className="min-h-[44px] px-5 py-2.5 text-slate-600 hover:bg-slate-200 rounded-xl font-semibold cursor-pointer text-sm"
               >
                 Tutup
               </button>
 
-              {detailItem.status === 'tersedia' && (
+              {activeDetail.status === 'tersedia' && (
                 <button
                   type="button"
                   onClick={() => {
-                    onToggleCart(detailItem);
-                    setDetailItem(null);
+                    onToggleCart(activeDetail);
+                    handleCloseDetail();
                   }}
                   className={`min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-semibold shadow transition-all cursor-pointer flex items-center gap-2 ${
-                    cart.some((c) => c.id === detailItem.id)
+                    cart.some((c) => c.id === activeDetail.id)
                       ? 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
                       : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200'
                   }`}
                 >
-                  {cart.some((c) => c.id === detailItem.id) ? (
+                  {cart.some((c) => c.id === activeDetail.id) ? (
                     <>
                       <Icon name="Check" size={16} />
                       <span>Hapus dari Keranjang</span>

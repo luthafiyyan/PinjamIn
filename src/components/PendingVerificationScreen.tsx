@@ -2,8 +2,20 @@ import React from 'react';
 import { Icon } from './Icon';
 import { useAuth } from '../context/AuthContext';
 
-export const PendingVerificationScreen: React.FC = () => {
+interface PendingVerificationScreenProps {
+  onLogout?: () => void;
+}
+
+export const PendingVerificationScreen: React.FC<PendingVerificationScreenProps> = ({ onLogout }) => {
   const { profile, currentUser, logout } = useAuth();
+
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      logout();
+    }
+  };
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
@@ -72,11 +84,11 @@ export const PendingVerificationScreen: React.FC = () => {
             Segarkan Status
           </button>
           <button
-            onClick={logout}
-            className="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+            onClick={handleLogout}
+            className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <Icon name="BoxArrowRight" size={16} />
-            Keluar Akun
+            Keluar / Ganti Akun
           </button>
         </div>
       </div>

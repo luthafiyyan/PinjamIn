@@ -71,9 +71,18 @@ export const LoginScreen: React.FC = () => {
         </p>
 
         {errorMsg && (
-          <div className="mb-6 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center gap-2 text-left">
-            <Icon name="ExclamationTriangle" size={16} className="text-rose-600 shrink-0" />
-            <span>{errorMsg}</span>
+          <div className="mb-6 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center justify-between gap-2 text-left">
+            <div className="flex items-center gap-2">
+              <Icon name="ExclamationTriangle" size={16} className="text-rose-600 shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setErrorMsg(null)}
+              className="text-xs font-semibold text-rose-700 hover:text-rose-900 underline shrink-0 cursor-pointer p-1"
+            >
+              Tutup
+            </button>
           </div>
         )}
 

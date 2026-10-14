@@ -15,16 +15,17 @@ import { PinjamInIcon } from './components/PinjamInIcon';
 import { MyProfile } from './components/MyProfile';
 
 function MainApp() {
-  const { currentUser, profile, loading, isVerified, isAdmin } = useAuth();
+  const { currentUser, profile, loading, isVerified, isAdmin, logout } = useAuth();
   
   // Navigation states
   const [currentTab, setCurrentTab] = useState<'katalog' | 'riwayat' | 'admin' | 'invoice' | 'profil'>('katalog');
   const [activeInvoiceLoanId, setActiveInvoiceLoanId] = useState<string | null>(null);
   const [unauthorizedMsg, setUnauthorizedMsg] = useState<string | null>(null);
 
-  // Cart state
+  // Cart & detail states
   const [cart, setCart] = useState<Item[]>([]);
   const [isLoanModalOpen, setIsLoanModalOpen] = useState(false);
+  const [activeDetailItem, setActiveDetailItem] = useState<Item | null>(null);
 
   // Menyimpan UID user yang sudah selesai ditentukan rute awalnya setelah login
   const resolvedUserUidRef = React.useRef<string | null>(null);
@@ -54,20 +55,17 @@ function MainApp() {
       setUnauthorizedMsg(null);
 
       if (isAdmin) {
-        // Admin (email hafiyyanluthfii@gmail.com, terverifikasi) diarahkan ke dashboard admin
+        // Admin diarahkan ke dashboard admin
         setCurrentTab('admin');
         window.location.hash = 'admin';
       } else {
-        // Semua user lain langsung diarahkan ke daftar barang (katalog), TANPA pesan apa pun
+        // Semua user lain langsung diarahkan ke katalog
         setCurrentTab('katalog');
-        // Pastikan hash di URL juga menjadi katalog (menghilangkan sisa hash #admin)
         window.location.hash = 'katalog';
       }
       return;
     }
 
-    // 4. Pesan "Anda tidak memiliki akses ke halaman ini." hanya boleh muncul jika
-    // user non-admin membuka URL halaman admin secara manual (mengetik atau menempel alamatnya).
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '').toLowerCase();
       if (hash === 'admin') {
@@ -80,13 +78,8 @@ function MainApp() {
           setCurrentTab('admin');
         }
       } else if (hash === 'profil') {
-        if (isAdmin) {
-          window.location.hash = 'admin';
-          setCurrentTab('admin');
-        } else {
-          setUnauthorizedMsg(null);
-          setCurrentTab('profil');
-        }
+        setUnauthorizedMsg(null);
+        setCurrentTab('profil');
       } else if (hash === 'riwayat') {
         setUnauthorizedMsg(null);
         setCurrentTab('riwayat');
@@ -110,13 +103,6 @@ function MainApp() {
         return;
       }
     }
-    if (tab === 'profil') {
-      if (isAdmin) {
-        setCurrentTab('admin');
-        window.location.hash = 'admin';
-        return;
-      }
-    }
     setCurrentTab(tab);
     window.location.hash = tab;
   };
@@ -136,6 +122,12 @@ function MainApp() {
 
   const handleClearCart = () => {
     setCart([]);
+  };
+
+  const handleLogout = async () => {
+    handleClearCart();
+    await logout();
+    window.location.hash = '';
   };
 
   const handleLoanSuccess = (loanId: string) => {
@@ -178,8 +170,10 @@ function MainApp() {
           setCurrentTab={() => {}}
           cartCount={0}
           openCart={() => {}}
+          hideBottomNav={true}
+          onLogout={handleLogout}
         />
-        <CompleteProfileModal />
+        <CompleteProfileModal onLogout={handleLogout} />
       </div>
     );
   }
@@ -193,10 +187,37 @@ function MainApp() {
           setCurrentTab={() => {}}
           cartCount={0}
           openCart={() => {}}
+          hideBottomNav={true}
+          onLogout={handleLogout}
         />
-        <PendingVerificationScreen />
+        <PendingVerificationScreen onLogout={handleLogout} />
       </div>
     );
+  }
+
+  // Sub-page header detection for mobile sticky header
+  let subPageHeader: { title: string; onBack: () => void } | null = null;
+  if (currentTab === 'invoice') {
+    subPageHeader = {
+      title: 'Bukti Peminjaman',
+      onBack: () => {
+        if (isAdmin) {
+          handleSelectTab('admin');
+        } else {
+          handleSelectTab('riwayat');
+        }
+      },
+    };
+  } else if (isLoanModalOpen) {
+    subPageHeader = {
+      title: 'Form Peminjaman',
+      onBack: () => setIsLoanModalOpen(false),
+    };
+  } else if (activeDetailItem) {
+    subPageHeader = {
+      title: 'Detail Alat',
+      onBack: () => setActiveDetailItem(null),
+    };
   }
 
   // 5. Normal Verified User / Admin
@@ -207,6 +228,8 @@ function MainApp() {
         setCurrentTab={handleSelectTab}
         cartCount={cart.length}
         openCart={() => setIsLoanModalOpen(true)}
+        subPageHeader={subPageHeader}
+        onLogout={handleLogout}
       />
 
       {/* Unauthorized Notice Banner */}
@@ -233,6 +256,8 @@ function MainApp() {
             cart={cart}
             onToggleCart={handleToggleCart}
             onOpenCart={() => setIsLoanModalOpen(true)}
+            detailItem={activeDetailItem}
+            onSelectDetailItem={setActiveDetailItem}
           />
         )}
 
@@ -244,7 +269,10 @@ function MainApp() {
         )}
 
         {currentTab === 'profil' && (
-          <MyProfile onBackToCatalog={() => handleSelectTab('katalog')} />
+          <MyProfile
+            onBackToCatalog={() => handleSelectTab('katalog')}
+            onLogout={handleLogout}
+          />
         )}
 
         {currentTab === 'admin' && (
@@ -255,12 +283,21 @@ function MainApp() {
               <Icon name="ExclamationTriangle" size={24} className="text-rose-600 mx-auto mb-2" />
               <p className="font-bold text-slate-900">Akses Ditolak</p>
               <p className="text-xs text-slate-500 mt-1">Anda tidak memiliki akses ke halaman ini.</p>
-              <button
-                onClick={() => handleSelectTab('katalog')}
-                className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold"
-              >
-                Kembali ke Katalog
-              </button>
+              <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+                <button
+                  onClick={() => handleSelectTab('katalog')}
+                  className="w-full sm:w-auto min-h-[44px] px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Kembali ke Katalog
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full sm:w-auto min-h-[44px] px-4 py-2 border border-rose-300 text-rose-600 hover:bg-rose-50 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Icon name="BoxArrowRight" size={14} />
+                  <span>Keluar / Ganti Akun</span>
+                </button>
+              </div>
             </div>
           )
         )}

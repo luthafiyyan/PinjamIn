@@ -8,6 +8,9 @@ interface NavbarProps {
   setCurrentTab: (tab: 'katalog' | 'riwayat' | 'admin' | 'profil') => void;
   cartCount: number;
   openCart: () => void;
+  subPageHeader?: { title: string; onBack: () => void } | null;
+  hideBottomNav?: boolean;
+  onLogout?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -15,11 +18,22 @@ export const Navbar: React.FC<NavbarProps> = ({
   setCurrentTab,
   cartCount,
   openCart,
+  subPageHeader,
+  hideBottomNav = false,
+  onLogout,
 }) => {
   const { profile, currentUser, isAdmin, isVerified, logout } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [photoError, setPhotoError] = useState(false);
+
+  const handleLogoutClick = () => {
+    setProfileDropdownOpen(false);
+    if (onLogout) {
+      onLogout();
+    } else {
+      logout();
+    }
+  };
 
   const getTipeBadge = (tipe?: string) => {
     switch (tipe) {
@@ -38,32 +52,72 @@ export const Navbar: React.FC<NavbarProps> = ({
   const initial = (displayName.trim()[0] || 'U').toUpperCase();
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 no-print transition-all">
+    <header className="sticky top-0 z-40 bg-white border-b border-slate-200 no-print transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-[56px] md:h-16">
-          {/* Logo & Tagline (tagline hidden on mobile) */}
-          <div className="flex items-center gap-2.5 sm:gap-3 cursor-pointer" onClick={() => setCurrentTab('katalog')}>
-            <PinjamInIcon className="w-8 h-8 md:w-10 md:h-10 shadow-md shadow-indigo-200" />
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-lg md:text-xl font-bold tracking-tight text-slate-900">
-                  Pinjam<span className="text-amber-500 font-extrabold">In</span>
-                </span>
-                <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200/60 uppercase">
-                  Lab FIT
-                </span>
+          {/* LEFT: Mobile Sub-page (Back + Title) OR Mobile Logo OR Desktop Logo */}
+          <div className="flex items-center gap-2">
+            {/* Mobile Sub-page Header (Detail Barang, Form Peminjaman, Invoice) */}
+            {subPageHeader ? (
+              <div className="flex md:hidden items-center gap-2">
+                <button
+                  type="button"
+                  onClick={subPageHeader.onBack}
+                  className="p-2 -ml-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer transition-colors"
+                  aria-label="Kembali"
+                  title="Kembali"
+                >
+                  <Icon name="ArrowLeft" size={20} />
+                </button>
+                <h1 className="text-base font-bold text-slate-900 truncate">
+                  {subPageHeader.title}
+                </h1>
               </div>
-              <p className="text-xs text-slate-500 hidden md:block font-medium">
-                Pinjam alat, tanpa ribet
-              </p>
+            ) : (
+              /* Mobile Main Logo (tagline disembunyikan) */
+              <div
+                className="flex md:hidden items-center gap-2.5 cursor-pointer"
+                onClick={() => setCurrentTab('katalog')}
+              >
+                <PinjamInIcon className="w-8 h-8 shadow-sm shadow-indigo-200" />
+                <div className="flex items-center gap-1.5">
+                  <span className="text-lg font-bold tracking-tight text-slate-900">
+                    Pinjam<span className="text-amber-500 font-extrabold">In</span>
+                  </span>
+                  <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200/60 uppercase">
+                    Lab FIT
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Desktop Logo & Tagline (Always visible on md: and above) */}
+            <div
+              className="hidden md:flex items-center gap-3 cursor-pointer"
+              onClick={() => setCurrentTab('katalog')}
+            >
+              <PinjamInIcon className="w-10 h-10 shadow-md shadow-indigo-200" />
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xl font-bold tracking-tight text-slate-900">
+                    Pinjam<span className="text-amber-500 font-extrabold">In</span>
+                  </span>
+                  <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200/60 uppercase">
+                    Lab FIT
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 font-medium">
+                  Pinjam alat, tanpa ribet
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation (Hidden on mobile) */}
           <nav className="hidden md:flex items-center gap-1">
             <button
               onClick={() => setCurrentTab('katalog')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 currentTab === 'katalog'
                   ? 'bg-indigo-50 text-indigo-700'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -76,7 +130,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {currentUser && isVerified && (
               <button
                 onClick={() => setCurrentTab('riwayat')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                   currentTab === 'riwayat'
                     ? 'bg-indigo-50 text-indigo-700'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -90,7 +144,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {isAdmin && (
               <button
                 onClick={() => setCurrentTab('admin')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                   currentTab === 'admin'
                     ? 'bg-amber-50 text-amber-800 border border-amber-200'
                     : 'text-slate-600 hover:text-amber-800 hover:bg-amber-50/60'
@@ -102,12 +156,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </nav>
 
-          {/* Desktop Cart Button & Profile Dropdown */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          {/* Desktop Cart Button & Profile Dropdown (Hidden on mobile) */}
+          <div className="hidden md:flex items-center gap-2.5 sm:gap-3">
             {currentUser && isVerified && (
               <button
                 onClick={openCart}
-                className="hidden md:flex relative items-center justify-center p-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-indigo-600 transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
+                className="relative items-center justify-center p-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-indigo-600 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex"
                 title="Keranjang Peminjaman"
                 aria-label="Keranjang Peminjaman"
               >
@@ -213,10 +267,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                         <button
                           type="button"
-                          onClick={() => {
-                            setProfileDropdownOpen(false);
-                            logout();
-                          }}
+                          onClick={handleLogoutClick}
                           className="w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer min-h-[44px]"
                         >
                           <Icon name="BoxArrowRight" size={18} className="text-rose-600" />
@@ -232,86 +283,112 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Mobile Bottom Navigation Bar (Katalog, Riwayat, Keranjang, Profil, Admin) */}
-      <nav
-        aria-label="Navigasi Bawah Ponsel"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] pb-[env(safe-area-inset-bottom)]"
-      >
-        <div className="flex items-center justify-around px-2 h-[56px]">
-          {/* Katalog */}
-          <button
-            type="button"
-            onClick={() => setCurrentTab('katalog')}
-            className={`flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
-              currentTab === 'katalog' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-slate-900 font-medium'
-            }`}
-          >
-            <Icon name="Grid" size={22} />
-            <span className="text-[11px] leading-tight mt-0.5">Katalog</span>
-          </button>
+      {/* Mobile Bottom Navigation Bar (Disembunyikan di layar tertentu via hideBottomNav) */}
+      {!hideBottomNav && (
+        <nav
+          aria-label="Navigasi Bawah Ponsel"
+          className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] pb-[env(safe-area-inset-bottom)]"
+        >
+          <div className="flex items-center justify-around px-2 h-[56px]">
+            {isAdmin ? (
+              /* Bottom Nav untuk Admin: Admin, Katalog, Akun */
+              <>
+                {/* 1. Admin */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab('admin')}
+                  className={`flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
+                    currentTab === 'admin' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-slate-900 font-medium'
+                  }`}
+                >
+                  <Icon name="Speedometer2" size={22} />
+                  <span className="text-[11px] leading-tight mt-0.5">Admin</span>
+                </button>
 
-          {/* Riwayat */}
-          {currentUser && isVerified && (
-            <button
-              type="button"
-              onClick={() => setCurrentTab('riwayat')}
-              className={`flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
-                currentTab === 'riwayat' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-slate-900 font-medium'
-              }`}
-            >
-              <Icon name="ClockHistory" size={22} />
-              <span className="text-[11px] leading-tight mt-0.5">Riwayat</span>
-            </button>
-          )}
+                {/* 2. Katalog */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab('katalog')}
+                  className={`flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
+                    currentTab === 'katalog' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-slate-900 font-medium'
+                  }`}
+                >
+                  <Icon name="Grid" size={22} />
+                  <span className="text-[11px] leading-tight mt-0.5">Katalog</span>
+                </button>
 
-          {/* Keranjang dengan badge */}
-          {currentUser && isVerified && (
-            <button
-              type="button"
-              onClick={openCart}
-              className="flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl text-slate-500 hover:text-slate-900 font-medium transition-colors cursor-pointer relative"
-            >
-              <div className="relative">
-                <Icon name="Bag" size={22} />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2 bg-amber-500 text-white font-bold text-[10px] min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center shadow">
-                    {cartCount}
-                  </span>
-                )}
-              </div>
-              <span className="text-[11px] leading-tight mt-0.5">Keranjang</span>
-            </button>
-          )}
+                {/* 3. Akun */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab('profil')}
+                  className={`flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
+                    currentTab === 'profil' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-slate-900 font-medium'
+                  }`}
+                >
+                  <Icon name="Person" size={22} />
+                  <span className="text-[11px] leading-tight mt-0.5">Akun</span>
+                </button>
+              </>
+            ) : (
+              /* Bottom Nav untuk Peminjam: Katalog, Riwayat, Keranjang (badge), Profil */
+              <>
+                {/* 1. Katalog */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab('katalog')}
+                  className={`flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
+                    currentTab === 'katalog' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-slate-900 font-medium'
+                  }`}
+                >
+                  <Icon name="Grid" size={22} />
+                  <span className="text-[11px] leading-tight mt-0.5">Katalog</span>
+                </button>
 
-          {/* Profil */}
-          {currentUser && (
-            <button
-              type="button"
-              onClick={() => setCurrentTab('profil')}
-              className={`flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
-                currentTab === 'profil' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-slate-900 font-medium'
-              }`}
-            >
-              <Icon name="Person" size={22} />
-              <span className="text-[11px] leading-tight mt-0.5">Profil</span>
-            </button>
-          )}
+                {/* 2. Riwayat */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab('riwayat')}
+                  className={`flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
+                    currentTab === 'riwayat' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-slate-900 font-medium'
+                  }`}
+                >
+                  <Icon name="ClockHistory" size={22} />
+                  <span className="text-[11px] leading-tight mt-0.5">Riwayat</span>
+                </button>
 
-          {/* Admin */}
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => setCurrentTab('admin')}
-              className={`flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
-                currentTab === 'admin' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-indigo-600 font-medium'
-              }`}
-            >
-              <Icon name="Speedometer2" size={22} />
-              <span className="text-[11px] leading-tight mt-0.5">Admin</span>
-            </button>
-          )}
-        </div>
-      </nav>
+                {/* 3. Keranjang (dengan badge) */}
+                <button
+                  type="button"
+                  onClick={openCart}
+                  className="flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl text-slate-500 hover:text-slate-900 font-medium transition-colors cursor-pointer relative"
+                >
+                  <div className="relative">
+                    <Icon name="Bag" size={22} />
+                    {cartCount > 0 && (
+                      <span className="absolute -top-1.5 -right-2 bg-amber-500 text-white font-bold text-[10px] min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center shadow">
+                        {cartCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] leading-tight mt-0.5">Keranjang</span>
+                </button>
+
+                {/* 4. Profil */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab('profil')}
+                  className={`flex-1 flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
+                    currentTab === 'profil' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-slate-900 font-medium'
+                  }`}
+                >
+                  <Icon name="Person" size={22} />
+                  <span className="text-[11px] leading-tight mt-0.5">Profil</span>
+                </button>
+              </>
+            )}
+          </div>
+        </nav>
+      )}
     </header>
   );
 };

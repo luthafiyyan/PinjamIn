@@ -301,14 +301,25 @@ export const LoanModal: React.FC<LoanModalProps> = ({
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
       <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden sm:my-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-5 sm:p-6 flex items-center justify-between shrink-0">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-amber-300 text-xs font-semibold mb-1">
-              <Icon name="Stars" size={16} className="text-amber-400" />
-              Keranjang Peminjaman
+        <div className="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-4 sm:p-6 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Kembali"
+              title="Kembali"
+              className="p-2 -ml-2 text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center sm:hidden"
+            >
+              <Icon name="ArrowLeft" size={20} />
+            </button>
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-amber-300 text-xs font-semibold mb-1">
+                <Icon name="Stars" size={16} className="text-amber-400" />
+                Keranjang Peminjaman
+              </div>
+              <h2 className="text-[18px] sm:text-[20px] font-semibold tracking-normal">Formulir Peminjaman Alat</h2>
+              <p className="text-xs text-indigo-100">Laboratorium Fakultas Ilmu Terapan</p>
             </div>
-            <h2 className="text-[18px] sm:text-[20px] font-semibold tracking-normal">Formulir Peminjaman Alat</h2>
-            <p className="text-xs text-indigo-100">Laboratorium Fakultas Ilmu Terapan</p>
           </div>
           <button
             onClick={onClose}

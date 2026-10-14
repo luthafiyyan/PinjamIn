@@ -3,8 +3,12 @@ import { Icon } from './Icon';
 import { useAuth } from '../context/AuthContext';
 import { TipePeminjam } from '../types';
 
-export const CompleteProfileModal: React.FC = () => {
-  const { currentUser, saveProfile } = useAuth();
+interface CompleteProfileModalProps {
+  onLogout?: () => void;
+}
+
+export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({ onLogout }) => {
+  const { currentUser, saveProfile, logout } = useAuth();
   const [tipePeminjam, setTipePeminjam] = useState<TipePeminjam>('mahasiswa');
   const [nama, setNama] = useState(currentUser?.displayName || '');
   const [nomorIdentitas, setNomorIdentitas] = useState('');
@@ -13,6 +17,14 @@ export const CompleteProfileModal: React.FC = () => {
   const [noHp, setNoHp] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      logout();
+    }
+  };
 
   const getIdentitasLabel = () => {
     switch (tipePeminjam) {
@@ -113,9 +125,20 @@ export const CompleteProfileModal: React.FC = () => {
       <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden sm:my-8 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
         {/* Header Banner */}
         <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-5 sm:p-7 shrink-0">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/30 text-indigo-100 text-xs font-semibold mb-2">
-            <Icon name="PersonCheck" size={16} />
-            Langkah Pertama
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/30 text-indigo-100 text-xs font-semibold">
+              <Icon name="PersonCheck" size={16} />
+              Langkah Pertama
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors cursor-pointer"
+              title="Keluar / Ganti Akun"
+            >
+              <Icon name="BoxArrowRight" size={14} />
+              <span>Keluar / Ganti Akun</span>
+            </button>
           </div>
           <h2 className="text-[18px] sm:text-[20px] font-semibold tracking-normal">
             Lengkapi Profil Peminjam
@@ -284,6 +307,16 @@ export const CompleteProfileModal: React.FC = () => {
               ) : null}
               <span>{submitting ? 'Menyimpan...' : 'Simpan Profil & Lanjutkan'}</span>
             </button>
+            <div className="mt-2.5 text-center">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-rose-600 transition-colors py-1 cursor-pointer"
+              >
+                <Icon name="BoxArrowRight" size={13} />
+                <span>Bukan akun Anda? <span className="font-semibold underline">Keluar / Ganti Akun</span></span>
+              </button>
+            </div>
           </div>
         </form>
       </div>

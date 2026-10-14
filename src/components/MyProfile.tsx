@@ -6,10 +6,11 @@ import { Icon } from './Icon';
 
 interface MyProfileProps {
   onBackToCatalog?: () => void;
+  onLogout?: () => void;
 }
 
-export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog }) => {
-  const { currentUser, profile } = useAuth();
+export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout }) => {
+  const { currentUser, profile, isAdmin, logout } = useAuth();
 
   // State untuk Data yang bisa diedit (Bagian A)
   const [noHp, setNoHp] = useState(profile?.noHp || profile?.nomorHp || '');
@@ -30,6 +31,19 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog }) => {
   const [requestError, setRequestError] = useState<string | null>(null);
   const [cancellingRequest, setCancellingRequest] = useState(false);
 
+  // Logout modal state & photo error
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [photoError, setPhotoError] = useState(false);
+
+  const handleConfirmLogout = () => {
+    setShowLogoutModal(false);
+    if (onLogout) {
+      onLogout();
+    } else {
+      logout();
+    }
+  };
+
   // Sync state jika profil dari Firestore diperbarui
   useEffect(() => {
     if (profile) {
@@ -39,7 +53,122 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog }) => {
     }
   }, [profile]);
 
-  if (!currentUser || !profile) {
+  if (!currentUser) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-12 text-center text-slate-500">
+        <Icon name="HourglassSplit" size={32} className="animate-spin mx-auto text-indigo-600 mb-2" />
+        <p className="text-sm">Memuat profil pengguna...</p>
+      </div>
+    );
+  }
+
+  // 4. Halaman Akun (Admin, Mobile & Desktop)
+  if (isAdmin) {
+    const adminInitial = ((currentUser.displayName || currentUser.email || 'A')[0]).toUpperCase();
+    return (
+      <div className="max-w-xl mx-auto px-4 sm:px-6 py-8 space-y-6 animate-in fade-in duration-200">
+        {/* Top Header */}
+        <div className="pb-4 border-b border-slate-200">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold mb-2">
+            <Icon name="Speedometer2" size={14} className="text-amber-600" />
+            <span>Pengelola Laboratorium</span>
+          </div>
+          <h1 className="text-[22px] sm:text-[28px] font-bold text-slate-900">
+            Akun Admin
+          </h1>
+          <p className="text-sm text-slate-500 mt-1 font-normal">
+            Kelola akses inventaris dan peminjaman Laboratorium FIT.
+          </p>
+        </div>
+
+        {/* Admin Identity Card */}
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-sm">
+          <div className="flex items-center gap-4">
+            {!photoError && currentUser.photoURL ? (
+              <img
+                src={currentUser.photoURL}
+                alt={currentUser.displayName || 'Admin'}
+                onError={() => setPhotoError(true)}
+                className="w-16 h-16 rounded-full ring-4 ring-amber-500/20 object-cover shrink-0"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-amber-500 text-white font-bold flex items-center justify-center text-xl shadow-sm shrink-0">
+                {adminInitial}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <h2 className="text-lg font-bold text-slate-900 truncate">
+                  {currentUser.displayName || 'Administrator FIT'}
+                </h2>
+                <span className="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-bold border border-amber-200">
+                  Admin
+                </span>
+              </div>
+              <p className="text-sm text-slate-600 truncate font-medium">
+                {currentUser.email}
+              </p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Laboratorium Fakultas Ilmu Terapan
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Tombol Keluar (Lebar penuh, tinggi 48px, outline merah) */}
+        <div className="pt-4">
+          <button
+            type="button"
+            onClick={() => setShowLogoutModal(true)}
+            className="w-full min-h-[48px] h-12 border-2 border-rose-600 text-rose-600 hover:bg-rose-50 font-semibold rounded-2xl flex items-center justify-center gap-2 text-sm sm:text-base transition-colors cursor-pointer"
+          >
+            <Icon name="BoxArrowRight" size={18} />
+            <span>Keluar</span>
+          </button>
+          <p className="text-xs text-slate-400 text-center mt-3 font-medium">
+            PinjamIn · Laboratorium FIT
+          </p>
+        </div>
+
+        {/* Logout Confirmation Bottom Sheet */}
+        {showLogoutModal && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+            <div className="fixed inset-0" onClick={() => setShowLogoutModal(false)} />
+            <div className="relative bg-white rounded-t-3xl sm:rounded-3xl p-6 sm:p-7 max-w-sm w-full border border-slate-200 shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 text-center">
+              <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-rose-200 shadow-xs">
+                <Icon name="BoxArrowRight" size={26} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-1.5">
+                Keluar dari PinjamIn?
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500 mb-6 leading-relaxed">
+                Anda harus masuk kembali menggunakan akun Google untuk mengakses dashboard admin Laboratorium FIT.
+              </p>
+              <div className="space-y-2.5">
+                <button
+                  type="button"
+                  onClick={handleConfirmLogout}
+                  className="w-full min-h-[48px] py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm rounded-xl shadow-sm shadow-rose-200 transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Icon name="BoxArrowRight" size={16} />
+                  <span>Keluar</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowLogoutModal(false)}
+                  className="w-full min-h-[48px] py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-xl transition-all cursor-pointer"
+                >
+                  Batal
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (!profile) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center text-slate-500">
         <Icon name="HourglassSplit" size={32} className="animate-spin mx-auto text-indigo-600 mb-2" />
@@ -312,6 +441,46 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog }) => {
           </button>
         </div>
       )}
+
+      {/* 1. KARTU IDENTITAS RESMI (Paling Atas) */}
+      <div className="bg-white rounded-3xl border border-slate-200 p-5 sm:p-6 shadow-sm">
+        <div className="flex items-center gap-4">
+          {!photoError && currentUser.photoURL ? (
+            <img
+              src={currentUser.photoURL}
+              alt={profile.nama}
+              onError={() => setPhotoError(true)}
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-full ring-4 ring-indigo-500/20 object-cover shrink-0"
+            />
+          ) : (
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-lg sm:text-xl shadow-sm shrink-0">
+              {(profile.nama.trim()[0] || 'U').toUpperCase()}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 truncate">
+              {profile.nama}
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 truncate mb-1.5 font-medium">
+              {profile.email || currentUser.email}
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              {profile.terverifikasi ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <Icon name="CheckCircle" size={13} className="text-emerald-600" />
+                  Terverifikasi
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                  <Icon name="HourglassSplit" size={13} className="text-amber-600" />
+                  Menunggu Verifikasi
+                </span>
+              )}
+              {getTipeBadge()}
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {/* ========================================================
@@ -588,6 +757,56 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog }) => {
           </div>
         </div>
       </div>
+
+      {/* 4. TOMBOL KELUAR (Paling Bawah) */}
+      <div className="pt-2 sm:pt-4">
+        <button
+          type="button"
+          onClick={() => setShowLogoutModal(true)}
+          className="w-full min-h-[48px] h-12 border-2 border-rose-600 text-rose-600 hover:bg-rose-50 font-semibold rounded-2xl flex items-center justify-center gap-2 text-sm sm:text-base transition-colors cursor-pointer"
+        >
+          <Icon name="BoxArrowRight" size={18} />
+          <span>Keluar</span>
+        </button>
+        <p className="text-xs text-slate-400 text-center mt-3 font-medium">
+          PinjamIn · Laboratorium FIT
+        </p>
+      </div>
+
+      {/* Logout Confirmation Bottom Sheet */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+          <div className="fixed inset-0" onClick={() => setShowLogoutModal(false)} />
+          <div className="relative bg-white rounded-t-3xl sm:rounded-3xl p-6 sm:p-7 max-w-sm w-full border border-slate-200 shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 text-center">
+            <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-rose-200 shadow-xs">
+              <Icon name="BoxArrowRight" size={26} />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1.5">
+              Keluar dari PinjamIn?
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 mb-6 leading-relaxed">
+              Anda harus masuk kembali menggunakan akun Google untuk mengakses layanan peminjaman alat di Laboratorium FIT.
+            </p>
+            <div className="space-y-2.5">
+              <button
+                type="button"
+                onClick={handleConfirmLogout}
+                className="w-full min-h-[48px] py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm rounded-xl shadow-sm shadow-rose-200 transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Icon name="BoxArrowRight" size={16} />
+                <span>Keluar</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowLogoutModal(false)}
+                className="w-full min-h-[48px] py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-xl transition-all cursor-pointer"
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================
           DIALOG MODAL: AJUKAN PERUBAHAN DATA NAMA / IDENTITAS
