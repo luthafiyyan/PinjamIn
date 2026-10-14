@@ -110,6 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email: currentUser.email || '',
       nama: profileData.nama || currentUser.displayName || 'Pengguna',
       noHp: profileData.noHp,
+      nomorHp: profileData.noHp,
       tipePeminjam: profileData.tipePeminjam,
       nomorIdentitas: profileData.nomorIdentitas,
       unitAsal: profileData.unitAsal,

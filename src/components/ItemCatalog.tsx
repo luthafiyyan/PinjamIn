@@ -4,23 +4,7 @@ import {
   onSnapshot, 
   query 
 } from 'firebase/firestore';
-import { 
-  Search, 
-  Plus, 
-  Check, 
-  Wrench, 
-  XCircle, 
-  Sparkles,
-  ShoppingBag,
-  Camera,
-  Layers,
-  Info,
-  MapPin,
-  Calendar,
-  CheckSquare,
-  X,
-  Package
-} from 'lucide-react';
+import { Icon, getCategoryIconName } from './Icon';
 import { db } from '../lib/firebase';
 import { Item, Category, ItemStatus } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -94,28 +78,28 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
       case 'tersedia':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+            <Icon name="CheckCircle" size={16} className="text-emerald-600" />
             Tersedia
           </span>
         );
       case 'dipinjam':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
+            <Icon name="HourglassSplit" size={16} className="text-amber-600" />
             Dipinjam
           </span>
         );
       case 'perawatan':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">
-            <Wrench className="w-3 h-3 text-slate-500" />
+            <Icon name="Tools" size={16} className="text-slate-500" />
             Perawatan
           </span>
         );
       case 'rusak':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">
-            <XCircle className="w-3 h-3 text-rose-600" />
+            <Icon name="XCircle" size={16} className="text-rose-600" />
             Rusak
           </span>
         );
@@ -168,30 +152,30 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
         <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-radial from-amber-500/10 to-transparent pointer-events-none" />
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-amber-300 text-xs font-semibold mb-3 border border-white/10">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <Icon name="Stars" size={16} className="text-amber-400" />
             Laboratorium Fakultas Ilmu Terapan
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight mb-2">
+          <h1 className="text-[22px] sm:text-[28px] font-bold tracking-normal mb-2 text-white">
             Katalog Peralatan & Aset Lab
           </h1>
-          <p className="text-sm sm:text-base text-indigo-100 leading-relaxed">
+          <p className="text-sm font-normal text-indigo-100 leading-normal">
             Pilih peralatan yang Anda butuhkan untuk praktikum, tugas akhir, penelitian, atau dokumentasi kegiatan.
           </p>
 
           <div className="mt-5 flex flex-wrap items-center gap-3 text-xs">
             <div className="bg-white/10 backdrop-blur-sm px-3.5 py-1.5 rounded-xl border border-white/10 font-medium">
-              Total Alat: <span className="font-bold text-white">{items.length}</span>
+              Total Alat: <span className="font-bold text-white tabular-nums">{items.length}</span>
             </div>
             <div className="bg-emerald-500/20 backdrop-blur-sm px-3.5 py-1.5 rounded-xl border border-emerald-400/30 text-emerald-300 font-medium">
-              Siap Dipinjam: <span className="font-bold text-white">{availableCount}</span>
+              Siap Dipinjam: <span className="font-bold text-white tabular-nums">{availableCount}</span>
             </div>
             {cart.length > 0 && (
               <button
                 onClick={onOpenCart}
-                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-1.5 rounded-xl flex items-center gap-1.5 shadow transition-all cursor-pointer"
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold px-4 py-1.5 rounded-xl flex items-center gap-1.5 shadow transition-all cursor-pointer text-xs"
               >
-                <ShoppingBag className="w-3.5 h-3.5" />
-                <span>Lihat Keranjang ({cart.length})</span>
+                <Icon name="Bag" size={16} />
+                <span className="tabular-nums">Lihat Keranjang ({cart.length})</span>
               </button>
             )}
           </div>
@@ -204,7 +188,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
           {/* Search Input */}
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <Search className="w-4 h-4" />
+              <Icon name="Search" size={16} />
             </div>
             <input
               type="text"
@@ -240,14 +224,14 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
           </div>
         </div>
 
-        {/* 12 Category Filter Chips (Horizontal Scrollable on Mobile) */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
+        {/* 12 Category Filter Chips (Horizontal Scrollable on Mobile without scrollbar) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 text-xs no-scrollbar">
           <button
             onClick={() => setSelectedCategory('all')}
-            className={`px-3.5 py-1.5 rounded-xl font-medium whitespace-nowrap transition-colors cursor-pointer ${
+            className={`min-h-[44px] px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-colors cursor-pointer flex items-center justify-center shrink-0 ${
               selectedCategory === 'all'
                 ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
             Semua
@@ -256,10 +240,10 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3.5 py-1.5 rounded-xl font-medium whitespace-nowrap transition-colors cursor-pointer ${
+              className={`min-h-[44px] px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-colors cursor-pointer flex items-center justify-center shrink-0 ${
                 selectedCategory === cat.id
                   ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
               {cat.nama}
@@ -270,7 +254,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
 
       {/* Items Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
             <div key={n} className="bg-white rounded-2xl border border-slate-200 p-5 animate-pulse space-y-3">
               <div className="h-36 bg-slate-200 rounded-xl" />
@@ -284,7 +268,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
       ) : filteredItems.length === 0 ? (
         <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center max-w-lg mx-auto shadow-sm">
           <div className="w-14 h-14 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Camera className="w-7 h-7" />
+            <Icon name="Grid" size={32} />
           </div>
           <h3 className="text-base font-bold text-slate-800 mb-1">
             Tidak ada alat ditemukan
@@ -308,7 +292,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
           {filteredItems.map((item) => {
             const isSelected = cart.some((c) => c.id === item.id);
             const isAvailable = item.status === 'tersedia';
@@ -340,8 +324,8 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center text-slate-300 group-hover:text-indigo-400 transition-colors">
-                      <Camera className="w-10 h-10 mb-1" />
-                      <span className="text-[10px] uppercase font-bold tracking-wider">
+                      <Icon name={getCategoryIconName(item.kategoriNama)} size={32} className="mb-1" />
+                      <span className="text-xs font-semibold text-slate-400">
                         {item.kategoriNama}
                       </span>
                     </div>
@@ -354,18 +338,18 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
 
                   {/* Asset Code Overlay */}
                   <div className="absolute top-3 left-3">
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-white/95 text-slate-800 shadow-sm border border-slate-200/80 backdrop-blur-sm">
+                    <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-white/95 text-slate-800 shadow-sm border border-slate-200/80 backdrop-blur-sm tabular-nums">
                       {item.kodeAset}
                     </span>
                   </div>
                 </div>
 
                 {/* Card Content */}
-                <div className="p-5 flex-1 flex flex-col justify-between">
+                <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
                   <div>
                     {/* Brand & Model subtitle */}
                     {(item.merek || item.model) && (
-                      <p className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider mb-1 truncate">
+                       <p className="text-xs font-medium text-slate-500 mb-1 truncate">
                         {[item.merek, item.model].filter(Boolean).join(' • ')}
                       </p>
                     )}
@@ -373,7 +357,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                     {/* Item Name */}
                     <h3 
                       onClick={() => setDetailItem(item)}
-                      className="font-bold text-slate-900 text-base mb-1.5 line-clamp-2 group-hover:text-indigo-600 transition-colors cursor-pointer"
+                      className="font-semibold text-slate-900 text-base mb-1.5 line-clamp-2 group-hover:text-indigo-600 transition-colors cursor-pointer"
                       title="Klik untuk melihat spesifikasi lengkap"
                     >
                       {item.nama}
@@ -381,7 +365,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
 
                     {/* Category Pill */}
                     <p className="text-xs text-slate-500 mb-3 flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5 text-slate-400" />
+                      <Icon name="Tag" size={16} className="text-slate-400" />
                       <span>{item.kategoriNama || 'Peralatan Lab'}</span>
                     </p>
                   </div>
@@ -392,20 +376,20 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                     <button
                       type="button"
                       onClick={() => setDetailItem(item)}
-                      className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 cursor-pointer"
+                      className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 cursor-pointer min-h-[44px] min-w-[44px] justify-end"
                     >
-                      <Info className="w-3.5 h-3.5" />
+                      <Icon name="InfoCircle" size={16} />
                       <span>Detail</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Bottom Action Button */}
-                <div className="p-4 bg-slate-50/70 border-t border-slate-100">
+                <div className="p-3 sm:p-4 bg-slate-50/70 border-t border-slate-100">
                   {isAvailable ? (
                     <button
                       onClick={() => onToggleCart(item)}
-                      className={`w-full py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      className={`w-full min-h-[44px] py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         isSelected
                           ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
                           : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-200'
@@ -413,18 +397,18 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                     >
                       {isSelected ? (
                         <>
-                          <Check className="w-3.5 h-3.5" />
+                          <Icon name="Check" size={16} />
                           <span>Hapus dari Pilihan</span>
                         </>
                       ) : (
                         <>
-                          <Plus className="w-3.5 h-3.5" />
+                          <Icon name="PlusLg" size={16} />
                           <span>Pilih untuk Pinjam</span>
                         </>
                       )}
                     </button>
                   ) : (
-                    <div className="w-full py-2.5 px-3 rounded-xl text-xs font-medium text-center bg-slate-100 text-slate-400 border border-slate-200/60 cursor-not-allowed">
+                    <div className="w-full min-h-[44px] py-2.5 px-3 rounded-xl text-xs font-medium flex items-center justify-center bg-slate-100 text-slate-400 border border-slate-200/60 cursor-not-allowed">
                       {item.status === 'dipinjam'
                         ? 'Sedang Dipinjam'
                         : item.status === 'perawatan'
@@ -444,18 +428,20 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
         <div className="fixed bottom-6 right-6 z-30 sm:hidden">
           <button
             onClick={onOpenCart}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-5 rounded-full shadow-lg shadow-indigo-900/30 transition-transform active:scale-95 cursor-pointer"
+            aria-label={`Lihat Keranjang (${cart.length} barang)`}
+            title={`Lihat Keranjang (${cart.length} barang)`}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-5 rounded-full shadow-lg shadow-indigo-900/20 transition-transform active:scale-95 cursor-pointer text-sm"
           >
-            <ShoppingBag className="w-5 h-5" />
-            <span className="text-sm">Pinjam ({cart.length})</span>
+            <Icon name="Bag" size={18} />
+            <span className="tabular-nums">Pinjam ({cart.length})</span>
           </button>
         </div>
       )}
 
       {/* DIALOG DETAIL BARANG (UNTUK PEMINJAM) */}
       {detailItem && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full border border-slate-200 overflow-hidden my-6 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-xl w-full border border-slate-200 overflow-hidden sm:my-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
             {/* Header Photo or Placeholder */}
             <div className="relative h-56 bg-slate-100 overflow-hidden flex items-center justify-center">
               {detailItem.fotoUrl ? (
@@ -466,20 +452,22 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center text-slate-300">
-                  <Camera className="w-16 h-16 mb-2" />
-                  <span className="text-xs uppercase font-bold tracking-wider">
+                  <Icon name={getCategoryIconName(detailItem.kategoriNama)} size={32} className="mb-2" />
+                  <span className="text-xs uppercase font-medium tracking-wide">
                     {detailItem.kategoriNama}
                   </span>
                 </div>
               )}
               <button
                 onClick={() => setDetailItem(null)}
+                aria-label="Tutup detail barang"
+                title="Tutup detail barang"
                 className="absolute top-4 right-4 bg-slate-900/60 hover:bg-slate-900 text-white p-2 rounded-full backdrop-blur-sm transition-colors cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <Icon name="XLg" size={16} />
               </button>
               <div className="absolute bottom-4 left-4 flex items-center gap-2">
-                <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-white text-slate-900 shadow">
+                <span className="font-mono text-xs font-semibold px-2.5 py-1 rounded-md bg-white text-slate-900 shadow tabular-nums">
                   {detailItem.kodeAset}
                 </span>
                 {getStatusBadge(detailItem.status)}
@@ -487,18 +475,18 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
             </div>
 
             {/* Content Details */}
-            <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto text-xs">
+            <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto text-sm">
               <div>
                 {(detailItem.merek || detailItem.model) && (
-                  <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">
+                  <p className="text-xs font-medium text-slate-500 mb-1">
                     {[detailItem.merek, detailItem.model].filter(Boolean).join(' • ')}
                   </p>
                 )}
-                <h3 className="text-xl font-extrabold text-slate-900">
+                <h3 className="text-lg font-semibold text-slate-900">
                   {detailItem.nama}
                 </h3>
-                <p className="text-slate-500 mt-0.5 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-slate-400" />
+                <p className="text-slate-500 text-xs mt-0.5 flex items-center gap-1.5 font-normal">
+                  <Icon name="Tag" size={14} className="text-slate-400" />
                   <span>Kategori: {detailItem.kategoriNama}</span>
                 </p>
               </div>
@@ -506,24 +494,24 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
               {/* Lokasi Simpan & Tahun Perolehan */}
               <div className="grid grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80">
                 <div className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                  <Icon name="GeoAlt" size={16} className="text-indigo-600 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
-                      Lokasi Simpan di Lab
+                    <span className="text-xs text-slate-500 font-medium block">
+                      Lokasi simpan di lab
                     </span>
-                    <span className="font-semibold text-slate-800">
+                    <span className="font-semibold text-slate-800 text-sm">
                       {detailItem.lokasiSimpan || 'Laboratorium FIT'}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2">
-                  <Calendar className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                  <Icon name="Calendar3" size={16} className="text-indigo-600 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
-                      Tahun Perolehan
+                    <span className="text-xs text-slate-500 font-medium block">
+                      Tahun perolehan
                     </span>
-                    <span className="font-semibold text-slate-800">
+                    <span className="font-semibold text-slate-800 text-sm tabular-nums">
                       {detailItem.tahunPerolehan ? `Tahun ${detailItem.tahunPerolehan}` : 'Tersedia di Lab'}
                     </span>
                   </div>
@@ -533,11 +521,11 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
               {/* Spesifikasi */}
               {detailItem.spesifikasi && (
                 <div>
-                  <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[11px] mb-2 flex items-center gap-1.5">
-                    <Info className="w-3.5 h-3.5 text-indigo-600" />
+                  <h4 className="font-semibold text-slate-800 text-xs mb-2 flex items-center gap-1.5">
+                    <Icon name="InfoCircle" size={16} className="text-indigo-600" />
                     <span>Spesifikasi Teknis</span>
                   </h4>
-                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 whitespace-pre-line leading-relaxed">
+                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 whitespace-pre-line leading-relaxed text-sm">
                     {detailItem.spesifikasi}
                   </div>
                 </div>
@@ -546,8 +534,8 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
               {/* Kelengkapan */}
               {detailItem.kelengkapan && detailItem.kelengkapan.length > 0 && (
                 <div>
-                  <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[11px] mb-2 flex items-center gap-1.5">
-                    <Package className="w-3.5 h-3.5 text-indigo-600" />
+                  <h4 className="font-semibold text-slate-800 text-xs mb-2 flex items-center gap-1.5">
+                    <Icon name="Grid" size={16} className="text-indigo-600" />
                     <span>Paket Kelengkapan Barang ({detailItem.kelengkapan.length})</span>
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -556,7 +544,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                         key={idx}
                         className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-white"
                       >
-                        <CheckSquare className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <Icon name="CheckCircle" size={16} className="text-emerald-600 shrink-0" />
                         <span className="font-medium text-slate-800">{acc}</span>
                       </div>
                     ))}
@@ -569,11 +557,11 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
             </div>
 
             {/* Dialog Footer Actions */}
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between safe-area-pb shrink-0">
               <button
                 type="button"
                 onClick={() => setDetailItem(null)}
-                className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-xl font-semibold cursor-pointer"
+                className="min-h-[44px] px-5 py-2.5 text-slate-600 hover:bg-slate-200 rounded-xl font-semibold cursor-pointer text-sm"
               >
                 Tutup
               </button>
@@ -585,7 +573,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                     onToggleCart(detailItem);
                     setDetailItem(null);
                   }}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold shadow transition-all cursor-pointer flex items-center gap-2 ${
+                  className={`min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-semibold shadow transition-all cursor-pointer flex items-center gap-2 ${
                     cart.some((c) => c.id === detailItem.id)
                       ? 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
                       : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200'
@@ -593,12 +581,12 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                 >
                   {cart.some((c) => c.id === detailItem.id) ? (
                     <>
-                      <Check className="w-3.5 h-3.5" />
+                      <Icon name="Check" size={16} />
                       <span>Hapus dari Keranjang</span>
                     </>
                   ) : (
                     <>
-                      <Plus className="w-3.5 h-3.5" />
+                      <Icon name="PlusLg" size={16} />
                       <span>Pilih untuk Pinjam</span>
                     </>
                   )}
@@ -606,6 +594,28 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Mobile Sticky Bottom Bar: "2 barang · Lanjut meminjam" */}
+      {cart.length > 0 && (
+        <div className="md:hidden fixed bottom-[64px] left-3 right-3 z-30 animate-in slide-in-from-bottom duration-200">
+          <button
+            type="button"
+            onClick={onOpenCart}
+            className="w-full bg-slate-900 hover:bg-slate-800 text-white p-3.5 rounded-2xl shadow-xl flex items-center justify-between font-semibold text-sm cursor-pointer min-h-[48px] border border-slate-700/50"
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center tabular-nums">
+                {cart.length}
+              </span>
+              <span className="text-white text-xs sm:text-sm font-semibold">{cart.length} barang dipilih</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-amber-400 text-xs font-bold bg-white/10 px-3 py-1.5 rounded-xl">
+              <span>Lanjut Meminjam</span>
+              <Icon name="ArrowRight" size={14} />
+            </div>
+          </button>
         </div>
       )}
     </div>

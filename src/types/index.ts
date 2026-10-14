@@ -15,11 +15,19 @@ export type JenisKeperluan =
   | 'kegiatan_unit'
   | 'lainnya';
 
+export interface PermintaanPerubahan {
+  nama?: string;
+  nomorIdentitas?: string;
+  alasan: string;
+  waktu: string;
+}
+
 export interface UserProfile {
   uid: string;
   nama: string;
   email: string;
   noHp: string;
+  nomorHp?: string;
   tipePeminjam: TipePeminjam;
   nomorIdentitas: string; // NIM / NIP/NIDN / NIP/NIK
   unitAsal: string; // prodi / KK / unit kerja
@@ -27,6 +35,7 @@ export interface UserProfile {
   role: UserRole;
   terverifikasi: boolean;
   createdAt?: string | any;
+  permintaanPerubahan?: PermintaanPerubahan | null;
 }
 
 export interface Category {

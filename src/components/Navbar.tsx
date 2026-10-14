@@ -1,20 +1,11 @@
 import React, { useState } from 'react';
-import { 
-  LogOut, 
-  ShoppingBag, 
-  Clock, 
-  LayoutGrid, 
-  Shield, 
-  Menu, 
-  X, 
-  UserCheck 
-} from 'lucide-react';
+import { Icon } from './Icon';
 import { PinjamInIcon } from './PinjamInIcon';
 import { useAuth } from '../context/AuthContext';
 
 interface NavbarProps {
-  currentTab: 'katalog' | 'riwayat' | 'admin' | 'invoice';
-  setCurrentTab: (tab: 'katalog' | 'riwayat' | 'admin') => void;
+  currentTab: 'katalog' | 'riwayat' | 'admin' | 'invoice' | 'profil';
+  setCurrentTab: (tab: 'katalog' | 'riwayat' | 'admin' | 'profil') => void;
   cartCount: number;
   openCart: () => void;
 }
@@ -27,6 +18,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const { profile, currentUser, isAdmin, isVerified, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [photoError, setPhotoError] = useState(false);
 
   const getTipeBadge = (tipe?: string) => {
     switch (tipe) {
@@ -40,6 +33,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         return null;
     }
   };
+
+  const displayName = profile?.nama || currentUser?.displayName || 'Pengguna';
+  const initial = (displayName.trim()[0] || 'U').toUpperCase();
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 no-print transition-all">
@@ -73,7 +69,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <LayoutGrid className="w-4 h-4" />
+              <Icon name="Grid" size={20} />
               Katalog Alat
             </button>
 
@@ -86,7 +82,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <Clock className="w-4 h-4" />
+                <Icon name="ClockHistory" size={20} />
                 Riwayat Saya
               </button>
             )}
@@ -100,22 +96,22 @@ export const Navbar: React.FC<NavbarProps> = ({
                     : 'text-slate-600 hover:text-amber-800 hover:bg-amber-50/60'
                 }`}
               >
-                <Shield className="w-4 h-4 text-amber-600" />
+                <Icon name="Speedometer2" size={20} className="text-amber-600" />
                 Panel Admin
               </button>
             )}
           </nav>
 
-          {/* Action Buttons & Profile */}
+          {/* Desktop Cart Button & Profile Dropdown */}
           <div className="flex items-center gap-2.5 sm:gap-3">
             {currentUser && isVerified && (
               <button
                 onClick={openCart}
-                className="relative flex items-center justify-center p-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-indigo-600 transition-colors"
+                className="hidden md:flex relative items-center justify-center p-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-indigo-600 transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
                 title="Keranjang Peminjaman"
                 aria-label="Keranjang Peminjaman"
               >
-                <ShoppingBag className="w-5 h-5" />
+                <Icon name="Bag" size={20} />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-amber-500 text-white font-bold text-xs w-5 h-5 rounded-full flex items-center justify-center shadow">
                     {cartCount}
@@ -125,110 +121,194 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
 
             {currentUser ? (
-              <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200">
-                <div className="hidden lg:flex flex-col items-end text-right">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-semibold text-slate-900 max-w-[130px] truncate">
-                      {profile?.nama || currentUser.displayName || 'Pengguna'}
-                    </span>
-                    {getTipeBadge(profile?.tipePeminjam)}
-                    {isAdmin && (
-                      <span className="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">
-                        Admin
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[11px] text-slate-500 truncate max-w-[150px]">
-                    {profile?.unitAsal || currentUser.email}
-                  </span>
-                </div>
-
-                {currentUser.photoURL ? (
-                  <img
-                    src={currentUser.photoURL}
-                    alt={currentUser.displayName || 'User'}
-                    className="w-9 h-9 rounded-full ring-2 ring-indigo-500/20 object-cover"
-                  />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-sm">
-                    {(profile?.nama || currentUser.displayName || 'U')[0].toUpperCase()}
-                  </div>
-                )}
-
+              <div className="relative flex items-center gap-2.5 md:pl-2 md:border-l md:border-slate-200">
+                {/* Trigger Button Avatar */}
                 <button
-                  onClick={logout}
-                  className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                  title="Keluar"
-                  aria-label="Keluar"
+                  type="button"
+                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                  className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-indigo-500/20 focus:outline-none transition-all cursor-pointer min-h-[44px] min-w-[44px] justify-center"
+                  aria-label="Menu profil pengguna"
+                  aria-expanded={profileDropdownOpen}
+                  title="Menu profil pengguna"
                 >
-                  <LogOut className="w-4 h-4" />
+                  {!photoError && currentUser.photoURL ? (
+                    <img
+                      src={currentUser.photoURL}
+                      alt={displayName}
+                      onError={() => setPhotoError(true)}
+                      className="w-9 h-9 rounded-full ring-2 ring-indigo-500/20 object-cover"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-sm shadow-sm">
+                      {initial}
+                    </div>
+                  )}
                 </button>
+
+                {/* Dropdown Menu */}
+                {profileDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setProfileDropdownOpen(false)}
+                    />
+
+                    <div className="absolute right-0 top-12 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="px-4 py-3 border-b border-slate-100">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <p className="text-sm font-semibold text-slate-900 truncate">
+                            {displayName}
+                          </p>
+                          {isAdmin ? (
+                            <span className="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded font-semibold uppercase">
+                              Admin
+                            </span>
+                          ) : (
+                            getTipeBadge(profile?.tipePeminjam)
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 truncate">
+                          {currentUser.email}
+                        </p>
+                      </div>
+
+                      <div className="py-1">
+                        {!isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCurrentTab('profil');
+                              setProfileDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium transition-colors cursor-pointer min-h-[44px] ${
+                              currentTab === 'profil'
+                                ? 'bg-indigo-50 text-indigo-700'
+                                : 'text-slate-700 hover:bg-slate-50 hover:text-indigo-600'
+                            }`}
+                          >
+                            <Icon name="Person" size={18} />
+                            <span>Profil Saya</span>
+                          </button>
+                        )}
+
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCurrentTab('admin');
+                              setProfileDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium transition-colors cursor-pointer min-h-[44px] ${
+                              currentTab === 'admin'
+                                ? 'bg-amber-50 text-amber-800'
+                                : 'text-slate-700 hover:bg-slate-50 hover:text-amber-700'
+                            }`}
+                          >
+                            <Icon name="Speedometer2" size={18} className="text-amber-600" />
+                            <span>Panel Admin</span>
+                          </button>
+                        )}
+
+                        <div className="border-t border-slate-100 my-1" />
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileDropdownOpen(false);
+                            logout();
+                          }}
+                          className="w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer min-h-[44px]"
+                        >
+                          <Icon name="BoxArrowRight" size={18} className="text-rose-600" />
+                          <span>Keluar</span>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             ) : null}
-
-            {/* Mobile Hamburger */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100"
-              aria-label="Buka Menu"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu dropdown */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-2 pb-4 space-y-1 shadow-lg">
-          <div className="py-2 mb-2 border-b border-slate-100">
-            <p className="text-xs font-semibold text-slate-800">
-              {profile?.nama || currentUser?.displayName}
-            </p>
-            <p className="text-xs text-slate-500">{currentUser?.email}</p>
-          </div>
+      {/* Mobile Bottom Navigation Bar (Katalog, Riwayat, Keranjang, Profil, Admin) */}
+      <nav aria-label="Navigasi Bawah Ponsel" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 safe-area-pb shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        <div className="flex items-center justify-around px-2 py-1">
+          {/* Katalog */}
           <button
-            onClick={() => {
-              setCurrentTab('katalog');
-              setMobileMenuOpen(false);
-            }}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium ${
-              currentTab === 'katalog' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50'
+            type="button"
+            onClick={() => setCurrentTab('katalog')}
+            className={`flex-1 flex flex-col items-center justify-center min-h-[48px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
+              currentTab === 'katalog' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-slate-900 font-medium'
             }`}
           >
-            <LayoutGrid className="w-4 h-4" />
-            Katalog Alat
+            <Icon name="Grid" size={20} />
+            <span className="text-[11px] mt-0.5">Katalog</span>
           </button>
+
+          {/* Riwayat */}
           {currentUser && isVerified && (
             <button
-              onClick={() => {
-                setCurrentTab('riwayat');
-                setMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium ${
-                currentTab === 'riwayat' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50'
+              type="button"
+              onClick={() => setCurrentTab('riwayat')}
+              className={`flex-1 flex flex-col items-center justify-center min-h-[48px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
+                currentTab === 'riwayat' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-slate-900 font-medium'
               }`}
             >
-              <Clock className="w-4 h-4" />
-              Riwayat Peminjaman
+              <Icon name="ClockHistory" size={20} />
+              <span className="text-[11px] mt-0.5">Riwayat</span>
             </button>
           )}
-          {isAdmin && (
+
+          {/* Keranjang dengan badge */}
+          {currentUser && isVerified && (
             <button
-              onClick={() => {
-                setCurrentTab('admin');
-                setMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium ${
-                currentTab === 'admin' ? 'bg-amber-50 text-amber-800' : 'text-slate-700 hover:bg-slate-50'
+              type="button"
+              onClick={openCart}
+              className="flex-1 flex flex-col items-center justify-center min-h-[48px] py-1 px-1 rounded-xl text-slate-500 hover:text-slate-900 font-medium transition-colors cursor-pointer relative"
+            >
+              <div className="relative">
+                <Icon name="Bag" size={20} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 bg-amber-500 text-white font-bold text-[10px] min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center shadow">
+                    {cartCount}
+                  </span>
+                )}
+              </div>
+              <span className="text-[11px] mt-0.5">Keranjang</span>
+            </button>
+          )}
+
+          {/* Profil */}
+          {currentUser && (
+            <button
+              type="button"
+              onClick={() => setCurrentTab('profil')}
+              className={`flex-1 flex flex-col items-center justify-center min-h-[48px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
+                currentTab === 'profil' ? 'text-indigo-600 font-semibold' : 'text-slate-500 hover:text-slate-900 font-medium'
               }`}
             >
-              <Shield className="w-4 h-4 text-amber-600" />
-              Panel Administrator
+              <Icon name="Person" size={20} />
+              <span className="text-[11px] mt-0.5">Profil</span>
+            </button>
+          )}
+
+          {/* Admin */}
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setCurrentTab('admin')}
+              className={`flex-1 flex flex-col items-center justify-center min-h-[48px] py-1 px-1 rounded-xl transition-colors cursor-pointer ${
+                currentTab === 'admin' ? 'text-amber-700 font-semibold' : 'text-slate-500 hover:text-amber-700 font-medium'
+              }`}
+            >
+              <Icon name="Speedometer2" size={20} className={currentTab === 'admin' ? 'text-amber-600' : ''} />
+              <span className="text-[11px] mt-0.5">Admin</span>
             </button>
           )}
         </div>
-      )}
+      </nav>
     </header>
   );
 };

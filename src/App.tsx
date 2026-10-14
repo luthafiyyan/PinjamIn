@@ -10,14 +10,15 @@ import { LoanModal } from './components/LoanModal';
 import { InvoiceView } from './components/InvoiceView';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { Item } from './types';
-import { AlertCircle, X } from 'lucide-react';
+import { Icon } from './components/Icon';
 import { PinjamInIcon } from './components/PinjamInIcon';
+import { MyProfile } from './components/MyProfile';
 
 function MainApp() {
   const { currentUser, profile, loading, isVerified, isAdmin } = useAuth();
   
   // Navigation states
-  const [currentTab, setCurrentTab] = useState<'katalog' | 'riwayat' | 'admin' | 'invoice'>('katalog');
+  const [currentTab, setCurrentTab] = useState<'katalog' | 'riwayat' | 'admin' | 'invoice' | 'profil'>('katalog');
   const [activeInvoiceLoanId, setActiveInvoiceLoanId] = useState<string | null>(null);
   const [unauthorizedMsg, setUnauthorizedMsg] = useState<string | null>(null);
 
@@ -78,6 +79,14 @@ function MainApp() {
           setUnauthorizedMsg(null);
           setCurrentTab('admin');
         }
+      } else if (hash === 'profil') {
+        if (isAdmin) {
+          window.location.hash = 'admin';
+          setCurrentTab('admin');
+        } else {
+          setUnauthorizedMsg(null);
+          setCurrentTab('profil');
+        }
       } else if (hash === 'riwayat') {
         setUnauthorizedMsg(null);
         setCurrentTab('riwayat');
@@ -92,12 +101,19 @@ function MainApp() {
   }, [currentUser, isAdmin, loading]);
 
   // Protected navigation tab handler
-  const handleSelectTab = (tab: 'katalog' | 'riwayat' | 'admin') => {
+  const handleSelectTab = (tab: 'katalog' | 'riwayat' | 'admin' | 'profil') => {
     setUnauthorizedMsg(null);
     if (tab === 'admin') {
       if (!isAdmin) {
         setCurrentTab('katalog');
         window.location.hash = 'katalog';
+        return;
+      }
+    }
+    if (tab === 'profil') {
+      if (isAdmin) {
+        setCurrentTab('admin');
+        window.location.hash = 'admin';
         return;
       }
     }
@@ -137,7 +153,7 @@ function MainApp() {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
         <PinjamInIcon className="w-16 h-16 shadow-xl shadow-indigo-200 mb-4 animate-bounce" />
-        <h2 className="text-xl font-black text-slate-900 tracking-tight">
+        <h2 className="text-xl font-bold text-slate-900">
           Pinjam<span className="text-amber-500">In</span>
         </h2>
         <p className="text-xs text-slate-500 font-medium mt-1">
@@ -197,19 +213,21 @@ function MainApp() {
       {unauthorizedMsg && (
         <div className="bg-rose-600 text-white px-4 py-2.5 text-xs font-semibold flex items-center justify-between shadow-md">
           <div className="flex items-center gap-2 max-w-7xl mx-auto w-full">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+            <Icon name="ExclamationTriangle" size={16} className="text-white shrink-0" />
             <span>{unauthorizedMsg}</span>
           </div>
           <button
             onClick={() => setUnauthorizedMsg(null)}
+            aria-label="Tutup pemberitahuan"
+            title="Tutup pemberitahuan"
             className="p-1 hover:bg-rose-700 rounded-lg text-white/90 hover:text-white cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <Icon name="XLg" size={16} />
           </button>
         </div>
       )}
 
-      <main className="flex-1 pb-16">
+      <main className="flex-1 pb-24 md:pb-16">
         {currentTab === 'katalog' && (
           <ItemCatalog
             cart={cart}
@@ -225,12 +243,16 @@ function MainApp() {
           />
         )}
 
+        {currentTab === 'profil' && (
+          <MyProfile onBackToCatalog={() => handleSelectTab('katalog')} />
+        )}
+
         {currentTab === 'admin' && (
           isAdmin ? (
             <AdminDashboard onViewInvoice={handleViewInvoice} />
           ) : (
             <div className="max-w-md mx-auto p-8 text-center my-12 bg-white rounded-2xl border border-rose-200">
-              <AlertCircle className="w-10 h-10 text-rose-600 mx-auto mb-2" />
+              <Icon name="ExclamationTriangle" size={24} className="text-rose-600 mx-auto mb-2" />
               <p className="font-bold text-slate-900">Akses Ditolak</p>
               <p className="text-xs text-slate-500 mt-1">Anda tidak memiliki akses ke halaman ini.</p>
               <button

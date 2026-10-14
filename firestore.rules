@@ -44,11 +44,12 @@ service cloud.firestore {
         )
       );
 
-      // Update profile: users can only update personal contact details, NOT role, terverifikasi, or tipePeminjam
-      // Admin can update all fields (including verification)
+      // Update profile: peminjam hanya boleh mengubah field: nomorHp, unitAsal, angkatan, dan permintaanPerubahan
+      // Field nama, nomorIdentitas, tipePeminjam, terverifikasi, email, dan createdAt tidak boleh diubah oleh peminjam
+      // Admin (isAdmin() berdasarkan email) boleh mengubah semua field
       allow update: if isAdmin() || (
         isOwner(userId) &&
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'terverifikasi', 'tipePeminjam', 'email'])
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nomorHp', 'unitAsal', 'angkatan', 'permintaanPerubahan'])
       );
 
       allow delete: if isAdmin();

@@ -8,13 +8,15 @@
         "nama": { "type": "string", "maxLength": 100 },
         "email": { "type": "string", "maxLength": 100 },
         "noHp": { "type": "string", "maxLength": 20 },
+        "nomorHp": { "type": "string", "maxLength": 20 },
         "tipePeminjam": { "type": "string", "enum": ["mahasiswa", "dosen", "tendik"] },
         "nomorIdentitas": { "type": "string", "maxLength": 50 },
         "unitAsal": { "type": "string", "maxLength": 100 },
         "angkatan": { "type": "string", "maxLength": 10 },
         "role": { "type": "string", "enum": ["peminjam", "admin"] },
         "terverifikasi": { "type": "boolean" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "permintaanPerubahan": { "type": "object" }
       },
       "required": ["nama", "email", "noHp", "tipePeminjam", "nomorIdentitas", "unitAsal", "role", "terverifikasi"]
     },
