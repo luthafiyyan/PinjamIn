@@ -7,9 +7,9 @@ import {
   Shield, 
   Menu, 
   X, 
-  UserCheck, 
-  Camera 
+  UserCheck 
 } from 'lucide-react';
+import { PinjamInIcon } from './PinjamInIcon';
 import { useAuth } from '../context/AuthContext';
 
 interface NavbarProps {
@@ -47,9 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center justify-between h-16">
           {/* Logo & Tagline */}
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentTab('katalog')}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-800 flex items-center justify-center text-white shadow-md shadow-indigo-100">
-              <Camera className="w-5 h-5" />
-            </div>
+            <PinjamInIcon className="w-10 h-10 shadow-md shadow-indigo-200" />
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-xl font-bold tracking-tight text-slate-900">

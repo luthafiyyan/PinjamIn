@@ -10,7 +10,8 @@ import { LoanModal } from './components/LoanModal';
 import { InvoiceView } from './components/InvoiceView';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { Item } from './types';
-import { Camera, AlertCircle, X } from 'lucide-react';
+import { AlertCircle, X } from 'lucide-react';
+import { PinjamInIcon } from './components/PinjamInIcon';
 
 function MainApp() {
   const { currentUser, profile, loading, isVerified, isAdmin } = useAuth();
@@ -116,9 +117,7 @@ function MainApp() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-        <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-200 mb-4 animate-bounce">
-          <Camera className="w-7 h-7" />
-        </div>
+        <PinjamInIcon className="w-16 h-16 shadow-xl shadow-indigo-200 mb-4 animate-bounce" />
         <h2 className="text-xl font-black text-slate-900 tracking-tight">
           Pinjam<span className="text-amber-500">In</span>
         </h2>

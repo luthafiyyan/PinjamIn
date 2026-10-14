@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Camera, CheckCircle2, ShieldCheck, Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
+import { PinjamInIcon } from './PinjamInIcon';
 import { useAuth } from '../context/AuthContext';
 
 export const LoginScreen: React.FC = () => {
@@ -25,9 +26,7 @@ export const LoginScreen: React.FC = () => {
       {/* Top Bar with Minimal Brand */}
       <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-200">
-            <Camera className="w-5 h-5" />
-          </div>
+          <PinjamInIcon className="w-10 h-10 shadow-md shadow-indigo-200" />
           <div>
             <span className="text-xl font-bold tracking-tight text-slate-900">
               Pinjam<span className="text-amber-500 font-extrabold">In</span>
