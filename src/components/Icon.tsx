@@ -58,6 +58,8 @@ import {
   Lock,
   Layers,
   JournalBookmark,
+  ChevronDown,
+  Envelope,
   Icon as BootstrapIconType,
 } from 'react-bootstrap-icons';
 
@@ -130,6 +132,8 @@ export const ICON_MAP: Record<string, BootstrapIconType> = {
   Lock,
   Layers,
   JournalBookmark,
+  ChevronDown,
+  Envelope,
 
   // Alias Umum & Kompatibilitas
   X: XLg,
