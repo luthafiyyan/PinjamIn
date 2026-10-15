@@ -44,36 +44,6 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    const revealNodes = document.querySelectorAll('.scroll-reveal');
-
-    if (!revealNodes.length) return;
-
-    if (!('IntersectionObserver' in window)) {
-      revealNodes.forEach((node) => node.classList.add('is-visible'));
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      {
-        threshold: 0.12,
-        rootMargin: '0px 0px -30px 0px',
-      }
-    );
-
-    revealNodes.forEach((node) => observer.observe(node));
-
-    return () => observer.disconnect();
-  }, [filteredItems.length]);
-
   const handleOpenDetail = (item: Item) => {
     setDetailImgError(false);
     if (onSelectDetailItem) {
@@ -210,6 +180,39 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
 
   const availableCount = items.filter((i) => i.status === 'tersedia').length;
 
+  useEffect(() => {
+    const revealNodes = Array.from(document.querySelectorAll('.scroll-reveal'));
+
+    if (!revealNodes.length) return;
+
+    const applyReveal = () => {
+      if (!('IntersectionObserver' in window)) {
+        revealNodes.forEach((node) => node.classList.add('is-visible'));
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          threshold: 0.12,
+          rootMargin: '0px 0px -30px 0px',
+        }
+      );
+
+      revealNodes.forEach((node) => observer.observe(node));
+    };
+
+    const frame = requestAnimationFrame(applyReveal);
+    return () => cancelAnimationFrame(frame);
+  }, [filteredItems.length, loading]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Welcome Banner (Ringkas di ponsel) */}
@@ -239,7 +242,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 sm:p-5 mb-6 sm:mb-8 space-y-3 sm:space-y-4">
+      <div className="scroll-reveal bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 sm:p-5 mb-6 sm:mb-8 space-y-3 sm:space-y-4 transition-[transform,box-shadow] duration-300 ease-out hover:shadow-md">
         <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
           {/* Search Input (44px height, 16px font on mobile) */}
           <div className="relative flex-1">
@@ -364,12 +367,12 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                 key={item.id}
                 onClick={() => handleOpenDetail(item)}
                 style={{ transitionDelay: `${index * 35}ms` }}
-                className={`scroll-reveal bg-white rounded-2xl border transition-all duration-200 flex flex-col justify-between overflow-hidden group cursor-pointer ${
+                className={`scroll-reveal bg-white rounded-2xl border transition-all duration-300 ease-out flex flex-col justify-between overflow-hidden group cursor-pointer hover:-translate-y-1 ${
                   !isAvailable ? 'opacity-80 hover:opacity-100' : ''
                 } ${
                   isSelected
-                    ? 'border-indigo-600 ring-2 ring-indigo-500/20 shadow-md'
-                    : 'border-slate-200/90 hover:border-slate-300 hover:shadow-md'
+                    ? 'border-indigo-600 ring-2 ring-indigo-500/20 shadow-lg shadow-indigo-100/80'
+                    : 'border-slate-200/90 hover:border-indigo-200 hover:shadow-[0_18px_35px_-24px_rgba(79,70,229,0.5)]'
                 }`}
               >
                 {/* Photo 4:3 Fixed Ratio with Contain and Small Padding */}
@@ -452,10 +455,10 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                         e.stopPropagation();
                         onToggleCart(item);
                       }}
-                      className={`w-full min-h-[44px] py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      className={`w-full min-h-[44px] py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 ease-out cursor-pointer ${
                         isSelected
                           ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
-                          : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-200'
+                          : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-200 hover:shadow-md hover:shadow-indigo-200/80'
                       }`}
                     >
                       {isSelected ? (
