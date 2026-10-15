@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Icon } from './Icon';
 import { PinjamInIcon } from './PinjamInIcon';
 import { useAuth } from '../context/AuthContext';
+import '../landing.css';
 
 /**
  * Informasi lab. Ubah nilai di bawah jika ada perubahan lokasi, jam layanan, atau kontak.
@@ -25,17 +26,18 @@ const STEPS = [
 ];
 
 const CATEGORIES = [
-  { name: 'Kamera', icon: 'Camera' },
-  { name: 'Tripod', icon: 'Triangle' },
-  { name: 'Gimbal', icon: 'ArrowsMove' },
-  { name: 'Lighting', icon: 'Lightbulb' },
-  { name: 'Audio', icon: 'Mic' },
-  { name: 'Aksesori Kamera', icon: 'SdCard' },
-  { name: 'Komputer & Laptop', icon: 'Laptop' },
-  { name: 'Jaringan', icon: 'Router' },
-  { name: 'VR/AR', icon: 'HeadsetVr' },
-  { name: 'Presentasi', icon: 'Easel' },
-  { name: 'Kabel & Konektor', icon: 'UsbPlug' },
+  { name: 'Kamera', icon: 'Camera', tone: 't1' },
+  { name: 'Tripod', icon: 'Triangle', tone: 't2' },
+  { name: 'Gimbal', icon: 'ArrowsMove', tone: 't3' },
+  { name: 'Lighting', icon: 'Lightbulb', tone: 't4' },
+  { name: 'Audio', icon: 'Mic', tone: 't1' },
+  { name: 'Aksesori Kamera', icon: 'SdCard', tone: 't2' },
+  { name: 'Komputer & Laptop', icon: 'Laptop', tone: 't3' },
+  { name: 'Jaringan', icon: 'Router', tone: 't4' },
+  { name: 'VR/AR', icon: 'HeadsetVr', tone: 't1' },
+  { name: 'Presentasi', icon: 'Easel', tone: 't2' },
+  { name: 'Kabel & Konektor', icon: 'UsbPlug', tone: 't3' },
+  { name: 'Lainnya', icon: 'ThreeDots', tone: 't4' },
 ];
 
 const BORROWER_TYPES = [
@@ -76,11 +78,33 @@ export const LoginScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Tombol masuk yang menempel di ponsel: tampil setelah tombol hero lewat, sembunyi saat penutup terlihat
+  const heroCtaRef = useRef<HTMLButtonElement>(null);
+  const closeCtaRef = useRef<HTMLButtonElement>(null);
+  const [heroPassed, setHeroPassed] = useState(false);
+  const [closeVisible, setCloseVisible] = useState(false);
+
   useEffect(() => {
     // Bersihkan hash URL saat berada di layar login agar sisa hash rute admin tidak tertinggal
     if (window.location.hash) {
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
     }
+  }, []);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return;
+    const heroEl = heroCtaRef.current;
+    const closeEl = closeCtaRef.current;
+    const heroObs = new IntersectionObserver(([e]) => {
+      setHeroPassed(!e.isIntersecting && e.boundingClientRect.top < 0);
+    });
+    const closeObs = new IntersectionObserver(([e]) => setCloseVisible(e.isIntersecting));
+    if (heroEl) heroObs.observe(heroEl);
+    if (closeEl) closeObs.observe(closeEl);
+    return () => {
+      heroObs.disconnect();
+      closeObs.disconnect();
+    };
   }, []);
 
   const handleLogin = async () => {
@@ -99,81 +123,58 @@ export const LoginScreen: React.FC = () => {
     }
   };
 
-  const sectionTitle = 'text-xl sm:text-2xl font-bold text-slate-900';
+  const loginContent = (
+    <>
+      {loading ? (
+        <span className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      ) : (
+        <Icon name="Google" size={20} />
+      )}
+      {loading ? 'Menghubungkan...' : 'Masuk dengan Akun Google'}
+    </>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/40 to-slate-100 text-slate-900">
-      {/* Header */}
-      <header className="sticky top-0 z-20 bg-white/85 backdrop-blur border-b border-slate-200/70">
-        <div className="max-w-6xl mx-auto h-14 sm:h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <PinjamInIcon className="w-9 h-9 shadow-md shadow-indigo-200" />
-            <div className="leading-tight">
-              <span className="text-lg font-bold tracking-tight text-slate-900">
-                Pinjam<span className="text-amber-500">In</span>
-              </span>
-              <span className="text-xs text-indigo-700 font-medium block">Laboratorium FIT</span>
+    <div className="lp">
+      {/* HERO */}
+      <div className="lp-hero">
+        <div className="wrap">
+          <header className="lp-header">
+            <div className="brand">
+              <PinjamInIcon className="logo" />
+              <div>
+                <b>
+                  Pinjam<i>In</i>
+                </b>
+                <small>Laboratorium FIT</small>
+              </div>
             </div>
-          </div>
-
-          <nav className="hidden md:flex items-center gap-1 text-sm font-medium text-slate-600" aria-label="Navigasi halaman">
-            <button type="button" onClick={() => scrollToSection('cara-meminjam')} className="px-3 py-2 rounded-lg hover:bg-slate-100 cursor-pointer">
-              Cara meminjam
+            <nav className="lp-nav" aria-label="Navigasi halaman">
+              <button type="button" onClick={() => scrollToSection('cara-meminjam')}>Cara meminjam</button>
+              <button type="button" onClick={() => scrollToSection('faq')}>FAQ</button>
+              <button type="button" onClick={() => scrollToSection('kontak')}>Kontak</button>
+            </nav>
+            <button type="button" className="btn-top" onClick={handleLogin} disabled={loading}>
+              <Icon name="BoxArrowRight" size={16} className="rotate-180" />
+              Masuk
             </button>
-            <button type="button" onClick={() => scrollToSection('faq')} className="px-3 py-2 rounded-lg hover:bg-slate-100 cursor-pointer">
-              FAQ
-            </button>
-            <button type="button" onClick={() => scrollToSection('kontak')} className="px-3 py-2 rounded-lg hover:bg-slate-100 cursor-pointer">
-              Kontak
-            </button>
-          </nav>
+          </header>
 
-          <button
-            type="button"
-            onClick={handleLogin}
-            disabled={loading}
-            className="min-h-[44px] px-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold disabled:opacity-60 cursor-pointer transition-colors"
-          >
-            <Icon name="BoxArrowRight" size={16} className="rotate-180" />
-            Masuk
-          </button>
-        </div>
-      </header>
-
-      <main>
-        {/* Hero */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-14 pb-10 sm:pb-16">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-14 items-center">
+          <div className="hero-grid">
             <div>
-              <h1 className="text-[28px] sm:text-4xl lg:text-[44px] leading-tight font-bold tracking-tight text-slate-900">
-                Pinjam alat lab, <span className="text-indigo-600">tanpa ribet</span>
+              <h1>
+                Pinjam alat lab, <em>tanpa ribet</em>
               </h1>
-              <p className="mt-4 text-base text-slate-600 max-w-lg leading-relaxed">
+              <p className="lead">
                 Peminjaman kamera, tripod, lighting, audio, dan perlengkapan lainnya di Laboratorium FIT kini dicatat
                 secara digital.
               </p>
-              <ul className="mt-6 space-y-2.5 text-sm text-slate-700">
-                {[
-                  'Status ketersediaan alat terlihat langsung',
-                  'Invoice peminjaman terbit otomatis',
-                  'Untuk mahasiswa, dosen, dan tendik',
-                ].map((t) => (
-                  <li key={t} className="flex items-center gap-2.5">
-                    <Icon name="CheckCircle" size={18} className="text-emerald-600" />
-                    <span>{t}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Kartu masuk */}
-            <div className="w-full max-w-md mx-auto lg:ml-auto bg-white rounded-3xl shadow-xl shadow-indigo-950/5 border border-slate-200/80 p-6 sm:p-8 relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-500 via-indigo-600 to-amber-500" />
-              <h2 className="text-lg font-semibold text-slate-900">Masuk ke PinjamIn</h2>
-              <p className="text-sm text-slate-500 mt-1 mb-6">Pinjam alat, tanpa ribet</p>
 
               {errorMsg && (
-                <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center justify-between gap-2 text-left">
+                <div
+                  role="alert"
+                  className="mt-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center justify-between gap-2 text-left"
+                >
                   <div className="flex items-center gap-2">
                     <Icon name="ExclamationTriangle" size={16} className="text-rose-600" />
                     <span>{errorMsg}</span>
@@ -188,142 +189,218 @@ export const LoginScreen: React.FC = () => {
                 </div>
               )}
 
-              <button
-                onClick={handleLogin}
-                disabled={loading}
-                className="w-full min-h-[48px] flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-slate-800 font-semibold py-3 px-5 rounded-2xl border border-slate-300 shadow-sm hover:shadow transition-all disabled:opacity-60 cursor-pointer"
-              >
-                {loading ? (
-                  <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Icon name="Google" size={20} className="text-slate-800" />
-                )}
-                <span className="text-sm">{loading ? 'Menghubungkan...' : 'Masuk dengan Akun Google'}</span>
+              <button ref={heroCtaRef} type="button" className="lp-cta" onClick={handleLogin} disabled={loading}>
+                {loginContent}
               </button>
+              <p className="hint">Akun baru diverifikasi oleh admin lab sebelum dapat meminjam.</p>
+              <div className="pills">
+                <span><Icon name="CheckCircle" size={13} />Status alat terlihat langsung</span>
+                <span><Icon name="CheckCircle" size={13} />Invoice otomatis</span>
+                <span><Icon name="CheckCircle" size={13} />Mahasiswa, dosen, tendik</span>
+              </div>
+            </div>
 
-              <p className="text-xs text-slate-500 mt-4 leading-relaxed">
-                Gunakan akun Google aktif Anda. Akun baru akan diverifikasi oleh admin lab sebelum dapat meminjam.
-              </p>
+            {/* Mockup ponsel (dekoratif) */}
+            <div className="phone-wrap" aria-hidden="true">
+              <div className="phone">
+                <div className="screen">
+                  <div className="s-top"><b>Katalog Alat</b><span className="av" /></div>
+                  <div className="s-search"><Icon name="Search" size={12} />Cari alat atau kode aset</div>
+                  <div className="chips">
+                    <span className="on">Semua</span><span>Kamera</span><span>Tripod</span><span>Gimbal</span>
+                  </div>
+                  <div className="cards">
+                    {[
+                      { icon: 'Camera', code: 'CAM-001', ok: false, brand: 'Sony • A6400', name: 'Sony Alpha A6400' },
+                      { icon: 'ArrowsMove', code: 'GBL-001', ok: true, brand: 'DJI • Ronin RS3', name: 'DJI Ronin RS3 Gimbal' },
+                      { icon: 'Mic', code: 'MIC-001', ok: true, brand: 'Saramonic • Blink 500', name: 'Saramonic Blink 500 B2' },
+                      { icon: 'Triangle', code: 'TRP-001', ok: true, brand: 'Manfrotto', name: 'Tripod Manfrotto' },
+                    ].map((c) => (
+                      <div className="card" key={c.code}>
+                        <div className="ph">
+                          <Icon name={c.icon} size={30} />
+                          <span className="code">{c.code}</span>
+                          <span className={`badge ${c.ok ? 'b-ok' : 'b-no'}`}>
+                            <Icon name={c.ok ? 'CheckCircle' : 'HourglassSplit'} size={8} />
+                            {c.ok ? 'Tersedia' : 'Dipinjam'}
+                          </span>
+                        </div>
+                        <div className="t"><small>{c.brand}</small><b>{c.name}</b></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <main>
+        {/* Cara meminjam + pratinjau invoice */}
+        <section id="cara-meminjam" className="lp-sec" style={{ scrollMarginTop: 8 }}>
+          <div className="wrap">
+            <div className="steps-grid">
+              <div>
+                <div className="eyebrow">Cara meminjam</div>
+                <h2>Empat langkah, dari masuk sampai invoice</h2>
+                <ol className="timeline" style={{ listStyle: 'none' }}>
+                  {STEPS.map((s, i) => (
+                    <li className="step" key={s.title}>
+                      <div className="num">{i + 1}</div>
+                      <div>
+                        <h3>{s.title}</h3>
+                        <p>{s.desc}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              <div className="inv" aria-hidden="true">
+                <div className="inv-h">
+                  <div>
+                    <b>Pinjam<i>In</i></b>
+                    <small>Pinjam alat, tanpa ribet · Laboratorium FIT</small>
+                  </div>
+                  <div className="no"><strong>PIN-20261015-001</strong>15 Okt 2026</div>
+                </div>
+                <div className="inv-r">
+                  <div>Peminjam<b>Nama Peminjam</b>Mahasiswa</div>
+                  <div>Batas kembali<b>18 Okt 2026</b>Keperluan: Tugas kuliah</div>
+                </div>
+                <table>
+                  <thead>
+                    <tr><th>Kode</th><th>Alat</th><th>Kondisi</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>CAM-001</td><td>Sony Alpha A6400</td><td>Baik</td></tr>
+                    <tr><td>TRP-001</td><td>Tripod Manfrotto</td><td>Baik</td></tr>
+                  </tbody>
+                </table>
+                <div className="sig"><div>Peminjam</div><div>Admin</div></div>
+                <span className="stamp">INVOICE TERBIT</span>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Cara meminjam */}
-        <section id="cara-meminjam" className="bg-white border-y border-slate-200/70 scroll-mt-16">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-            <h2 className={sectionTitle}>Cara meminjam</h2>
-            <p className="text-sm text-slate-500 mt-1.5">Empat langkah dari masuk sampai invoice.</p>
-            <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {STEPS.map((s, i) => (
-                <li key={s.title} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
-                  <span className="w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-bold inline-flex items-center justify-center">
-                    {i + 1}
-                  </span>
-                  <h3 className="mt-3 text-base font-semibold text-slate-900">{s.title}</h3>
-                  <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">{s.desc}</p>
+        {/* Kategori */}
+        <section className="lp-sec cats">
+          <div className="wrap">
+            <div className="eyebrow">Alat yang tersedia</div>
+            <h2>Dari kamera sampai kabel</h2>
+            <ul className="tiles" style={{ listStyle: 'none' }}>
+              {CATEGORIES.map((c) => (
+                <li key={c.name} className={`tile ${c.tone}`}>
+                  <Icon name={c.icon} size={26} />
+                  {c.name}
                 </li>
               ))}
-            </ol>
+            </ul>
+            <p className="note">Ketersediaan alat dapat dilihat setelah masuk.</p>
           </div>
-        </section>
-
-        {/* Alat yang tersedia */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-          <h2 className={sectionTitle}>Alat yang tersedia</h2>
-          <p className="text-sm text-slate-500 mt-1.5">Ketersediaan alat dapat dilihat setelah masuk.</p>
-          <ul className="mt-6 flex flex-wrap gap-2.5">
-            {CATEGORIES.map((c) => (
-              <li
-                key={c.name}
-                className="inline-flex items-center gap-2 min-h-[44px] px-4 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-700"
-              >
-                <Icon name={c.icon} size={18} className="text-indigo-600" />
-                {c.name}
-              </li>
-            ))}
-          </ul>
         </section>
 
         {/* Siapa yang dapat meminjam */}
-        <section className="bg-white border-y border-slate-200/70">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-            <h2 className={sectionTitle}>Siapa yang dapat meminjam</h2>
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        <section className="lp-sec">
+          <div className="wrap">
+            <div className="eyebrow">Untuk siapa</div>
+            <h2>Siapa yang dapat meminjam</h2>
+            <div className="who">
               {BORROWER_TYPES.map((b) => (
-                <div key={b.name} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 inline-flex items-center justify-center">
-                    <Icon name={b.icon} size={20} />
+                <div className="w" key={b.name}>
+                  <div className="ic"><Icon name={b.icon} size={20} /></div>
+                  <div>
+                    <b>{b.name}</b>
+                    <p>{b.desc}</p>
                   </div>
-                  <h3 className="mt-3 text-base font-semibold text-slate-900">{b.name}</h3>
-                  <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">{b.desc}</p>
                 </div>
               ))}
             </div>
-            <p className="mt-4 text-sm text-slate-500">
-              Batas durasi dan jumlah barang berbeda untuk tiap tipe peminjam dan dapat dilihat saat mengisi formulir.
-            </p>
+            <p className="note">Batas durasi dan jumlah barang berbeda untuk tiap tipe peminjam.</p>
           </div>
         </section>
 
         {/* FAQ */}
-        <section id="faq" className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 scroll-mt-16">
-          <h2 className={sectionTitle}>Pertanyaan umum</h2>
-          <div className="mt-6 space-y-2.5">
-            {FAQS.map((f) => (
-              <details key={f.q} className="group rounded-2xl bg-white border border-slate-200 open:shadow-sm">
-                <summary className="flex items-center justify-between gap-3 min-h-[52px] px-5 py-3 cursor-pointer list-none text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
-                  {f.q}
-                  <Icon name="ChevronDown" size={16} className="text-slate-500 transition-transform group-open:rotate-180" />
-                </summary>
-                <p className="px-5 pb-4 text-sm text-slate-600 leading-relaxed">{f.a}</p>
-              </details>
-            ))}
+        <section id="faq" className="lp-sec" style={{ paddingTop: 0, scrollMarginTop: 8 }}>
+          <div className="wrap faq-wrap">
+            <div className="eyebrow">FAQ</div>
+            <h2>Pertanyaan umum</h2>
+            <div className="faq">
+              {FAQS.map((f, i) => (
+                <details className="q" key={f.q} open={i === 0}>
+                  <summary>
+                    {f.q}
+                    <Icon name="ChevronDown" size={14} />
+                  </summary>
+                  <p className="a">{f.a}</p>
+                </details>
+              ))}
+            </div>
           </div>
         </section>
 
         {/* Informasi lab */}
-        <section id="kontak" className="bg-white border-t border-slate-200/70 scroll-mt-16">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-            <h2 className={sectionTitle}>Informasi lab</h2>
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200 p-5">
-                <Icon name="GeoAlt" size={20} className="text-indigo-600" />
-                <h3 className="mt-3 text-sm font-semibold text-slate-900">Lokasi</h3>
-                <p className="mt-1 text-sm text-slate-600">{LAB_INFO.lokasi}</p>
+        <section id="kontak" className="lp-sec cats" style={{ paddingTop: 44, scrollMarginTop: 0 }}>
+          <div className="wrap">
+            <div className="eyebrow">Informasi lab</div>
+            <h2>Temui kami</h2>
+            <div className="info">
+              <div className="i">
+                <div className="ic"><Icon name="GeoAlt" size={19} /></div>
+                <div><b>Lokasi</b><p>{LAB_INFO.lokasi}</p></div>
               </div>
-              <div className="rounded-2xl border border-slate-200 p-5">
-                <Icon name="Clock" size={20} className="text-indigo-600" />
-                <h3 className="mt-3 text-sm font-semibold text-slate-900">Jam layanan</h3>
-                <div className="mt-1 text-sm text-slate-600 space-y-0.5">
-                  {LAB_INFO.jamLayanan.map((baris) => (
-                    <p key={baris}>{baris}</p>
-                  ))}
+              <div className="i">
+                <div className="ic"><Icon name="Clock" size={19} /></div>
+                <div>
+                  <b>Jam layanan</b>
+                  <p>
+                    {LAB_INFO.jamLayanan.map((baris, idx) => (
+                      <React.Fragment key={baris}>
+                        {idx > 0 && <br />}
+                        {baris}
+                      </React.Fragment>
+                    ))}
+                  </p>
                 </div>
               </div>
-              <div className="rounded-2xl border border-slate-200 p-5">
-                <Icon name="Envelope" size={20} className="text-indigo-600" />
-                <h3 className="mt-3 text-sm font-semibold text-slate-900">Kontak</h3>
-                {LAB_INFO.kontakHref ? (
-                  <a
-                    href={LAB_INFO.kontakHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 inline-block text-sm text-indigo-700 underline underline-offset-2"
-                  >
-                    {LAB_INFO.kontakLabel}
-                  </a>
-                ) : (
-                  <p className="mt-1 text-sm text-slate-600">{LAB_INFO.kontakLabel}</p>
-                )}
+              <div className="i">
+                <div className="ic"><Icon name="Telephone" size={19} /></div>
+                <div>
+                  <b>Kontak</b>
+                  {LAB_INFO.kontakHref ? (
+                    <a href={LAB_INFO.kontakHref} target="_blank" rel="noopener noreferrer">
+                      {LAB_INFO.kontakLabel}
+                    </a>
+                  ) : (
+                    <p>{LAB_INFO.kontakLabel}</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="text-center text-xs text-slate-500 py-8 px-4">
-        &copy; {new Date().getFullYear()} Laboratorium Fakultas Ilmu Terapan (FIT)
-      </footer>
+      {/* Penutup */}
+      <div className="lp-close">
+        <div className="wrap">
+          <h2>Siap meminjam alat?</h2>
+          <p>Masuk dengan akun Google dan mulai dalam hitungan menit.</p>
+          <button ref={closeCtaRef} type="button" className="lp-cta" onClick={handleLogin} disabled={loading}>
+            {loginContent}
+          </button>
+        </div>
+      </div>
+      <footer className="lp-foot">&copy; {new Date().getFullYear()} Laboratorium Fakultas Ilmu Terapan (FIT)</footer>
+
+      {/* Tombol masuk menempel (ponsel) */}
+      <div className={`lp-bar${heroPassed && !closeVisible ? ' show' : ''}`} aria-hidden={!(heroPassed && !closeVisible)}>
+        <button type="button" className="lp-cta" onClick={handleLogin} disabled={loading} tabIndex={heroPassed && !closeVisible ? 0 : -1}>
+          {loginContent}
+        </button>
+      </div>
     </div>
   );
 };
