@@ -1086,7 +1086,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
       )}
 
       {/* Admin Header */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="mb-5 sm:mb-8 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200 mb-2">
             <Icon name="Speedometer2" size={14} className="text-slate-500" />
@@ -1095,14 +1095,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           <h1 className="text-[22px] sm:text-[28px] font-bold tracking-normal text-slate-900">
             Dashboard Administrasi Pinjam<span className="text-amber-500">In</span>
           </h1>
-          <p className="text-sm text-slate-500 mt-1 font-normal">
+          <p className="hidden sm:block text-sm text-slate-500 mt-1 font-normal">
             Kelola verifikasi akun peminjam, inventaris spesifikasi lengkap, peminjaman aktif, kategori, dan aturan peminjaman.
           </p>
         </div>
       </div>
 
-      {/* Metric Cards Grid (2 col mobile, 4 col tablet, 7 col wide screen) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-3 mb-8">
+      {/* Metric Cards Grid (desktop / tablet only) */}
+      <div className="hidden sm:grid sm:grid-cols-4 xl:grid-cols-7 gap-3 mb-8">
         <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm">
           <span className="text-xs font-medium text-slate-500 block truncate">Tersedia</span>
           <div className="flex items-center justify-between mt-2">
@@ -1183,28 +1183,69 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
         </div>
       </div>
 
-      {/* Bar Tab Admin di Ponsel: Dropdown Select Ergonomis */}
-      <div className="sm:hidden mb-6">
-        <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-          Pilih Tab Panel Pengelola:
-        </label>
-        <div className="relative">
-          <select
-            value={activeTab}
-            onChange={(e) => setActiveTab(e.target.value as any)}
-            className="w-full min-h-[48px] px-4 py-3 rounded-xl border border-slate-300 bg-white text-base font-semibold text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 appearance-none pr-10"
-          >
-            <option value="verifikasi">Verifikasi Akun ({pendingUsers.length})</option>
-            <option value="pengembalian">Peminjaman Aktif ({activeLoans.length})</option>
-            <option value="barang">Kelola Barang ({items.length})</option>
-            <option value="kategori">Kelola Kategori ({categories.length})</option>
-            <option value="riwayat">Semua Riwayat ({loans.length})</option>
-            <option value="pengaturan">Aturan Peminjaman</option>
-            <option value="panduan">Petunjuk Admin & Indeks</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-500">
-            <Icon name="ChevronDown" size={16} />
+      {/* Ringkasan Cepat di Mobile */}
+      <div className="sm:hidden mb-4 grid grid-cols-4 gap-2">
+        {[
+          { label: 'Tersedia', value: totalTersedia, tone: 'emerald' },
+          { label: 'Aktif', value: activeLoans.length, tone: 'indigo' },
+          { label: 'Terlambat', value: overdueLoans.length, tone: 'rose' },
+          { label: 'Verif', value: pendingUsers.length, tone: 'amber' },
+        ].map((item) => (
+          <div key={item.label} className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+            <div className={`mb-1 h-1.5 w-6 rounded-full ${
+              item.tone === 'emerald' ? 'bg-emerald-500' :
+              item.tone === 'indigo' ? 'bg-indigo-500' :
+              item.tone === 'rose' ? 'bg-rose-500' : 'bg-amber-500'
+            }`} />
+            <div className="text-[10px] text-slate-500">{item.label}</div>
+            <div className="text-base font-bold text-slate-900 tabular-nums">{item.value}</div>
           </div>
+        ))}
+      </div>
+
+      {/* Bar Tab Admin di Ponsel: tombol horizontal supaya semua fitur terlihat jelas */}
+      <div className="sm:hidden mb-5">
+        <div className="mb-2">
+          <label className="block text-xs font-semibold text-slate-600">
+            Panel Pengelola:
+          </label>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar snap-x snap-mandatory">
+          {[
+            { key: 'verifikasi', label: 'Verifikasi', count: pendingUsers.length },
+            { key: 'pengembalian', label: 'Aktif', count: activeLoans.length },
+            { key: 'barang', label: 'Barang', count: items.length },
+            { key: 'kategori', label: 'Kategori', count: categories.length },
+            { key: 'riwayat', label: 'Riwayat', count: loans.length },
+            { key: 'pengaturan', label: 'Aturan', count: null },
+            { key: 'panduan', label: 'Panduan', count: null },
+          ].map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key as any)}
+                className={`snap-start shrink-0 min-h-[44px] px-3 py-2 rounded-xl text-[11px] font-semibold border transition-all ${
+                  isActive
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                <span className="flex items-center gap-1.5">
+                  {tab.label}
+                  {tab.count !== null && (
+                    <span className={`inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full text-[10px] font-bold ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  )}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
