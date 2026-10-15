@@ -37,10 +37,10 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
         snapshot.forEach((doc) => {
           list.push({ id: doc.id, ...(doc.data() as Omit<Loan, 'id'>) });
         });
-        // Sort descending by tglPinjam or createdAt
+        // Semua riwayat peminjaman tetap tampil dari yang terbaru dulu.
         list.sort((a, b) => {
-          const dateA = new Date(a.tglPinjam).getTime();
-          const dateB = new Date(b.tglPinjam).getTime();
+          const dateA = new Date(a.tglPinjam || 0).getTime();
+          const dateB = new Date(b.tglPinjam || 0).getTime();
           return dateB - dateA;
         });
         setLoans(list);

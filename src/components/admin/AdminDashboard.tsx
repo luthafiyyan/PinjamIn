@@ -148,6 +148,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
     const unsubLoans = onSnapshot(collection(db, 'loans'), (snap) => {
       const list: Loan[] = [];
       snap.forEach((d) => list.push({ id: d.id, ...(d.data() as Omit<Loan, 'id'>) }));
+      list.sort((a, b) => {
+        const dateA = new Date(a.tglPinjam || 0).getTime();
+        const dateB = new Date(b.tglPinjam || 0).getTime();
+        return dateB - dateA;
+      });
       setLoans(list);
     });
 
@@ -1114,7 +1119,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
       'Catatan Pengembalian',
     ];
 
-    const rows = filteredHistoryLoans.map((l) => [
+    const rows = sortedHistoryLoans.map((l) => [
       `"${l.noInvoice}"`,
       `"${l.peminjam.nama}"`,
       `"${l.peminjam.tipePeminjam}"`,
@@ -1162,6 +1167,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
     const matchesType = historyTypeFilter === 'all' || l.peminjam.tipePeminjam === historyTypeFilter;
 
     return matchesSearch && matchesStatus && matchesType;
+  });
+
+  const sortedHistoryLoans = [...filteredHistoryLoans].sort((a, b) => {
+    const dateA = new Date(a.tglPinjam || 0).getTime();
+    const dateB = new Date(b.tglPinjam || 0).getTime();
+    return dateB - dateA;
   });
 
   return (
@@ -2384,7 +2395,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
 
           {/* Mobile: Daftar Kartu Riwayat Bertumpuk (md:hidden) */}
           <div className="md:hidden space-y-3">
-            {filteredHistoryLoans.map((loan) => {
+            {sortedHistoryLoans.map((loan) => {
               const isLate = isLoanOverdue(loan);
 
               return (
@@ -2462,7 +2473,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredHistoryLoans.map((loan) => {
+                {sortedHistoryLoans.map((loan) => {
                   const isLate = isLoanOverdue(loan);
 
                   return (
