@@ -107,6 +107,28 @@ export const LoginScreen: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return;
+    const landing = document.querySelector('.lp');
+    const revealNodes = landing?.querySelectorAll<HTMLElement>('.lp-reveal');
+    if (!landing || !revealNodes?.length) return;
+
+    landing.classList.add('lp-reveal-ready');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -24px 0px' });
+
+    revealNodes.forEach((node) => observer.observe(node));
+    return () => {
+      observer.disconnect();
+      landing.classList.remove('lp-reveal-ready');
+    };
+  }, []);
+
   const handleLogin = async () => {
     try {
       setLoading(true);
@@ -140,7 +162,7 @@ export const LoginScreen: React.FC = () => {
       <div className="lp-hero">
         <div className="wrap">
           <header className="lp-header">
-            <div className="brand">
+            <div className="brand lp-brand">
               <PinjamInIcon className="logo" />
               <div>
                 <b>
@@ -161,7 +183,7 @@ export const LoginScreen: React.FC = () => {
           </header>
 
           <div className="hero-grid">
-            <div>
+            <div className="lp-hero-copy">
               <h1>
                 Pinjam alat lab, <em>tanpa ribet</em>
               </h1>
@@ -201,7 +223,7 @@ export const LoginScreen: React.FC = () => {
             </div>
 
             {/* Mockup ponsel (dekoratif) */}
-            <div className="phone-wrap" aria-hidden="true">
+            <div className="phone-wrap lp-phone-intro" aria-hidden="true">
               <div className="phone">
                 <div className="screen">
                   <div className="s-top"><b>Katalog Alat</b><span className="av" /></div>
@@ -246,7 +268,7 @@ export const LoginScreen: React.FC = () => {
                 <h2>Empat langkah, dari masuk sampai invoice</h2>
                 <ol className="timeline" style={{ listStyle: 'none' }}>
                   {STEPS.map((s, i) => (
-                    <li className="step" key={s.title}>
+                    <li className="step lp-reveal" key={s.title}>
                       <div className="num">{i + 1}</div>
                       <div>
                         <h3>{s.title}</h3>
@@ -257,7 +279,7 @@ export const LoginScreen: React.FC = () => {
                 </ol>
               </div>
 
-              <div className="inv" aria-hidden="true">
+              <div className="inv lp-reveal" aria-hidden="true">
                 <div className="inv-h">
                   <div>
                     <b>Pinjam<i>In</i></b>
@@ -292,7 +314,7 @@ export const LoginScreen: React.FC = () => {
             <h2>Dari kamera sampai kabel</h2>
             <ul className="tiles" style={{ listStyle: 'none' }}>
               {CATEGORIES.map((c) => (
-                <li key={c.name} className={`tile ${c.tone}`}>
+                <li key={c.name} className={`tile ${c.tone} lp-reveal`}>
                   <Icon name={c.icon} size={26} />
                   {c.name}
                 </li>
@@ -309,7 +331,7 @@ export const LoginScreen: React.FC = () => {
             <h2>Siapa yang dapat meminjam</h2>
             <div className="who">
               {BORROWER_TYPES.map((b) => (
-                <div className="w" key={b.name}>
+                <div className="w lp-reveal" key={b.name}>
                   <div className="ic"><Icon name={b.icon} size={20} /></div>
                   <div>
                     <b>{b.name}</b>
@@ -329,7 +351,7 @@ export const LoginScreen: React.FC = () => {
             <h2>Pertanyaan umum</h2>
             <div className="faq">
               {FAQS.map((f, i) => (
-                <details className="q" key={f.q} open={i === 0}>
+                <details className="q lp-reveal" key={f.q} open={i === 0}>
                   <summary>
                     {f.q}
                     <Icon name="ChevronDown" size={14} />
@@ -347,11 +369,11 @@ export const LoginScreen: React.FC = () => {
             <div className="eyebrow">Informasi lab</div>
             <h2>Temui kami</h2>
             <div className="info">
-              <div className="i">
+              <div className="i lp-reveal">
                 <div className="ic"><Icon name="GeoAlt" size={19} /></div>
                 <div><b>Lokasi</b><p>{LAB_INFO.lokasi}</p></div>
               </div>
-              <div className="i">
+              <div className="i lp-reveal">
                 <div className="ic"><Icon name="Clock" size={19} /></div>
                 <div>
                   <b>Jam layanan</b>
@@ -365,7 +387,7 @@ export const LoginScreen: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="i">
+              <div className="i lp-reveal">
                 <div className="ic"><Icon name="Telephone" size={19} /></div>
                 <div>
                   <b>Kontak</b>
@@ -386,8 +408,8 @@ export const LoginScreen: React.FC = () => {
       {/* Penutup */}
       <div className="lp-close">
         <div className="wrap">
-          <h2>Siap meminjam alat?</h2>
-          <p>Masuk dengan akun Google dan mulai dalam hitungan menit.</p>
+          <h2 className="lp-reveal">Siap meminjam alat?</h2>
+          <p className="lp-reveal">Masuk dengan akun Google dan mulai dalam hitungan menit.</p>
           <button ref={closeCtaRef} type="button" className="lp-cta" onClick={handleLogin} disabled={loading}>
             {loginContent}
           </button>
