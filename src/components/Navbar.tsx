@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Icon } from './Icon';
 import { PinjamInIcon } from './PinjamInIcon';
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +25,17 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { profile, currentUser, isAdmin, isVerified, logout } = useAuth();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [photoError, setPhotoError] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 8);
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleLogoutClick = () => {
     setProfileDropdownOpen(false);
@@ -52,7 +63,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   const initial = (displayName.trim()[0] || 'U').toUpperCase();
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-slate-200 no-print transition-all">
+    <header
+      className={`sticky top-0 z-40 no-print transition-all duration-200 ${
+        isScrolled
+          ? 'border-b border-slate-200/80 bg-white/90 shadow-[0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-sm'
+          : 'border-b border-slate-200 bg-white'
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-[56px] md:h-16">
           {/* LEFT: Mobile Sub-page (Back + Title) OR Mobile Logo OR Desktop Logo */}

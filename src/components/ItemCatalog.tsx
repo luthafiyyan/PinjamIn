@@ -44,6 +44,36 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    const revealNodes = document.querySelectorAll('.scroll-reveal');
+
+    if (!revealNodes.length) return;
+
+    if (!('IntersectionObserver' in window)) {
+      revealNodes.forEach((node) => node.classList.add('is-visible'));
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.12,
+        rootMargin: '0px 0px -30px 0px',
+      }
+    );
+
+    revealNodes.forEach((node) => observer.observe(node));
+
+    return () => observer.disconnect();
+  }, [filteredItems.length]);
+
   const handleOpenDetail = (item: Item) => {
     setDetailImgError(false);
     if (onSelectDetailItem) {
@@ -183,7 +213,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Welcome Banner (Ringkas di ponsel) */}
-      <div className="mb-4 sm:mb-8 bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-950 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xl shadow-indigo-950/10 relative overflow-hidden">
+      <div className="scroll-reveal mb-4 sm:mb-8 bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-950 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xl shadow-indigo-950/10 relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-radial from-amber-500/10 to-transparent pointer-events-none" />
         <div className="relative z-10 max-w-2xl">
           <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-amber-300 text-xs font-semibold mb-3 border border-white/10">
@@ -324,7 +354,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 min-[340px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
-          {filteredItems.map((item) => {
+          {filteredItems.map((item, index) => {
             const isSelected = cart.some((c) => c.id === item.id);
             const isAvailable = item.status === 'tersedia';
             const hasPhoto = !!item.fotoUrl && !brokenImages[item.id];
@@ -333,7 +363,8 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
               <div
                 key={item.id}
                 onClick={() => handleOpenDetail(item)}
-                className={`bg-white rounded-2xl border transition-all duration-200 flex flex-col justify-between overflow-hidden group cursor-pointer ${
+                style={{ transitionDelay: `${index * 35}ms` }}
+                className={`scroll-reveal bg-white rounded-2xl border transition-all duration-200 flex flex-col justify-between overflow-hidden group cursor-pointer ${
                   !isAvailable ? 'opacity-80 hover:opacity-100' : ''
                 } ${
                   isSelected
