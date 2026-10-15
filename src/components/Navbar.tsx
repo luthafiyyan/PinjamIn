@@ -63,8 +63,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   const initial = (displayName.trim()[0] || 'U').toUpperCase();
 
   return (
+    <>
     <header
-      className={`sticky top-0 z-40 no-print transition-all duration-200 ${
+      className={`md:sticky md:top-0 z-40 no-print transition-all duration-200 ${
         isScrolled
           ? 'border-b border-slate-200/80 bg-white/90 shadow-[0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-sm'
           : 'border-b border-slate-200 bg-white'
@@ -299,6 +300,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
       </div>
+    </header>
 
       {/* Mobile Bottom Navigation Bar (Disembunyikan di layar tertentu via hideBottomNav) */}
       {!hideBottomNav && (
@@ -406,6 +408,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </nav>
       )}
-    </header>
+    </>
   );
 };
