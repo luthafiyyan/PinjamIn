@@ -148,35 +148,66 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
       <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-900/5 p-8 sm:p-12 print-a5-container">
         
         {/* 1. KOP SURAT */}
-        <div className="border-b-2 border-slate-900 pb-6 mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print-kop print:flex-row print:justify-between print:items-start">
-          <div>
-            <div className="flex items-center gap-2 mb-1 print:mb-0">
-              <span className="text-2xl font-bold tracking-tight text-slate-950 print-brand">
-                Pinjam<span className="text-amber-500">In</span>
-              </span>
-              <span className="text-slate-400 font-light text-xl print:text-[9pt] print:mx-1">|</span>
-              <span className="text-xs font-semibold text-slate-700 print:text-[8pt]">
-                Laboratorium FIT
-              </span>
+        <div className="border-b-2 border-slate-900 pb-5 mb-6 print-kop">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-2xl font-bold tracking-tight text-slate-950 print-brand">
+                  Pinjam<span className="text-amber-500">In</span>
+                </span>
+                <span className="text-slate-400 font-light text-xl print:text-[9pt] print:mx-1">|</span>
+                <span className="text-xs font-semibold text-slate-700 print:text-[8pt]">
+                  Laboratorium FIT
+                </span>
+              </div>
+              <p className="text-xs font-medium text-slate-500 italic mt-1 print-tagline">
+                "Pinjam alat, tanpa ribet"
+              </p>
+              <p className="text-xs text-slate-400 mt-1 print:text-[7pt] print:mt-0.5">
+                Fakultas Ilmu Terapan • Gedung Selaru Lt. 1 • WA: 0851-7208-8181
+              </p>
             </div>
-            <p className="text-xs font-medium text-slate-500 italic print-tagline">
-              "Pinjam alat, tanpa ribet"
-            </p>
-            <p className="text-xs text-slate-400 mt-1 print:text-[7pt] print:mt-0.5">
-              Fakultas Ilmu Terapan • Gedung Selaru Lt. 1 • WA: 0851-7208-8181
-            </p>
-          </div>
 
-          <div className="text-left sm:text-right print:text-right">
-            <span className="text-xs font-medium text-slate-500 block print:text-[7pt]">
-              Bukti Peminjaman Alat
-            </span>
-            <span className="font-mono text-base font-semibold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-200 inline-block mt-1 tabular-nums print:text-[8.5pt] print:px-1.5 print:py-0.5 print:mt-0.5 print:bg-slate-100 print:text-slate-900 print:border-slate-300">
-              {loan.noInvoice}
-            </span>
-            <p className="text-xs text-slate-500 mt-1 print:text-[7pt] print:mt-0.5">
-              Tanggal Terbit: <span className="font-semibold text-slate-800 tabular-nums">{loan.tglPinjam}</span>
-            </p>
+            <div className="shrink-0 flex items-center justify-end">
+              <img
+                src="https://web.labfit.id/wp-content/uploads/2025/06/Logo-Lab-FIT-2024_Lengkap-Utama-2048x306.png"
+                alt="Logo Laboratorium FIT"
+                className="h-16 w-auto max-w-[180px] object-contain rounded-lg bg-white print:h-12 print:max-w-[120px]"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 print:mb-3 print:p-2 print:rounded-lg">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 print:text-[7pt]">
+                Bukti Peminjaman Alat
+              </p>
+              <h2 className="mt-1 text-xl font-bold text-slate-900 print:text-[12pt] print:mt-0">
+                Invoice Peminjaman
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:text-right print:grid-cols-2 print:text-right print:gap-2">
+              <div className="rounded-xl bg-white border border-slate-200 px-3 py-2 print:px-1.5 print:py-1">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500 print:text-[6.5pt]">
+                  Nomor Peminjaman
+                </p>
+                <p className="mt-1 font-mono text-sm font-bold text-indigo-700 tabular-nums print:text-[8.5pt] print:text-slate-900 print:mt-0">
+                  {loan.noInvoice}
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-white border border-slate-200 px-3 py-2 print:px-1.5 print:py-1">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500 print:text-[6.5pt]">
+                  Tanggal
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-800 tabular-nums print:text-[8.5pt] print:text-slate-900 print:mt-0">
+                  {loan.tglPinjam}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
