@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { LoginScreen } from './components/LoginScreen';
@@ -7,12 +7,24 @@ import { PendingVerificationScreen } from './components/PendingVerificationScree
 import { ItemCatalog } from './components/ItemCatalog';
 import { MyLoans } from './components/MyLoans';
 import { LoanModal } from './components/LoanModal';
-import { InvoiceView } from './components/InvoiceView';
-import { AdminDashboard } from './components/admin/AdminDashboard';
 import { Item } from './types';
 import { Icon } from './components/Icon';
 import { PinjamInIcon } from './components/PinjamInIcon';
 import { MyProfile } from './components/MyProfile';
+
+// Dimuat hanya saat dibutuhkan agar halaman awal (landing page) terbuka lebih cepat
+const AdminDashboard = lazy(() =>
+  import('./components/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
+);
+const InvoiceView = lazy(() =>
+  import('./components/InvoiceView').then((m) => ({ default: m.InvoiceView }))
+);
+
+const LazyFallback = () => (
+  <div className="flex items-center justify-center py-20" role="status" aria-label="Memuat">
+    <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 function MainApp() {
   const { currentUser, profile, loading, isVerified, isAdmin, logout } = useAuth();
@@ -277,7 +289,9 @@ function MainApp() {
 
         {currentTab === 'admin' && (
           isAdmin ? (
-            <AdminDashboard onViewInvoice={handleViewInvoice} />
+            <Suspense fallback={<LazyFallback />}>
+              <AdminDashboard onViewInvoice={handleViewInvoice} />
+            </Suspense>
           ) : (
             <div className="max-w-md mx-auto p-8 text-center my-12 bg-white rounded-2xl border border-rose-200">
               <Icon name="ExclamationTriangle" size={24} className="text-rose-600 mx-auto mb-2" />
@@ -303,16 +317,18 @@ function MainApp() {
         )}
 
         {currentTab === 'invoice' && activeInvoiceLoanId && (
-          <InvoiceView
-            loanId={activeInvoiceLoanId}
-            onBack={() => {
-              if (isAdmin) {
-                handleSelectTab('admin');
-              } else {
-                handleSelectTab('riwayat');
-              }
-            }}
-          />
+          <Suspense fallback={<LazyFallback />}>
+            <InvoiceView
+              loanId={activeInvoiceLoanId}
+              onBack={() => {
+                if (isAdmin) {
+                  handleSelectTab('admin');
+                } else {
+                  handleSelectTab('riwayat');
+                }
+              }}
+            />
+          </Suspense>
         )}
       </main>
 
