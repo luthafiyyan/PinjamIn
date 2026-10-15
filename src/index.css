@@ -15,7 +15,7 @@
     color: #0f172a;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   /* Prevent iOS automatic zoom by ensuring inputs are min 16px on mobile */
