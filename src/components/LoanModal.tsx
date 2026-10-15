@@ -218,16 +218,14 @@ export const LoanModal: React.FC<LoanModalProps> = ({
 
         // Prepare new document references
         const loansCollectionRef = collection(db, 'loans');
-        const invoicesCollectionRef = collection(db, 'invoices');
         const newLoanDocRef = doc(loansCollectionRef);
-        const newInvoiceDocRef = doc(invoicesCollectionRef);
 
         // STEP 5: ATOMIC WRITES
-        // Update all items to dipinjam
+        // Reserve all selected items while the admin reviews the request.
         for (const it of cart) {
           const itemRef = doc(db, 'items', it.id);
           transaction.update(itemRef, {
-            status: 'dipinjam',
+            status: 'menunggu_persetujuan',
             currentLoanId: newLoanDocRef.id,
           });
         }
@@ -255,7 +253,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
           tglPinjam,
           tglRencanaKembali,
           tglKembaliAktual: null,
-          status: 'dipinjam',
+          status: 'menunggu_persetujuan',
           items: cart.map((it) => ({
             itemId: it.id,
             kodeAset: it.kodeAset,
@@ -265,19 +263,12 @@ export const LoanModal: React.FC<LoanModalProps> = ({
             model: it.model || '',
             kelengkapan: it.kelengkapan || [],
           })),
+          itemIds: cart.map((it) => it.id),
           noInvoice,
+          alasanPenolakan: null,
           dikembalikanOleh: null,
           catatanPengembalian: null,
           createdAt: serverTimestamp(),
-        });
-
-        // Write Invoice Document
-        transaction.set(newInvoiceDocRef, {
-          loanId: newLoanDocRef.id,
-          userId: profile.uid,
-          noInvoice,
-          tglTerbit: new Date().toISOString(),
-          catatan: 'Bukti Peminjaman Resmi Laboratorium FIT',
         });
 
         // Write Counter Document

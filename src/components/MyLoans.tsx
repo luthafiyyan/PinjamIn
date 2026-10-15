@@ -62,6 +62,24 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
   };
 
   const getStatusBadge = (loan: Loan) => {
+    if (loan.status === 'menunggu_persetujuan') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800 border border-sky-200">
+          <Icon name="HourglassSplit" size={16} className="text-sky-600" />
+          Menunggu Persetujuan
+        </span>
+      );
+    }
+
+    if (loan.status === 'ditolak') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
+          <Icon name="XCircle" size={16} className="text-rose-600" />
+          Ditolak
+        </span>
+      );
+    }
+
     if (loan.status === 'dikembalikan') {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -163,6 +181,11 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                     <p className="text-sm text-slate-600 font-normal">
                       Tujuan: <span className="font-semibold text-slate-800">{loan.keperluan}</span>
                     </p>
+                    {loan.status === 'ditolak' && loan.alasanPenolakan && (
+                      <p className="mt-1 text-xs text-rose-700">
+                        Alasan penolakan: {loan.alasanPenolakan}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-4 text-xs">
@@ -200,14 +223,16 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => onViewInvoice(loan.id)}
-                    className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 hover:bg-indigo-600 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
-                  >
-                    <Icon name="Receipt" size={16} />
-                    <span>Lihat Invoice</span>
-                    <Icon name="ArrowRight" size={16} />
-                  </button>
+                  {loan.status === 'dipinjam' || loan.status === 'dikembalikan' ? (
+                    <button
+                      onClick={() => onViewInvoice(loan.id)}
+                      className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 hover:bg-indigo-600 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
+                    >
+                      <Icon name="Receipt" size={16} />
+                      <span>Lihat Invoice</span>
+                      <Icon name="ArrowRight" size={16} />
+                    </button>
+                  ) : null}
                 </div>
               </div>
             );

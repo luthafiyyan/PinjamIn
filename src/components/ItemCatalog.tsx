@@ -124,6 +124,13 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
             <span>Dipinjam</span>
           </span>
         );
+      case 'menunggu_persetujuan':
+        return (
+          <span className={`inline-flex items-center gap-1 rounded-full font-semibold bg-sky-100 text-sky-800 border border-sky-200 ${padClass}`}>
+            <Icon name="HourglassSplit" size={iconSize} className="text-sky-600 shrink-0" />
+            <span>Menunggu Admin</span>
+          </span>
+        );
       case 'perawatan':
         return (
           <span className={`inline-flex items-center gap-1 rounded-full font-semibold bg-slate-100 text-slate-700 border border-slate-300 ${padClass}`}>
@@ -481,7 +488,9 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                       }}
                       className="w-full min-h-[44px] py-2 px-2 rounded-xl text-[11px] sm:text-xs font-medium flex items-center justify-center bg-slate-100 text-slate-500 border border-slate-200/60"
                     >
-                      {item.status === 'dipinjam'
+                      {item.status === 'menunggu_persetujuan'
+                        ? 'Menunggu Persetujuan'
+                        : item.status === 'dipinjam'
                         ? 'Sedang Dipinjam'
                         : item.status === 'perawatan'
                         ? 'Dalam Perawatan'

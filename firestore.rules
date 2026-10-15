@@ -29,6 +29,15 @@ service cloud.firestore {
       );
     }
 
+    function isOwnPendingLoanForItem(loanId, itemId) {
+      let loanPath = /databases/$(database)/documents/loans/$(loanId);
+      return existsAfter(loanPath)
+        && getAfter(loanPath).data.userId == request.auth.uid
+        && getAfter(loanPath).data.status == "menunggu_persetujuan"
+        && getAfter(loanPath).data.itemIds is list
+        && getAfter(loanPath).data.itemIds.hasAny([itemId]);
+    }
+
     // USERS COLLECTION
     match /users/{userId} {
       // User can read their own profile, admin can read all
@@ -72,11 +81,11 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create, delete: if isAdmin();
       allow update: if isAdmin() || (
-        // Borrower can update status from "tersedia" to "dipinjam" with currentLoanId when verified
         isVerifiedUser() &&
         resource.data.status == "tersedia" &&
-        request.resource.data.status == "dipinjam" &&
+        request.resource.data.status == "menunggu_persetujuan" &&
         request.resource.data.currentLoanId != null &&
+        isOwnPendingLoanForItem(request.resource.data.currentLoanId, itemId) &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'currentLoanId'])
       );
     }
@@ -91,8 +100,12 @@ service cloud.firestore {
       );
 
       // Create: verified user creating loan for themselves, or admin
-      allow create: if isVerifiedUser() && (
-        request.resource.data.userId == request.auth.uid || isAdmin()
+      allow create: if isAdmin() || (
+        isVerifiedUser() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == "menunggu_persetujuan" &&
+        request.resource.data.itemIds is list &&
+        request.resource.data.itemIds.size() > 0
       );
 
       // Update: admin can update loan status (e.g. for returns)
@@ -108,9 +121,7 @@ service cloud.firestore {
         resource.data.userId == request.auth.uid
       );
       // Create together with loan
-      allow create: if isVerifiedUser() && (
-        request.resource.data.userId == request.auth.uid || isAdmin()
-      );
+      allow create: if isAdmin();
       allow update, delete: if isAdmin();
     }
 

@@ -4,9 +4,9 @@ export type TipePeminjam = 'mahasiswa' | 'dosen' | 'tendik';
 
 export type ItemCondition = 'baik' | 'perlu_cek' | 'rusak';
 
-export type ItemStatus = 'tersedia' | 'dipinjam' | 'perawatan' | 'rusak';
+export type ItemStatus = 'tersedia' | 'menunggu_persetujuan' | 'dipinjam' | 'perawatan' | 'rusak';
 
-export type LoanStatus = 'dipinjam' | 'dikembalikan';
+export type LoanStatus = 'menunggu_persetujuan' | 'dipinjam' | 'ditolak' | 'dikembalikan';
 
 export type JenisKeperluan = 
   | 'tugas_kuliah'
@@ -101,7 +101,9 @@ export interface Loan {
   tglKembaliAktual: string | null;
   status: LoanStatus;
   items: LoanItem[];
+  itemIds?: string[];
   noInvoice: string;
+  alasanPenolakan?: string | null;
   dikembalikanOleh: string | null;
   catatanPengembalian: string | null;
   createdAt?: any;

@@ -142,9 +142,9 @@ function MainApp() {
     window.location.hash = '';
   };
 
-  const handleLoanSuccess = (loanId: string) => {
-    setActiveInvoiceLoanId(loanId);
-    setCurrentTab('invoice');
+  const handleLoanSuccess = () => {
+    setCurrentTab('riwayat');
+    window.location.hash = 'riwayat';
   };
 
   const handleViewInvoice = (loanId: string) => {
