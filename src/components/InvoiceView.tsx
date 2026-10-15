@@ -172,13 +172,13 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
               <img
                 src="https://web.labfit.id/wp-content/uploads/2025/06/Logo-Lab-FIT-2024_Lengkap-Utama-2048x306.png"
                 alt="Logo Laboratorium FIT"
-                className="h-16 w-auto max-w-[180px] object-contain rounded-lg bg-white print:h-12 print:max-w-[120px]"
+                className="h-16 w-auto max-w-[180px] object-contain rounded-lg bg-white print-logo"
               />
             </div>
           </div>
         </div>
 
-        <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 print:mb-3 print:p-2 print:rounded-lg">
+        <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 print-document-meta">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 print:text-[7pt]">
@@ -189,8 +189,8 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:text-right print:grid-cols-2 print:text-right print:gap-2">
-              <div className="rounded-xl bg-white border border-slate-200 px-3 py-2 print:px-1.5 print:py-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:text-right print:grid-cols-2 print:text-right print-document-meta-grid">
+              <div className="rounded-xl bg-white border border-slate-200 px-3 py-2 print-document-meta-card">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500 print:text-[6.5pt]">
                   Nomor Peminjaman
                 </p>
@@ -199,7 +199,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
                 </p>
               </div>
 
-              <div className="rounded-xl bg-white border border-slate-200 px-3 py-2 print:px-1.5 print:py-1">
+              <div className="rounded-xl bg-white border border-slate-200 px-3 py-2 print-document-meta-card">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500 print:text-[6.5pt]">
                   Tanggal
                 </p>
@@ -212,7 +212,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
         </div>
 
         {/* Status Callout (Screen & Print) */}
-        <div className="mb-6 flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200 print:mb-2 print:p-1.5 print:border-slate-300 print:rounded-lg print:text-[7.5pt]">
+        <div className="mb-6 flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200 print-status print:border-slate-300 print:rounded-lg print:text-[7.5pt]">
           <div className="flex items-center gap-2 print:gap-1.5">
             <span className="text-xs font-semibold text-slate-600 print:text-[7.5pt]">Status:</span>
             {loan.status === 'dikembalikan' ? (
@@ -317,7 +317,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
         </div>
 
         {/* 5. TABEL BARANG */}
-        <div className="mb-8 print:mb-2 print-avoid-break">
+        <div className="mb-8 print-items-section">
           <h4 className="text-xs font-semibold text-slate-800 mb-2 print:text-[7.5pt] print:mb-1">
             Daftar Peralatan Laboratorium ({loan.items.length} Barang)
           </h4>
@@ -531,7 +531,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
         </div>
 
         {/* Print Document Footer */}
-        <div className="hidden print:flex justify-between items-center text-[7pt] text-slate-400 pt-1.5 mt-2 border-t border-slate-200">
+        <div className="hidden print:flex justify-between items-center text-[7pt] text-slate-400 pt-1.5 mt-2 border-t border-slate-200 print-footer">
           <span>PinjamIn • Sistem Peminjaman Alat Laboratorium FIT</span>
           <span>Dokumen Resmi — Hal. 1</span>
         </div>
