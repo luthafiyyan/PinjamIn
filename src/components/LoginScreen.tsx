@@ -415,7 +415,10 @@ export const LoginScreen: React.FC = () => {
           </button>
         </div>
       </div>
-      <footer className="lp-foot">&copy; {new Date().getFullYear()} Laboratorium Fakultas Ilmu Terapan (FIT)</footer>
+      <footer className="lp-foot">
+        &copy; {new Date().getFullYear()} Laboratorium Fakultas Ilmu Terapan (FIT)
+        <span className="lp-footer-initials">HFYN</span>
+      </footer>
 
       {/* Tombol masuk menempel (ponsel) */}
       <div className={`lp-bar${heroPassed && !closeVisible ? ' show' : ''}`} aria-hidden={!(heroPassed && !closeVisible)}>

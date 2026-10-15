@@ -156,6 +156,7 @@
   .lp-close p{margin-top:8px;color:#c7d2fe;font-size:15px}
   .lp-close .lp-cta{max-width:340px;margin:22px auto 0}
   .lp-foot{background:#17154a;color:#a5b4fc;text-align:center;font-size:12px;padding:18px}
+  .lp-footer-initials{display:inline-block;margin-left:8px;padding-left:8px;border-left:1px solid rgba(165,180,252,.4);font-weight:700;letter-spacing:.08em;color:#fff}
 
   /* Entrance and scroll animations */
   .lp-reveal-ready .lp-reveal{opacity:0;transform:translateY(18px);transition:opacity .55s ease,transform .55s cubic-bezier(.2,.7,.2,1)}
