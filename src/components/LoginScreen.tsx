@@ -4,15 +4,17 @@ import { PinjamInIcon } from './PinjamInIcon';
 import { useAuth } from '../context/AuthContext';
 
 /**
- * Informasi lab. Ganti nilai di bawah dengan data yang sebenarnya.
- * Selama masih berisi tanda [ISI ...], teks tersebut tampil apa adanya di halaman.
+ * Informasi lab. Ubah nilai di bawah jika ada perubahan lokasi, jam layanan, atau kontak.
  */
 const LAB_INFO = {
-  lokasi: '[ISI LOKASI LAB: gedung dan ruangan]',
-  jamLayanan: '[ISI JAM LAYANAN: hari dan jam]',
-  kontakLabel: '[ISI NOMOR WHATSAPP / EMAIL LAB]',
-  // Tautan kontak (opsional). Contoh: 'https://wa.me/628123456789' atau 'mailto:lab@kampus.ac.id'
-  kontakHref: '',
+  lokasi: 'Gedung Selaru Lantai 1, Fakultas Ilmu Terapan, Telkom University',
+  jamLayanan: [
+    'Senin–Kamis: 08.00 – 16.30 WIB',
+    "Jum'at: 08.00 – 17.00 WIB",
+  ],
+  kontakLabel: 'WhatsApp 0851-7208-8181',
+  // Tautan kontak (opsional). Format WhatsApp: 'https://wa.me/' + nomor berawalan 62 tanpa angka 0 di depan.
+  kontakHref: 'https://wa.me/6285172088181',
 };
 
 const STEPS = [
@@ -292,7 +294,11 @@ export const LoginScreen: React.FC = () => {
               <div className="rounded-2xl border border-slate-200 p-5">
                 <Icon name="Clock" size={20} className="text-indigo-600" />
                 <h3 className="mt-3 text-sm font-semibold text-slate-900">Jam layanan</h3>
-                <p className="mt-1 text-sm text-slate-600">{LAB_INFO.jamLayanan}</p>
+                <div className="mt-1 text-sm text-slate-600 space-y-0.5">
+                  {LAB_INFO.jamLayanan.map((baris) => (
+                    <p key={baris}>{baris}</p>
+                  ))}
+                </div>
               </div>
               <div className="rounded-2xl border border-slate-200 p-5">
                 <Icon name="Envelope" size={20} className="text-indigo-600" />
