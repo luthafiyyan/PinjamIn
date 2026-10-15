@@ -31,6 +31,34 @@ interface AdminDashboardProps {
   onViewInvoice: (loanId: string) => void;
 }
 
+type HistoryAnalyticsPeriod = '30d' | '3m' | 'year' | 'all';
+
+interface HistoryChartBucket {
+  key: string;
+  label: string;
+  count: number;
+}
+
+const formatDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const parseLoanDate = (dateString: string) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
+  if (!match) return null;
+
+  const [, year, month, day] = match;
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+  return date.getFullYear() === Number(year) &&
+    date.getMonth() === Number(month) - 1 &&
+    date.getDate() === Number(day)
+    ? date
+    : null;
+};
+
 export const INITIAL_CATEGORIES = [
   { id: 'kat-cam', nama: 'Kamera', prefix: 'CAM', urutan: 1 },
   { id: 'kat-trp', nama: 'Tripod', prefix: 'TRP', urutan: 2 },
@@ -112,6 +140,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
   const [historySearch, setHistorySearch] = useState('');
   const [historyStatusFilter, setHistoryStatusFilter] = useState<string>('all');
   const [historyTypeFilter, setHistoryTypeFilter] = useState<string>('all');
+  const [historyAnalyticsPeriod, setHistoryAnalyticsPeriod] = useState<HistoryAnalyticsPeriod>('year');
   const [itemSearch, setItemSearch] = useState('');
   const [itemCatFilter, setItemCatFilter] = useState<string>('all');
 
@@ -1174,6 +1203,109 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
     const dateB = new Date(b.tglPinjam || 0).getTime();
     return dateB - dateA;
   });
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const analyticsStart = new Date(today);
+  if (historyAnalyticsPeriod === '30d') {
+    analyticsStart.setDate(analyticsStart.getDate() - 29);
+  } else if (historyAnalyticsPeriod === '3m') {
+    analyticsStart.setDate(1);
+    analyticsStart.setMonth(analyticsStart.getMonth() - 2);
+  } else if (historyAnalyticsPeriod === 'year') {
+    analyticsStart.setMonth(0, 1);
+  }
+
+  const approvedAnalyticsLoans = loans.flatMap((loan) => {
+    if (loan.status !== 'dipinjam' && loan.status !== 'dikembalikan') return [];
+    const date = parseLoanDate(loan.tglPinjam);
+    if (!date || (historyAnalyticsPeriod !== 'all' && date < analyticsStart)) return [];
+    return [{ loan, date }];
+  });
+
+  const trendBuckets: HistoryChartBucket[] = [];
+  if (historyAnalyticsPeriod === '30d') {
+    for (let offset = 0; offset < 30; offset += 1) {
+      const date = new Date(analyticsStart);
+      date.setDate(analyticsStart.getDate() + offset);
+      const key = formatDateKey(date);
+      trendBuckets.push({
+        key,
+        label: date.getDate() % 5 === 0 || offset === 29 ? String(date.getDate()) : '',
+        count: 0,
+      });
+    }
+  } else if (historyAnalyticsPeriod === 'all') {
+    const years = approvedAnalyticsLoans.map(({ date }) => date.getFullYear());
+    if (years.length > 0) {
+      const firstYear = Math.min(...years);
+      const lastYear = Math.max(...years);
+      for (let year = firstYear; year <= lastYear; year += 1) {
+        trendBuckets.push({ key: String(year), label: String(year), count: 0 });
+      }
+    }
+  } else {
+    const monthCount = historyAnalyticsPeriod === 'year' ? 12 : 3;
+    const firstMonth = historyAnalyticsPeriod === 'year'
+      ? new Date(today.getFullYear(), 0, 1)
+      : new Date(today.getFullYear(), today.getMonth() - 2, 1);
+    for (let offset = 0; offset < monthCount; offset += 1) {
+      const date = new Date(firstMonth.getFullYear(), firstMonth.getMonth() + offset, 1);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      trendBuckets.push({
+        key,
+        label: date.toLocaleDateString('id-ID', { month: 'short' }),
+        count: 0,
+      });
+    }
+  }
+
+  const bucketByKey = new Map(trendBuckets.map((bucket) => [bucket.key, bucket]));
+  approvedAnalyticsLoans.forEach(({ loan, date }) => {
+    const key = historyAnalyticsPeriod === '30d'
+      ? formatDateKey(date)
+      : historyAnalyticsPeriod === 'all'
+      ? String(date.getFullYear())
+      : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const bucket = bucketByKey.get(key);
+    if (bucket) bucket.count += 1;
+  });
+
+  const topBorrowers = Object.values(approvedAnalyticsLoans.reduce<
+    Record<string, { key: string; name: string; identity: string; count: number }>
+  >((totals, { loan }) => {
+    const key = loan.userId || loan.peminjam.nomorIdentitas || loan.peminjam.nama;
+    const borrower = totals[key] ?? {
+      key,
+      name: loan.peminjam.nama,
+      identity: loan.peminjam.nomorIdentitas,
+      count: 0,
+    };
+    borrower.count += 1;
+    totals[key] = borrower;
+    return totals;
+  }, {})).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)).slice(0, 5);
+
+  const topBorrowedItems = Object.values(approvedAnalyticsLoans.reduce<
+    Record<string, { key: string; code: string; name: string; count: number }>
+  >((totals, { loan }) => {
+    loan.items.forEach((item) => {
+      const key = item.itemId || item.kodeAset || item.nama;
+      const borrowedItem = totals[key] ?? {
+        key,
+        code: item.kodeAset,
+        name: item.nama,
+        count: 0,
+      };
+      borrowedItem.count += 1;
+      totals[key] = borrowedItem;
+    });
+    return totals;
+  }, {})).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)).slice(0, 5);
+
+  const maxTrendCount = Math.max(1, ...trendBuckets.map(({ count }) => count));
+  const maxBorrowerCount = Math.max(1, ...topBorrowers.map(({ count }) => count));
+  const maxItemCount = Math.max(1, ...topBorrowedItems.map(({ count }) => count));
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -2392,6 +2524,159 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
               </select>
             </div>
           </div>
+
+          <section aria-labelledby="history-analytics-heading" className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 id="history-analytics-heading" className="text-base font-semibold text-slate-900">
+                  Analitik Peminjaman
+                </h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  Menghitung transaksi yang disetujui (sedang dipinjam atau sudah dikembalikan).
+                </p>
+              </div>
+              <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                Periode
+                <select
+                  value={historyAnalyticsPeriod}
+                  onChange={(event) => setHistoryAnalyticsPeriod(event.target.value as HistoryAnalyticsPeriod)}
+                  className="min-h-[40px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                >
+                  <option value="30d">30 hari terakhir</option>
+                  <option value="3m">3 bulan kalender</option>
+                  <option value="year">Tahun ini</option>
+                  <option value="all">Semua waktu</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 xl:col-span-2">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-800">Tren Peminjaman</h4>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      {historyAnalyticsPeriod === '30d'
+                        ? 'Jumlah transaksi per hari'
+                        : historyAnalyticsPeriod === 'all'
+                        ? 'Jumlah transaksi per tahun'
+                        : 'Jumlah transaksi per bulan'}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 tabular-nums">
+                    {approvedAnalyticsLoans.length} transaksi
+                  </span>
+                </div>
+
+                {approvedAnalyticsLoans.length === 0 ? (
+                  <div className="flex h-36 items-center justify-center rounded-xl bg-slate-50 text-xs text-slate-500">
+                    Belum ada transaksi disetujui pada periode ini.
+                  </div>
+                ) : (
+                  <div
+                    role="img"
+                    aria-label={`Grafik tren peminjaman, ${approvedAnalyticsLoans.length} transaksi pada periode terpilih`}
+                    className="flex h-36 items-end gap-1 border-b border-slate-200 px-1 sm:gap-2"
+                  >
+                    {trendBuckets.map((bucket) => (
+                      <div
+                        key={bucket.key}
+                        title={`${bucket.key}: ${bucket.count} transaksi`}
+                        className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1"
+                      >
+                        <span className="text-[9px] font-medium text-slate-500 tabular-nums">
+                          {bucket.count > 0 ? bucket.count : ''}
+                        </span>
+                        <div className="flex h-[86px] w-full items-end justify-center">
+                          <div
+                            className="w-full max-w-8 rounded-t-md bg-indigo-500 transition-all"
+                            style={{ height: `${Math.max(3, (bucket.count / maxTrendCount) * 100)}%` }}
+                          />
+                        </div>
+                        <span className="h-3 text-[9px] text-slate-500 tabular-nums">
+                          {bucket.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-slate-800">Peminjam Teratas</h4>
+                  <p className="mt-1 text-[11px] text-slate-500">Berdasarkan jumlah transaksi peminjaman</p>
+                </div>
+                {topBorrowers.length === 0 ? (
+                  <p className="rounded-xl bg-slate-50 px-3 py-6 text-center text-xs text-slate-500">
+                    Belum ada data peminjam pada periode ini.
+                  </p>
+                ) : (
+                  <ol className="space-y-3">
+                    {topBorrowers.map((borrower, index) => (
+                      <li key={borrower.key} className="min-w-0">
+                        <div className="mb-1 flex items-baseline justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-semibold text-slate-800">
+                              <span className="mr-1.5 text-slate-400">{index + 1}.</span>
+                              {borrower.name}
+                            </p>
+                            <p className="truncate pl-4 text-[10px] text-slate-500">{borrower.identity}</p>
+                          </div>
+                          <span className="shrink-0 text-xs font-semibold text-indigo-700 tabular-nums">
+                            {borrower.count}x
+                          </span>
+                        </div>
+                        <div className="ml-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                          <div
+                            className="h-full rounded-full bg-indigo-500"
+                            style={{ width: `${(borrower.count / maxBorrowerCount) * 100}%` }}
+                          />
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-slate-800">Barang Terpopuler</h4>
+                  <p className="mt-1 text-[11px] text-slate-500">Berdasarkan frekuensi barang dipinjam</p>
+                </div>
+                {topBorrowedItems.length === 0 ? (
+                  <p className="rounded-xl bg-slate-50 px-3 py-6 text-center text-xs text-slate-500">
+                    Belum ada data barang dipinjam pada periode ini.
+                  </p>
+                ) : (
+                  <ol className="space-y-3">
+                    {topBorrowedItems.map((item, index) => (
+                      <li key={item.key} className="min-w-0">
+                        <div className="mb-1 flex items-baseline justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-semibold text-slate-800">
+                              <span className="mr-1.5 text-slate-400">{index + 1}.</span>
+                              {item.name}
+                            </p>
+                            <p className="truncate pl-4 text-[10px] text-slate-500">{item.code}</p>
+                          </div>
+                          <span className="shrink-0 text-xs font-semibold text-emerald-700 tabular-nums">
+                            {item.count}x
+                          </span>
+                        </div>
+                        <div className="ml-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                          <div
+                            className="h-full rounded-full bg-emerald-500"
+                            style={{ width: `${(item.count / maxItemCount) * 100}%` }}
+                          />
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            </div>
+          </section>
 
           {/* Mobile: Daftar Kartu Riwayat Bertumpuk (md:hidden) */}
           <div className="md:hidden space-y-3">
