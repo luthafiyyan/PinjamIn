@@ -51,8 +51,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
 
   // Tab State
   const [activeTab, setActiveTab] = useState<
-    'persetujuan' | 'verifikasi' | 'pengembalian' | 'barang' | 'kategori' | 'riwayat' | 'pengaturan' | 'panduan'
-  >('persetujuan');
+    'verifikasi' | 'pengembalian' | 'barang' | 'kategori' | 'riwayat' | 'pengaturan' | 'panduan'
+  >('pengembalian');
 
   // Real-time Data
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -1310,9 +1310,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
 
         <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar snap-x snap-mandatory">
           {[
-            { key: 'persetujuan', label: 'Pengajuan', count: pendingLoans.length },
+            { key: 'pengembalian', label: 'Pinjaman', count: activeLoans.length + pendingLoans.length },
             { key: 'verifikasi', label: 'Verifikasi', count: pendingUsers.length },
-            { key: 'pengembalian', label: 'Aktif', count: activeLoans.length },
             { key: 'barang', label: 'Barang', count: items.length },
             { key: 'kategori', label: 'Kategori', count: categories.length },
             { key: 'riwayat', label: 'Riwayat', count: loans.length },
@@ -1350,18 +1349,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
       {/* Desktop / Tablet Tabs Navigation */}
       <div className="hidden sm:flex items-center gap-1.5 overflow-x-auto border-b border-slate-200 pb-2 mb-6 text-xs font-semibold no-scrollbar">
         <button
-          onClick={() => setActiveTab('persetujuan')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl whitespace-nowrap transition-colors cursor-pointer min-h-[44px] ${
-            activeTab === 'persetujuan'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Icon name="HourglassSplit" size={16} />
-          <span>Pengajuan ({pendingLoans.length})</span>
-        </button>
-
-        <button
           onClick={() => setActiveTab('verifikasi')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl whitespace-nowrap transition-colors cursor-pointer min-h-[44px] ${
             activeTab === 'verifikasi'
@@ -1391,6 +1378,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
         >
           <Icon name="ClockHistory" size={16} />
           <span>Peminjaman Aktif ({activeLoans.length})</span>
+          {pendingLoans.length > 0 && (
+            <span className="bg-sky-100 text-sky-800 px-1.5 py-0.2 rounded-full text-[10px]">
+              {pendingLoans.length} Pengajuan
+            </span>
+          )}
           {overdueLoans.length > 0 && (
             <span className="bg-rose-500 text-white px-1.5 py-0.2 rounded-full text-[10px]">
               {overdueLoans.length} Terlambat
@@ -1782,80 +1774,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
         </div>
       )}
 
-      {activeTab === 'persetujuan' && (
-        <div className="space-y-4">
-          <div>
-            <h2 className="text-[18px] sm:text-[20px] font-semibold text-slate-900 flex items-center gap-2">
-              <Icon name="HourglassSplit" size={20} className="text-sky-600" />
-              <span>Pengajuan Peminjaman ({pendingLoans.length})</span>
-            </h2>
-            <p className="text-xs text-slate-500 mt-1">
-              Barang ditahan selama pengajuan menunggu keputusan admin.
-            </p>
-          </div>
-
-          {pendingLoans.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500 bg-white rounded-2xl border border-slate-200">
-              <Icon name="CheckCircle" size={32} className="text-emerald-500 mx-auto mb-2" />
-              <p className="font-semibold text-slate-700">Tidak ada pengajuan yang menunggu.</p>
-            </div>
-          ) : (
-            pendingLoans.map((loan) => (
-              <div key={loan.id} className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                      <span className="font-mono text-xs font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-lg border border-indigo-200">
-                        {loan.noInvoice}
-                      </span>
-                      <span className="text-[10px] font-semibold text-sky-800 bg-sky-100 px-2.5 py-1 rounded-full">
-                        Menunggu Persetujuan
-                      </span>
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900">{loan.peminjam.nama}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {loan.peminjam.tipePeminjam} · {loan.peminjam.nomorIdentitas} · {loan.peminjam.noHp || 'Tanpa nomor telepon'}
-                    </p>
-                    <p className="text-xs text-slate-600 mt-2">Tujuan: <span className="font-medium">{loan.keperluan}</span></p>
-                  </div>
-                  <div className="flex gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => handleRejectLoan(loan)}
-                      disabled={loanActionId !== null}
-                      className="min-h-[40px] px-3 py-2 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold disabled:opacity-50"
-                    >
-                      Tolak
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApproveLoan(loan)}
-                      disabled={loanActionId !== null}
-                      className="min-h-[40px] px-3 py-2 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 text-xs font-semibold disabled:opacity-50"
-                    >
-                      {loanActionId === loan.id ? 'Memproses...' : 'Setujui'}
-                    </button>
-                  </div>
-                </div>
-                <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex flex-wrap gap-2">
-                    {loan.items.map((item) => (
-                      <span key={item.itemId} className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-slate-700">
-                        <span className="font-mono text-slate-500">{item.kodeAset}</span>
-                        <span>{item.nama}</span>
-                      </span>
-                    ))}
-                  </div>
-                  <span className="text-xs text-slate-500 shrink-0">
-                    {loan.tglPinjam} sampai {loan.tglRencanaKembali}
-                  </span>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
       {/* TAB 2: PEMINJAMAN AKTIF & PENGEMBALIAN */}
       {activeTab === 'pengembalian' && (
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 space-y-6">
@@ -1870,6 +1788,66 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
               </p>
             </div>
           </div>
+
+          {pendingLoans.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Menunggu Persetujuan ({pendingLoans.length})
+                </h3>
+                <span className="text-[10px] font-semibold text-sky-800 bg-sky-100 px-2 py-0.5 rounded-full">
+                  Barang ditahan
+                </span>
+              </div>
+              {pendingLoans.map((loan) => (
+                <div key={loan.id} className="p-4 rounded-2xl border border-sky-200 bg-sky-50/50">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="font-mono text-xs font-semibold text-indigo-700 bg-white px-2 py-0.5 rounded border border-indigo-200">
+                          {loan.noInvoice}
+                        </span>
+                        <span className="text-[10px] font-semibold text-sky-800">Menunggu persetujuan</span>
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-900">{loan.peminjam.nama}</h4>
+                      <p className="text-xs text-slate-500">
+                        {loan.peminjam.tipePeminjam} · {loan.peminjam.nomorIdentitas} · {loan.peminjam.noHp || 'Tanpa nomor telepon'}
+                      </p>
+                      <p className="text-xs text-slate-600 mt-1">Tujuan: <span className="font-medium">{loan.keperluan}</span></p>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {loan.items.map((item) => (
+                          <span key={item.itemId} className="text-[11px] px-2 py-1 rounded-md bg-white border border-slate-200 text-slate-700">
+                            <span className="font-mono text-slate-500">{item.kodeAset}</span> {item.nama}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-2">
+                        Rencana pinjam: {loan.tglPinjam} sampai {loan.tglRencanaKembali}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleRejectLoan(loan)}
+                        disabled={loanActionId !== null}
+                        className="min-h-[40px] px-3 py-2 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold disabled:opacity-50"
+                      >
+                        Tolak
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleApproveLoan(loan)}
+                        disabled={loanActionId !== null}
+                        className="min-h-[40px] px-3 py-2 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 text-xs font-semibold disabled:opacity-50"
+                      >
+                        {loanActionId === loan.id ? 'Memproses...' : 'Setujui'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </section>
+          )}
 
           {sortedActiveLoans.length === 0 ? (
             <div className="p-8 text-center text-xs text-slate-500 bg-slate-50 rounded-2xl border border-slate-200">
