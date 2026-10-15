@@ -340,6 +340,9 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                 Maksimal <b>{settings.maxBarang} barang</b> sekaligus, durasi maksimal <b>{settings.maxDurasiHari} hari</b>.
                 {settings.wajibPenanggungJawab && ' Wajib menyertakan Dosen Penanggung Jawab.'}
               </p>
+              <p className="text-slate-600">
+                Barang ditahan setelah diajukan. Peminjaman aktif dan invoice tersedia setelah disetujui admin.
+              </p>
             </div>
           </div>
 
@@ -557,7 +560,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
               ) : (
                 <Icon name="CheckCircle" size={16} />
               )}
-              <span>{loading ? 'Memproses Transaksi...' : 'Konfirmasi & Terbitkan Invoice'}</span>
+              <span>{loading ? 'Mengirim Pengajuan...' : 'Ajukan Peminjaman'}</span>
             </button>
           </div>
         </form>

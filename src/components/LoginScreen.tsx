@@ -21,8 +21,8 @@ const LAB_INFO = {
 const STEPS = [
   { title: 'Masuk dan lengkapi profil', desc: 'Masuk dengan akun Google, lalu isi data diri sesuai tipe peminjam.' },
   { title: 'Tunggu verifikasi admin', desc: 'Admin lab memeriksa data akun sebelum Anda dapat meminjam.' },
-  { title: 'Pilih alat dan isi formulir', desc: 'Pilih alat yang tersedia, lalu isi keperluan dan tanggal pengembalian.' },
-  { title: 'Ambil alat dan simpan invoice', desc: 'Invoice terbit otomatis dan dapat dicetak sebagai bukti peminjaman.' },
+  { title: 'Pilih alat dan ajukan peminjaman', desc: 'Pilih alat yang tersedia, lalu isi keperluan dan tanggal pengembalian.' },
+  { title: 'Tunggu persetujuan admin', desc: 'Barang ditahan selama pengajuan ditinjau. Setelah disetujui, ambil alat dan simpan invoice.' },
 ];
 
 const CATEGORIES = [
@@ -195,7 +195,7 @@ export const LoginScreen: React.FC = () => {
               <p className="hint">Akun baru diverifikasi oleh admin lab sebelum dapat meminjam.</p>
               <div className="pills">
                 <span><Icon name="CheckCircle" size={13} />Status alat terlihat langsung</span>
-                <span><Icon name="CheckCircle" size={13} />Invoice otomatis</span>
+                <span><Icon name="CheckCircle" size={13} />Invoice setelah disetujui</span>
                 <span><Icon name="CheckCircle" size={13} />Mahasiswa, dosen, tendik</span>
               </div>
             </div>
