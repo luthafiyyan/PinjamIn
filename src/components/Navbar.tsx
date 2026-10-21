@@ -185,7 +185,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <Icon name="Bag" size={20} />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-amber-500 text-white font-bold text-xs w-5 h-5 rounded-full flex items-center justify-center shadow">
+                  <span className="absolute -top-1 -right-1 bg-rose-500 text-white font-bold text-xs w-5 h-5 rounded-full flex items-center justify-center shadow-sm ring-2 ring-white">
                     {cartCount}
                   </span>
                 )}
@@ -384,7 +384,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <div className="relative">
                     <Icon name="Bag" size={22} />
                     {cartCount > 0 && (
-                      <span className="absolute -top-1.5 -right-2 bg-amber-500 text-white font-bold text-[10px] min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center shadow">
+                      <span className="absolute -top-1.5 -right-2 bg-rose-500 text-white font-bold text-[10px] min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center shadow-sm ring-2 ring-white">
                         {cartCount}
                       </span>
                     )}

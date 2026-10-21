@@ -752,7 +752,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
             className="w-full bg-slate-900 hover:bg-slate-800 text-white p-3.5 rounded-2xl shadow-xl flex items-center justify-between font-semibold text-sm cursor-pointer min-h-[48px] border border-slate-700/50"
           >
             <div className="flex items-center gap-2.5">
-              <span className="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center tabular-nums">
+              <span className="w-6 h-6 rounded-full bg-rose-500 text-white font-bold text-xs flex items-center justify-center tabular-nums shadow-sm">
                 {cart.length}
               </span>
               <span className="text-white text-xs sm:text-sm font-semibold">{cart.length} barang dipilih</span>
