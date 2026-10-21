@@ -120,7 +120,7 @@ export const LoginScreen: React.FC = () => {
         entry.target.classList.add('is-visible');
         observer.unobserve(entry.target);
       });
-    }, { threshold: 0.12, rootMargin: '0px 0px -24px 0px' });
+    }, { threshold: 0.05, rootMargin: '0px 0px -15px 0px' });
 
     revealNodes.forEach((node) => observer.observe(node));
     return () => {
@@ -264,8 +264,10 @@ export const LoginScreen: React.FC = () => {
           <div className="wrap">
             <div className="steps-grid">
               <div>
-                <div className="eyebrow">Cara meminjam</div>
-                <h2>Empat langkah, dari masuk sampai invoice</h2>
+                <div className="lp-reveal">
+                  <div className="eyebrow">Cara meminjam</div>
+                  <h2>Empat langkah, dari masuk sampai invoice</h2>
+                </div>
                 <ol className="timeline" style={{ listStyle: 'none' }}>
                   {STEPS.map((s, i) => (
                     <li className="step lp-reveal" key={s.title}>
@@ -310,8 +312,10 @@ export const LoginScreen: React.FC = () => {
         {/* Kategori */}
         <section className="lp-sec cats">
           <div className="wrap">
-            <div className="eyebrow">Alat yang tersedia</div>
-            <h2>Dari kamera sampai kabel</h2>
+            <div className="lp-reveal">
+              <div className="eyebrow">Alat yang tersedia</div>
+              <h2>Dari kamera sampai kabel</h2>
+            </div>
             <ul className="tiles" style={{ listStyle: 'none' }}>
               {CATEGORIES.map((c) => (
                 <li key={c.name} className={`tile ${c.tone} lp-reveal`}>
@@ -320,15 +324,17 @@ export const LoginScreen: React.FC = () => {
                 </li>
               ))}
             </ul>
-            <p className="note">Ketersediaan alat dapat dilihat setelah masuk.</p>
+            <p className="note lp-reveal">Ketersediaan alat dapat dilihat setelah masuk.</p>
           </div>
         </section>
 
         {/* Siapa yang dapat meminjam */}
         <section className="lp-sec">
           <div className="wrap">
-            <div className="eyebrow">Untuk siapa</div>
-            <h2>Siapa yang dapat meminjam</h2>
+            <div className="lp-reveal">
+              <div className="eyebrow">Untuk siapa</div>
+              <h2>Siapa yang dapat meminjam</h2>
+            </div>
             <div className="who">
               {BORROWER_TYPES.map((b) => (
                 <div className="w lp-reveal" key={b.name}>
@@ -340,15 +346,17 @@ export const LoginScreen: React.FC = () => {
                 </div>
               ))}
             </div>
-            <p className="note">Batas durasi dan jumlah barang berbeda untuk tiap tipe peminjam.</p>
+            <p className="note lp-reveal">Batas durasi dan jumlah barang berbeda untuk tiap tipe peminjam.</p>
           </div>
         </section>
 
         {/* FAQ */}
         <section id="faq" className="lp-sec" style={{ paddingTop: 0, scrollMarginTop: 8 }}>
           <div className="wrap faq-wrap">
-            <div className="eyebrow">FAQ</div>
-            <h2>Pertanyaan umum</h2>
+            <div className="lp-reveal">
+              <div className="eyebrow">FAQ</div>
+              <h2>Pertanyaan umum</h2>
+            </div>
             <div className="faq">
               {FAQS.map((f, i) => (
                 <details className="q lp-reveal" key={f.q} open={i === 0}>
@@ -366,8 +374,10 @@ export const LoginScreen: React.FC = () => {
         {/* Informasi lab */}
         <section id="kontak" className="lp-sec cats" style={{ paddingTop: 44, scrollMarginTop: 0 }}>
           <div className="wrap">
-            <div className="eyebrow">Informasi lab</div>
-            <h2>Temui kami</h2>
+            <div className="lp-reveal">
+              <div className="eyebrow">Informasi lab</div>
+              <h2>Temui kami</h2>
+            </div>
             <div className="info">
               <div className="i lp-reveal">
                 <div className="ic"><Icon name="GeoAlt" size={19} /></div>
@@ -409,10 +419,12 @@ export const LoginScreen: React.FC = () => {
       <div className="lp-close">
         <div className="wrap">
           <h2 className="lp-reveal">Siap meminjam alat?</h2>
-          <p className="lp-reveal">Masuk dengan akun Google dan mulai dalam hitungan menit.</p>
-          <button ref={closeCtaRef} type="button" className="lp-cta" onClick={handleLogin} disabled={loading}>
-            {loginContent}
-          </button>
+          <p className="lp-reveal" style={{ transitionDelay: '0.06s' }}>Masuk dengan akun Google dan mulai dalam hitungan menit.</p>
+          <div className="lp-reveal" style={{ transitionDelay: '0.12s' }}>
+            <button ref={closeCtaRef} type="button" className="lp-cta" onClick={handleLogin} disabled={loading}>
+              {loginContent}
+            </button>
+          </div>
         </div>
       </div>
       <footer className="lp-foot">
