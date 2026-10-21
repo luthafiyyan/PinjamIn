@@ -133,7 +133,7 @@
 
     /* Kop Surat A5 */
     .print-kop {
-      border-bottom: 1.5pt solid #0f172a !important;
+      border-bottom: 2pt double #0f172a !important;
       padding-bottom: 1.5mm !important;
       margin-bottom: 2mm !important;
     }
