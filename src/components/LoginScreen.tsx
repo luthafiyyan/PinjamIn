@@ -108,24 +108,29 @@ export const LoginScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') return;
     const landing = document.querySelector('.lp');
     const revealNodes = landing?.querySelectorAll<HTMLElement>('.lp-reveal');
     if (!landing || !revealNodes?.length) return;
 
-    landing.classList.add('lp-reveal-ready');
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add('is-visible');
-        observer.unobserve(entry.target);
-      });
-    }, { threshold: 0.05, rootMargin: '0px 0px -15px 0px' });
+    if (typeof IntersectionObserver === 'undefined') {
+      revealNodes.forEach((node) => node.classList.add('is-visible'));
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.08, rootMargin: '0px 0px -20px 0px' }
+    );
 
     revealNodes.forEach((node) => observer.observe(node));
     return () => {
       observer.disconnect();
-      landing.classList.remove('lp-reveal-ready');
     };
   }, []);
 

@@ -159,14 +159,14 @@
   .lp-footer-initials{display:inline-block;margin-left:8px;padding-left:8px;border-left:1px solid rgba(165,180,252,.4);font-weight:700;letter-spacing:.08em;color:#fff}
 
   /* Entrance and scroll animations (optimized for mobile 60-120fps GPU compositing) */
-  .lp-reveal-ready .lp-reveal {
+  .lp-reveal {
     opacity: 0;
-    transform: translateY(14px);
-    transition: opacity 0.42s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateY(22px);
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: opacity, transform;
   }
-  .lp-reveal-ready .lp-reveal.is-visible {
+  .lp-reveal.is-visible {
     opacity: 1;
     transform: translateY(0);
   }
@@ -234,7 +234,7 @@
   @media (prefers-reduced-motion:reduce){ .lp-bar{transition:none} }
   @media (prefers-reduced-motion:reduce){
     .lp-brand,.lp-hero-copy,.lp-phone-intro,.phone{animation:none!important}
-    .lp-reveal-ready .lp-reveal,.lp-reveal-ready .lp-reveal.is-visible{opacity:1;transform:none;transition:none}
+    .lp-reveal,.lp-reveal.is-visible{opacity:1!important;transform:none!important;transition:none!important}
     .lp-cta,.tile,.w,.i{transition:none}
     .lp-cta:hover:not(:disabled),.tile:hover,.w:hover,.i:hover{transform:none;box-shadow:none}
   }
