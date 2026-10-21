@@ -164,7 +164,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
                 Laboratorium Fakultas Ilmu Terapan — Telkom University
               </p>
               <p className="text-[11px] text-slate-500 mt-0.5 print:text-[6.5pt] print:mt-0">
-                Gedung Selaru Lt. 1 • Jl. Telekomunikasi Terusan Buahbatu, Bandung 40257 • Layanan: 0851-7208-8181
+                Gedung Selaru Lt. 1 • Jl. Telekomunikasi Terusan Buahbatu, Bandung 40257 • WhatsApp: 0851-7208-8181
               </p>
             </div>
 
