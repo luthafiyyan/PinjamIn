@@ -71,6 +71,15 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
       );
     }
 
+    if (loan.status === 'disetujui') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">
+          <Icon name="CheckCircle" size={16} className="text-indigo-600" />
+          Disetujui (Siap Diambil di Lab)
+        </span>
+      );
+    }
+
     if (loan.status === 'ditolak') {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
@@ -223,7 +232,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                     </div>
                   </div>
 
-                  {loan.status === 'dipinjam' || loan.status === 'dikembalikan' ? (
+                  {loan.status === 'disetujui' || loan.status === 'dipinjam' || loan.status === 'dikembalikan' ? (
                     <button
                       onClick={() => onViewInvoice(loan.id)}
                       className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 hover:bg-indigo-600 text-white transition-colors cursor-pointer shrink-0 shadow-sm"

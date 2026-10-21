@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { 
   collection, 
   onSnapshot, 
-  query 
+  query,
+  where 
 } from 'firebase/firestore';
 import { Icon, getCategoryIconName } from './Icon';
 import { db } from '../lib/firebase';
-import { Item, Category, ItemStatus } from '../types';
+import { Item, Category, ItemStatus, Loan } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { formatDateIndo } from '../lib/dateUtils';
 
 interface ItemCatalogProps {
   cart: Item[];
@@ -34,6 +36,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
   const [internalDetailItem, setInternalDetailItem] = useState<Item | null>(null);
   const [detailImgError, setDetailImgError] = useState(false);
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
+  const [activeLoans, setActiveLoans] = useState<Loan[]>([]);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
 
   const activeDetail = controlledDetailItem !== undefined ? controlledDetailItem : internalDetailItem;
@@ -103,6 +106,29 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
     );
 
     return () => unsubscribeItems();
+  }, []);
+
+  // Real-time snapshot for active loans (jadwal kalender booking)
+  useEffect(() => {
+    const qLoans = query(
+      collection(db, 'loans'),
+      where('status', 'in', ['menunggu_persetujuan', 'disetujui', 'dipinjam'])
+    );
+    const unsubscribeLoans = onSnapshot(
+      qLoans,
+      (snapshot) => {
+        const list: Loan[] = [];
+        snapshot.forEach((doc) => {
+          list.push({ id: doc.id, ...(doc.data() as Omit<Loan, 'id'>) });
+        });
+        setActiveLoans(list);
+      },
+      (error) => {
+        console.warn('Error fetching active loans snapshot for calendar:', error);
+      }
+    );
+
+    return () => unsubscribeLoans();
   }, []);
 
   const getStatusBadge = (status: ItemStatus, isCompact = false) => {
@@ -366,7 +392,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
         <div className="grid grid-cols-1 min-[340px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
           {filteredItems.map((item, index) => {
             const isSelected = cart.some((c) => c.id === item.id);
-            const isAvailable = item.status === 'tersedia';
+            const isBookable = item.status !== 'rusak' && item.status !== 'perawatan';
             const hasPhoto = !!item.fotoUrl && !brokenImages[item.id];
 
             return (
@@ -375,7 +401,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                 onClick={() => handleOpenDetail(item)}
                 style={{ transitionDelay: `${index * 35}ms` }}
                 className={`scroll-reveal bg-white rounded-2xl border transition-all duration-300 ease-out flex flex-col justify-between overflow-hidden group cursor-pointer hover:-translate-y-1 ${
-                  !isAvailable ? 'opacity-80 hover:opacity-100' : ''
+                  !isBookable ? 'opacity-80 hover:opacity-100' : ''
                 } ${
                   isSelected
                     ? 'border-indigo-600 ring-2 ring-indigo-500/20 shadow-lg shadow-indigo-100/80'
@@ -455,7 +481,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
 
                 {/* Bottom Action Button (Min-h 44px) */}
                 <div className="p-2.5 sm:p-3 bg-slate-50/70 border-t border-slate-100">
-                  {isAvailable ? (
+                  {isBookable ? (
                     <button
                       type="button"
                       onClick={(e) => {
@@ -476,7 +502,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                       ) : (
                         <>
                           <Icon name="PlusLg" size={16} />
-                          <span>Pilih untuk Pinjam</span>
+                          <span>{item.status === 'dipinjam' ? 'Booking Jadwal Lain' : 'Pilih untuk Pinjam'}</span>
                         </>
                       )}
                     </button>
@@ -488,13 +514,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                       }}
                       className="w-full min-h-[44px] py-2 px-2 rounded-xl text-[11px] sm:text-xs font-medium flex items-center justify-center bg-slate-100 text-slate-500 border border-slate-200/60"
                     >
-                      {item.status === 'menunggu_persetujuan'
-                        ? 'Menunggu Persetujuan'
-                        : item.status === 'dipinjam'
-                        ? 'Sedang Dipinjam'
-                        : item.status === 'perawatan'
-                        ? 'Dalam Perawatan'
-                        : 'Barang Rusak'}
+                      {item.status === 'perawatan' ? 'Dalam Perawatan' : 'Barang Rusak'}
                     </div>
                   )}
                 </div>
@@ -633,6 +653,53 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                   </p>
                 </div>
               )}
+
+              {/* Jadwal Kalender Booking Alat */}
+              {(() => {
+                const itemBookings = activeLoans.filter((l) =>
+                  l.items.some((it) => it.itemId === activeDetail.id)
+                );
+
+                return (
+                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                    <h4 className="font-semibold text-slate-800 text-xs flex items-center gap-1.5">
+                      <Icon name="Calendar3" size={15} className="text-indigo-600" />
+                      <span>Jadwal Booking Terdaftar ({itemBookings.length})</span>
+                    </h4>
+                    {itemBookings.length === 0 ? (
+                      <div className="p-3 bg-emerald-50 border border-emerald-200/80 rounded-xl text-emerald-800 text-xs flex items-center gap-2">
+                        <Icon name="CheckCircle" size={15} className="text-emerald-600 shrink-0" />
+                        <span>Belum ada jadwal booking. Alat ini bebas diajukan untuk rentang tanggal manapun.</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {itemBookings.map((b) => (
+                          <div key={b.id} className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                            <div>
+                              <span className="font-semibold text-slate-800">
+                                {formatDateIndo(b.tglPinjam)} s/d {formatDateIndo(b.tglRencanaKembali)}
+                              </span>
+                              <span className="text-[10px] text-slate-500 block">No. Invoice: {b.noInvoice}</span>
+                            </div>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              b.status === 'dipinjam'
+                                ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                : b.status === 'disetujui'
+                                ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                                : 'bg-sky-100 text-sky-800 border border-sky-200'
+                            }`}>
+                              {b.status === 'dipinjam' ? 'Sedang Dipakai' : b.status === 'disetujui' ? 'Booking Disetujui' : 'Menunggu Approval'}
+                            </span>
+                          </div>
+                        ))}
+                        <p className="text-[11px] text-slate-500 italic">
+                          * Anda tetap dapat meminjam alat ini untuk tanggal di luar jadwal terdaftar di atas.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Dialog Footer Actions */}
@@ -645,7 +712,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                 Tutup
               </button>
 
-              {activeDetail.status === 'tersedia' && (
+              {activeDetail.status !== 'rusak' && activeDetail.status !== 'perawatan' && (
                 <button
                   type="button"
                   onClick={() => {
@@ -666,7 +733,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                   ) : (
                     <>
                       <Icon name="PlusLg" size={16} />
-                      <span>Pilih untuk Pinjam</span>
+                      <span>{activeDetail.status === 'dipinjam' ? 'Booking Jadwal Lain' : 'Pilih untuk Pinjam'}</span>
                     </>
                   )}
                 </button>

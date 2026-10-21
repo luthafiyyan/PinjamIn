@@ -6,7 +6,12 @@ export type ItemCondition = 'baik' | 'perlu_cek' | 'rusak';
 
 export type ItemStatus = 'tersedia' | 'menunggu_persetujuan' | 'dipinjam' | 'perawatan' | 'rusak';
 
-export type LoanStatus = 'menunggu_persetujuan' | 'dipinjam' | 'ditolak' | 'dikembalikan';
+export type LoanStatus = 
+  | 'menunggu_persetujuan' 
+  | 'disetujui' 
+  | 'dipinjam' 
+  | 'ditolak' 
+  | 'dikembalikan';
 
 export type JenisKeperluan = 
   | 'tugas_kuliah'
@@ -106,6 +111,9 @@ export interface Loan {
   alasanPenolakan?: string | null;
   dikembalikanOleh: string | null;
   catatanPengembalian: string | null;
+  approvedAt?: any;
+  diserahkanAt?: any;
+  diserahkanOleh?: string | null;
   createdAt?: any;
 }
 

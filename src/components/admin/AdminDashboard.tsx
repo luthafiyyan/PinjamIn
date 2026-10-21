@@ -26,6 +26,7 @@ import {
   ItemCondition 
 } from '../../types';
 import { isAdmin as checkIsAdmin, ADMIN_EMAIL } from '../../lib/adminConfig';
+import { formatDateIndo } from '../../lib/dateUtils';
 
 interface AdminDashboardProps {
   onViewInvoice: (loanId: string) => void;
@@ -213,10 +214,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
   const totalPerawatan = items.filter((i) => i.status === 'perawatan').length;
   const totalRusak = items.filter((i) => i.status === 'rusak').length;
   const activeLoans = loans.filter((l) => l.status === 'dipinjam');
+  const approvedBookings = loans.filter((l) => l.status === 'disetujui');
   const pendingLoans = loans.filter((l) => l.status === 'menunggu_persetujuan');
   const overdueLoans = activeLoans.filter((l) => isLoanOverdue(l));
   const pendingUsers = users.filter((u) => !u.terverifikasi);
   const changeRequestUsers = users.filter((u) => u.permintaanPerubahan != null);
+
+  // Approved bookings sorted by start date
+  const sortedApprovedBookings = [...approvedBookings].sort((a, b) => {
+    return new Date(a.tglPinjam).getTime() - new Date(b.tglPinjam).getTime();
+  });
 
   // Active loans sorted with overdue on top
   const sortedActiveLoans = [...activeLoans].sort((a, b) => {
@@ -281,36 +288,76 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           throw new Error('Pengajuan ini sudah diproses atau tidak ditemukan.');
         }
 
-        const itemRefs = loan.items.map((item) => doc(db, 'items', item.itemId));
-        const itemSnaps = await Promise.all(itemRefs.map((itemRef) => transaction.get(itemRef)));
-        itemSnaps.forEach((itemSnap, index) => {
-          if (
-            !itemSnap.exists() ||
-            itemSnap.data().status !== 'menunggu_persetujuan' ||
-            itemSnap.data().currentLoanId !== loan.id
-          ) {
-            throw new Error(`Barang ${loan.items[index].nama} tidak lagi memiliki reservasi yang valid.`);
-          }
-        });
-
         const invoiceRef = doc(collection(db, 'invoices'));
         transaction.update(loanRef, {
-          status: 'dipinjam',
+          status: 'disetujui',
           approvedAt: serverTimestamp(),
         });
-        itemRefs.forEach((itemRef) => transaction.update(itemRef, { status: 'dipinjam' }));
+
+        // Pada sistem kalender, barang fisik tetap berada di lab sampai diserahkan pada hari-H
         transaction.set(invoiceRef, {
           loanId: loan.id,
           userId: loan.userId,
           noInvoice: loan.noInvoice,
           tglTerbit: new Date().toISOString(),
-          catatan: 'Bukti Peminjaman Resmi Laboratorium FIT',
+          catatan: 'Bukti Booking Resmi Laboratorium FIT',
         });
       });
-      showToast(`Pengajuan ${loan.noInvoice} disetujui.`);
+      showToast(`Booking ${loan.noInvoice} disetujui. Menunggu penyerahan alat pada hari-H.`);
     } catch (err: any) {
       console.error('Error saat menyetujui peminjaman:', err);
       showToast(err.message || 'Gagal menyetujui pengajuan.', 'error');
+    } finally {
+      setLoanActionId(null);
+    }
+  };
+
+  // Action: Serahkan Barang ke Peminjam (Hari-H saat peminjam datang ke meja lab)
+  const handleHandoverLoan = async (loan: Loan) => {
+    if (!window.confirm(`Serahkan barang untuk peminjaman ${loan.noInvoice} kepada ${loan.peminjam.nama}?`)) return;
+
+    try {
+      setLoanActionId(loan.id);
+      await runTransaction(db, async (transaction) => {
+        const loanRef = doc(db, 'loans', loan.id);
+        const loanSnap = await transaction.get(loanRef);
+        if (!loanSnap.exists() || loanSnap.data().status !== 'disetujui') {
+          throw new Error('Peminjaman ini belum disetujui atau sudah diserahkan sebelumnya.');
+        }
+
+        const itemRefs = loan.items.map((item) => doc(db, 'items', item.itemId));
+        const itemSnaps = await Promise.all(itemRefs.map((itemRef) => transaction.get(itemRef)));
+
+        for (let i = 0; i < itemSnaps.length; i++) {
+          const itemSnap = itemSnaps[i];
+          if (!itemSnap.exists()) {
+            throw new Error(`Barang ${loan.items[i].nama} tidak ditemukan.`);
+          }
+          const itemData = itemSnap.data();
+          if (itemData.status === 'rusak' || itemData.status === 'perawatan') {
+            throw new Error(`Barang [${loan.items[i].nama}] sedang dalam status ${itemData.status}, tidak dapat diserahkan.`);
+          }
+        }
+
+        // Update status pinjaman menjadi 'dipinjam' (aktif dibawa)
+        transaction.update(loanRef, {
+          status: 'dipinjam',
+          diserahkanAt: serverTimestamp(),
+          diserahkanOleh: profile?.nama || currentUser?.displayName || 'Petugas Laboratorium',
+        });
+
+        // Update status fisik barang menjadi 'dipinjam'
+        itemRefs.forEach((itemRef) => {
+          transaction.update(itemRef, {
+            status: 'dipinjam',
+            currentLoanId: loan.id,
+          });
+        });
+      });
+      showToast(`Barang untuk invoice ${loan.noInvoice} telah diserahkan ke peminjam.`);
+    } catch (err: any) {
+      console.error('Error saat menyerahkan barang:', err);
+      showToast(err.message || 'Gagal menyerahkan barang.', 'error');
     } finally {
       setLoanActionId(null);
     }
@@ -329,36 +376,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
       await runTransaction(db, async (transaction) => {
         const loanRef = doc(db, 'loans', loan.id);
         const loanSnap = await transaction.get(loanRef);
-        if (!loanSnap.exists() || loanSnap.data().status !== 'menunggu_persetujuan') {
+        if (!loanSnap.exists() || (loanSnap.data().status !== 'menunggu_persetujuan' && loanSnap.data().status !== 'disetujui')) {
           throw new Error('Pengajuan ini sudah diproses atau tidak ditemukan.');
         }
-
-        const itemRefs = loan.items.map((item) => doc(db, 'items', item.itemId));
-        const itemSnaps = await Promise.all(itemRefs.map((itemRef) => transaction.get(itemRef)));
-        itemSnaps.forEach((itemSnap, index) => {
-          if (
-            !itemSnap.exists() ||
-            itemSnap.data().status !== 'menunggu_persetujuan' ||
-            itemSnap.data().currentLoanId !== loan.id
-          ) {
-            throw new Error(`Barang ${loan.items[index].nama} tidak lagi memiliki reservasi yang valid.`);
-          }
-        });
 
         transaction.update(loanRef, {
           status: 'ditolak',
           alasanPenolakan: reason.trim(),
           rejectedAt: serverTimestamp(),
         });
-        itemRefs.forEach((itemRef) => transaction.update(itemRef, {
-          status: 'tersedia',
-          currentLoanId: null,
-        }));
       });
-      showToast(`Pengajuan ${loan.noInvoice} ditolak dan barang kembali tersedia.`);
+      showToast(`Pengajuan ${loan.noInvoice} ditolak.`);
     } catch (err: any) {
       console.error('Error saat menolak peminjaman:', err);
-      showToast(err.message || 'Gagal menolak pengajuan.', 'error');
+      showToast(err.message || 'Gagal menolak peminjaman.', 'error');
     } finally {
       setLoanActionId(null);
     }
@@ -1188,6 +1219,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
 
     let matchesStatus = true;
     if (historyStatusFilter === 'menunggu_persetujuan') matchesStatus = l.status === 'menunggu_persetujuan';
+    else if (historyStatusFilter === 'disetujui') matchesStatus = l.status === 'disetujui';
     else if (historyStatusFilter === 'ditolak') matchesStatus = l.status === 'ditolak';
     else if (historyStatusFilter === 'dipinjam') matchesStatus = l.status === 'dipinjam' && !isLoanOverdue(l);
     else if (historyStatusFilter === 'terlambat') matchesStatus = isLoanOverdue(l);
@@ -1453,7 +1485,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
 
         <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar snap-x snap-mandatory">
           {[
-            { key: 'pengembalian', label: 'Pinjaman', count: activeLoans.length + pendingLoans.length },
+            { key: 'pengembalian', label: 'Pinjaman', count: activeLoans.length + pendingLoans.length + approvedBookings.length },
             { key: 'verifikasi', label: 'Verifikasi', count: pendingUsers.length },
             { key: 'barang', label: 'Barang', count: items.length },
             { key: 'kategori', label: 'Kategori', count: categories.length },
@@ -1520,10 +1552,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           }`}
         >
           <Icon name="ClockHistory" size={16} />
-          <span>Peminjaman Aktif ({activeLoans.length})</span>
+          <span>Peminjaman ({activeLoans.length + approvedBookings.length})</span>
           {pendingLoans.length > 0 && (
             <span className="bg-sky-100 text-sky-800 px-1.5 py-0.2 rounded-full text-[10px]">
               {pendingLoans.length} Pengajuan
+            </span>
+          )}
+          {approvedBookings.length > 0 && (
+            <span className="bg-indigo-100 text-indigo-800 px-1.5 py-0.2 rounded-full text-[10px]">
+              {approvedBookings.length} Siap Diambil
             </span>
           )}
           {overdueLoans.length > 0 && (
@@ -1939,7 +1976,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                   Menunggu Persetujuan ({pendingLoans.length})
                 </h3>
                 <span className="text-[10px] font-semibold text-sky-800 bg-sky-100 px-2 py-0.5 rounded-full">
-                  Barang ditahan
+                  Menunggu Review Admin
                 </span>
               </div>
               {pendingLoans.map((loan) => (
@@ -1965,7 +2002,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         ))}
                       </div>
                       <p className="text-[11px] text-slate-500 mt-2">
-                        Rencana pinjam: {loan.tglPinjam} sampai {loan.tglRencanaKembali}
+                        Rencana pinjam: {formatDateIndo(loan.tglPinjam)} sampai {formatDateIndo(loan.tglRencanaKembali)}
                       </p>
                     </div>
                     <div className="flex gap-2 shrink-0">
@@ -1973,7 +2010,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         type="button"
                         onClick={() => handleRejectLoan(loan)}
                         disabled={loanActionId !== null}
-                        className="min-h-[40px] px-3 py-2 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold disabled:opacity-50"
+                        className="min-h-[40px] px-3 py-2 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold disabled:opacity-50 cursor-pointer"
                       >
                         Tolak
                       </button>
@@ -1981,9 +2018,80 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         type="button"
                         onClick={() => handleApproveLoan(loan)}
                         disabled={loanActionId !== null}
-                        className="min-h-[40px] px-3 py-2 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 text-xs font-semibold disabled:opacity-50"
+                        className="min-h-[40px] px-3 py-2 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 text-xs font-semibold disabled:opacity-50 cursor-pointer"
                       >
-                        {loanActionId === loan.id ? 'Memproses...' : 'Setujui'}
+                        {loanActionId === loan.id ? 'Memproses...' : 'Setujui Booking'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </section>
+          )}
+
+          {/* Section: Booking Disetujui (Menunggu Pengambilan / Serahkan Barang) */}
+          {sortedApprovedBookings.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Booking Disetujui / Menunggu Pengambilan ({sortedApprovedBookings.length})
+                </h3>
+                <span className="text-[10px] font-semibold text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded-full">
+                  Siap Diserahkan di Lab
+                </span>
+              </div>
+              {sortedApprovedBookings.map((loan) => (
+                <div key={loan.id} className="p-4 rounded-2xl border border-indigo-200 bg-indigo-50/40">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="font-mono text-xs font-semibold text-indigo-700 bg-white px-2 py-0.5 rounded border border-indigo-200">
+                          {loan.noInvoice}
+                        </span>
+                        <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
+                          Disetujui (Menunggu Diambil)
+                        </span>
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-900">{loan.peminjam.nama}</h4>
+                      <p className="text-xs text-slate-500">
+                        {loan.peminjam.tipePeminjam} · {loan.peminjam.nomorIdentitas} · {loan.peminjam.noHp || 'Tanpa nomor telepon'}
+                      </p>
+                      <p className="text-xs text-slate-600 mt-1">Tujuan: <span className="font-medium">{loan.keperluan}</span></p>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {loan.items.map((item) => (
+                          <span key={item.itemId} className="text-[11px] px-2 py-1 rounded-md bg-white border border-slate-200 text-slate-700">
+                            <span className="font-mono text-slate-500">{item.kodeAset}</span> {item.nama}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-[11px] text-indigo-900 mt-2 font-medium">
+                        Jadwal Pinjam: {formatDateIndo(loan.tglPinjam)} sampai {formatDateIndo(loan.tglRencanaKembali)}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => onViewInvoice(loan.id)}
+                        className="min-h-[40px] px-3 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold cursor-pointer"
+                      >
+                        Invoice
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRejectLoan(loan)}
+                        disabled={loanActionId !== null}
+                        className="min-h-[40px] px-3 py-2 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold disabled:opacity-50 cursor-pointer"
+                      >
+                        Batalkan
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleHandoverLoan(loan)}
+                        disabled={loanActionId !== null}
+                        className="min-h-[40px] px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Icon name="CheckCircle" size={14} />
+                        <span>{loanActionId === loan.id ? 'Memproses...' : 'Serahkan Barang'}</span>
                       </button>
                     </div>
                   </div>
@@ -2504,6 +2612,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
               >
                 <option value="all">Semua Status Peminjaman</option>
                 <option value="menunggu_persetujuan">Menunggu Persetujuan</option>
+                <option value="disetujui">Disetujui (Menunggu Diambil)</option>
                 <option value="ditolak">Ditolak</option>
                 <option value="dipinjam">Dipinjam (Aktif Normal)</option>
                 <option value="terlambat">Terlambat</option>
@@ -2696,6 +2805,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                     <div>
                       {loan.status === 'menunggu_persetujuan' ? (
                         <span className="text-sky-800 font-semibold text-[10px] bg-sky-100 px-2.5 py-0.5 rounded-full">Menunggu</span>
+                      ) : loan.status === 'disetujui' ? (
+                        <span className="text-indigo-800 font-semibold text-[10px] bg-indigo-100 px-2.5 py-0.5 rounded-full">Disetujui</span>
                       ) : loan.status === 'ditolak' ? (
                         <span className="text-rose-700 font-semibold text-[10px] bg-rose-100 px-2.5 py-0.5 rounded-full">Ditolak</span>
                       ) : loan.status === 'dikembalikan' ? (
@@ -2727,7 +2838,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
 
                   <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
                     <span className="text-slate-600 font-medium tabular-nums">{loan.items.length} alat dipinjam</span>
-                    {loan.status === 'dipinjam' || loan.status === 'dikembalikan' ? (
+                    {loan.status === 'disetujui' || loan.status === 'dipinjam' || loan.status === 'dikembalikan' ? (
                       <button
                         onClick={() => onViewInvoice(loan.id)}
                         className="min-h-[44px] px-4 py-2 bg-slate-900 hover:bg-indigo-600 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
@@ -2774,6 +2885,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                       <td className="py-2.5 px-3">
                         {loan.status === 'menunggu_persetujuan' ? (
                           <span className="text-sky-800 font-semibold text-[10px] bg-sky-50 px-2 py-0.5 rounded">Menunggu</span>
+                        ) : loan.status === 'disetujui' ? (
+                          <span className="text-indigo-800 font-semibold text-[10px] bg-indigo-50 px-2 py-0.5 rounded">Disetujui</span>
                         ) : loan.status === 'ditolak' ? (
                           <span className="text-rose-700 font-semibold text-[10px] bg-rose-50 px-2 py-0.5 rounded">Ditolak</span>
                         ) : loan.status === 'dikembalikan' ? (
@@ -2792,7 +2905,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                       </td>
                       <td className="py-2.5 px-3 text-slate-700 font-semibold tabular-nums">{loan.items.length} alat</td>
                       <td className="py-2.5 px-3 text-right">
-                        {loan.status === 'dipinjam' || loan.status === 'dikembalikan' ? (
+                        {loan.status === 'disetujui' || loan.status === 'dipinjam' || loan.status === 'dikembalikan' ? (
                           <button
                             onClick={() => onViewInvoice(loan.id)}
                             className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer"

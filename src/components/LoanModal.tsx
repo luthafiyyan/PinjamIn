@@ -5,12 +5,20 @@ import {
   doc, 
   collection, 
   serverTimestamp, 
-  getDoc 
+  getDoc,
+  query,
+  where,
+  getDocs
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
-import { Item, JenisKeperluan, PeminjamanSettings, RuleSetting } from '../types';
+import { Item, JenisKeperluan, PeminjamanSettings, RuleSetting, Loan } from '../types';
 import { isAdmin as checkIsAdmin } from '../lib/adminConfig';
+import { 
+  checkItemBookingConflicts, 
+  formatDateIndo, 
+  BookingConflict 
+} from '../lib/dateUtils';
 
 interface LoanModalProps {
   isOpen: boolean;
@@ -53,6 +61,8 @@ export const LoanModal: React.FC<LoanModalProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [conflicts, setConflicts] = useState<BookingConflict[]>([]);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   // Fetch settings from Firestore
   useEffect(() => {
@@ -86,6 +96,50 @@ export const LoanModal: React.FC<LoanModalProps> = ({
       setTglRencanaKembali(tmrw.toISOString().split('T')[0]);
     }
   }, [isOpen, profile]);
+
+  // Cek ketersediaan jadwal barang di kalender saat rentang tanggal atau keranjang berubah
+  useEffect(() => {
+    let isMounted = true;
+    async function checkAvailability() {
+      if (!isOpen || cart.length === 0 || !tglPinjam || !tglRencanaKembali) {
+        setConflicts([]);
+        return;
+      }
+
+      try {
+        setCheckingAvailability(true);
+        const qLoans = query(
+          collection(db, 'loans'),
+          where('status', 'in', ['menunggu_persetujuan', 'disetujui', 'dipinjam'])
+        );
+        const snap = await getDocs(qLoans);
+        const activeLoans: Loan[] = [];
+        snap.forEach((d) => {
+          activeLoans.push({ id: d.id, ...(d.data() as Omit<Loan, 'id'>) });
+        });
+
+        if (isMounted) {
+          const foundConflicts = checkItemBookingConflicts(
+            cart.map((c) => c.id),
+            tglPinjam,
+            tglRencanaKembali,
+            activeLoans
+          );
+          setConflicts(foundConflicts);
+        }
+      } catch (err) {
+        console.warn('Gagal mengecek jadwal bentrok:', err);
+      } finally {
+        if (isMounted) setCheckingAvailability(false);
+      }
+    }
+
+    checkAvailability();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, cart, tglPinjam, tglRencanaKembali]);
 
   if (!isOpen) return null;
 
@@ -144,6 +198,11 @@ export const LoanModal: React.FC<LoanModalProps> = ({
       return;
     }
 
+    if (conflicts.length > 0) {
+      setErrorMsg('Terdapat jadwal yang bentrok dengan peminjam lain. Silakan sesuaikan tanggal peminjaman atau hapus barang yang bentrok.');
+      return;
+    }
+
     if (!keperluan.trim()) {
       setErrorMsg('Deskripsi keperluan wajib diisi.');
       return;
@@ -192,7 +251,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
           throw new Error(`Jumlah barang melebihi batas (${activeSettings.maxBarang} barang).`);
         }
 
-        // STEP 3: Read all selected items
+        // STEP 3: Read all selected items and verify physical conditions
         const itemSnaps = await Promise.all(
           cart.map((it) => transaction.get(doc(db, 'items', it.id)))
         );
@@ -204,8 +263,8 @@ export const LoanModal: React.FC<LoanModalProps> = ({
             throw new Error(`Barang "${itName}" tidak ditemukan dalam database.`);
           }
           const itemData = snap.data();
-          if (itemData.status !== 'tersedia') {
-            throw new Error(`Barang [${itemData.nama || itName}] sedang dipinjam atau tidak tersedia. Silakan pilih barang lain.`);
+          if (itemData.status === 'rusak' || itemData.status === 'perawatan') {
+            throw new Error(`Barang [${itemData.nama || itName}] sedang dalam status ${itemData.status} dan tidak dapat dipinjam.`);
           }
         }
 
@@ -221,14 +280,8 @@ export const LoanModal: React.FC<LoanModalProps> = ({
         const newLoanDocRef = doc(loansCollectionRef);
 
         // STEP 5: ATOMIC WRITES
-        // Reserve all selected items while the admin reviews the request.
-        for (const it of cart) {
-          const itemRef = doc(db, 'items', it.id);
-          transaction.update(itemRef, {
-            status: 'menunggu_persetujuan',
-            currentLoanId: newLoanDocRef.id,
-          });
-        }
+        // Write Loan Document (Status awal: menunggu_persetujuan)
+        // Barang fisik tetap berada di laboratorium (tidak mengunci item fisik) sampai diserahkan oleh admin.
 
         // Write Loan Document
         transaction.set(newLoanDocRef, {
@@ -331,6 +384,31 @@ export const LoanModal: React.FC<LoanModalProps> = ({
             </div>
           )}
 
+          {conflicts.length > 0 && (
+            <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-900 space-y-2">
+              <div className="flex items-center gap-2 font-bold text-rose-800">
+                <Icon name="ExclamationTriangle" size={16} className="shrink-0 text-rose-600" />
+                <span>Jadwal Bentrok Terdeteksi ({conflicts.length} Barang)</span>
+              </div>
+              <p className="text-slate-700 leading-relaxed">
+                Alat berikut telah dibooking oleh pengguna lain pada rentang tanggal yang Anda pilih:
+              </p>
+              <div className="space-y-1.5 pl-2 border-l-2 border-rose-300">
+                {conflicts.map((c, idx) => (
+                  <div key={idx} className="bg-white/90 p-2 rounded-lg border border-rose-200">
+                    <span className="font-semibold text-slate-900">{c.itemName}</span>
+                    <span className="text-rose-700 block text-[11px] font-medium mt-0.5">
+                      Sudah dipesan: {formatDateIndo(c.tglPinjam)} s/d {formatDateIndo(c.tglRencanaKembali)} ({c.noInvoice})
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-rose-600 font-medium">
+                💡 Saran: Sesuaikan tanggal kembali sebelum tanggal peminjam lain, atau hapus alat yang bentrok dari keranjang.
+              </p>
+            </div>
+          )}
+
           {/* Aturan Peminjaman Info Box */}
           <div className="p-3.5 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex items-start gap-3 text-xs text-indigo-950">
             <Icon name="InfoCircle" size={16} className="text-indigo-600 shrink-0 mt-0.5" />
@@ -341,7 +419,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                 {settings.wajibPenanggungJawab && ' Wajib menyertakan Dosen Penanggung Jawab.'}
               </p>
               <p className="text-slate-600">
-                Barang ditahan setelah diajukan. Peminjaman aktif dan invoice tersedia setelah disetujui admin.
+                Sistem Booking Kalender: Jadwal diamankan setelah disetujui admin. Barang fisik tetap di lab dan diserahkan pada hari-H.
               </p>
             </div>
           </div>
@@ -552,7 +630,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
 
             <button
               type="submit"
-              disabled={loading || cart.length === 0 || isItemsCountExceeded || isDurationExceeded}
+              disabled={loading || cart.length === 0 || isItemsCountExceeded || isDurationExceeded || conflicts.length > 0 || checkingAvailability}
               className="w-full sm:w-auto min-h-[48px] px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-base sm:text-sm font-semibold rounded-xl shadow-md shadow-indigo-200 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
@@ -560,7 +638,15 @@ export const LoanModal: React.FC<LoanModalProps> = ({
               ) : (
                 <Icon name="CheckCircle" size={16} />
               )}
-              <span>{loading ? 'Mengirim Pengajuan...' : 'Ajukan Peminjaman'}</span>
+              <span>
+                {loading
+                  ? 'Mengirim Pengajuan...'
+                  : checkingAvailability
+                  ? 'Mengecek Jadwal...'
+                  : conflicts.length > 0
+                  ? 'Jadwal Bentrok'
+                  : 'Ajukan Booking'}
+              </span>
             </button>
           </div>
         </form>

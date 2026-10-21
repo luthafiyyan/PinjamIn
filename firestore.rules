@@ -29,15 +29,6 @@ service cloud.firestore {
       );
     }
 
-    function isOwnPendingLoanForItem(loanId, itemId) {
-      let loanPath = /databases/$(database)/documents/loans/$(loanId);
-      return existsAfter(loanPath)
-        && getAfter(loanPath).data.userId == request.auth.uid
-        && getAfter(loanPath).data.status == "menunggu_persetujuan"
-        && getAfter(loanPath).data.itemIds is list
-        && getAfter(loanPath).data.itemIds.hasAny([itemId]);
-    }
-
     // USERS COLLECTION
     match /users/{userId} {
       // User can read their own profile, admin can read all
@@ -79,25 +70,13 @@ service cloud.firestore {
     // ITEMS
     match /items/{itemId} {
       allow read: if isSignedIn();
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin() || (
-        isVerifiedUser() &&
-        resource.data.status == "tersedia" &&
-        request.resource.data.status == "menunggu_persetujuan" &&
-        request.resource.data.currentLoanId != null &&
-        isOwnPendingLoanForItem(request.resource.data.currentLoanId, itemId) &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'currentLoanId'])
-      );
+      allow write: if isAdmin();
     }
 
     // LOANS
     match /loans/{loanId} {
-      // Peminjam can read own loans, admin can read all
-      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow list: if isSignedIn() && (
-        isAdmin() ||
-        resource.data.userId == request.auth.uid
-      );
+      // Any signed in user can read loan schedules for calendar booking availability
+      allow read: if isSignedIn();
 
       // Create: verified user creating loan for themselves, or admin
       allow create: if isAdmin() || (
@@ -108,7 +87,7 @@ service cloud.firestore {
         request.resource.data.itemIds.size() > 0
       );
 
-      // Update: admin can update loan status (e.g. for returns)
+      // Update & Delete: admin can update loan status (e.g. approve, handover, returns)
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }

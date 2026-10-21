@@ -22,7 +22,7 @@ const STEPS = [
   { title: 'Masuk dan lengkapi profil', desc: 'Masuk dengan akun Google, lalu isi data diri sesuai tipe peminjam.' },
   { title: 'Tunggu verifikasi admin', desc: 'Admin lab memeriksa data akun sebelum Anda dapat meminjam.' },
   { title: 'Pilih alat dan ajukan peminjaman', desc: 'Pilih alat yang tersedia, lalu isi keperluan dan tanggal pengembalian.' },
-  { title: 'Tunggu persetujuan admin', desc: 'Barang ditahan selama pengajuan ditinjau. Setelah disetujui, ambil alat dan simpan invoice.' },
+  { title: 'Tunggu persetujuan admin', desc: 'Jadwal booking ditinjau admin. Setelah disetujui, ambil alat di lab pada hari-H dan simpan invoice.' },
 ];
 
 const CATEGORIES = [

@@ -225,10 +225,20 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
                 <Icon name="ExclamationTriangle" size={14} className="text-rose-600 print:grayscale" />
                 Terlambat Pengembalian
               </span>
+            ) : loan.status === 'disetujui' ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200 print:text-[7.5pt] print:px-1.5 print:py-0.5">
+                <Icon name="CheckCircle" size={14} className="text-indigo-600 print:grayscale" />
+                Booking Disetujui (Menunggu Pengambilan di Lab)
+              </span>
+            ) : loan.status === 'menunggu_persetujuan' ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-800 border border-sky-200 print:text-[7.5pt] print:px-1.5 print:py-0.5">
+                <Icon name="HourglassSplit" size={14} className="text-sky-600 print:grayscale" />
+                Menunggu Persetujuan Admin
+              </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200 print:text-[7.5pt] print:px-1.5 print:py-0.5">
                 <Icon name="HourglassSplit" size={14} className="text-amber-600 print:grayscale" />
-                Sedang Dipinjam (Aktif)
+                Sedang Dipinjam (Alat Diserahkan)
               </span>
             )}
           </div>
