@@ -234,7 +234,7 @@ function MainApp() {
 
   // 5. Normal Verified User / Admin
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 print:bg-white print:min-h-0 flex flex-col">
       <Navbar
         currentTab={currentTab}
         setCurrentTab={handleSelectTab}
@@ -262,7 +262,7 @@ function MainApp() {
         </div>
       )}
 
-      <main className="flex-1 pb-[calc(80px+env(safe-area-inset-bottom))] md:pb-16">
+      <main className="flex-1 pb-[calc(80px+env(safe-area-inset-bottom))] md:pb-16 print:p-0 print:m-0 print:bg-white">
         {currentTab === 'katalog' && (
           <ItemCatalog
             cart={cart}

@@ -124,7 +124,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 pb-24 md:pb-8 print:max-w-[148mm] print:p-0 print:m-0">
+    <div className="max-w-4xl mx-auto px-4 py-6 pb-24 md:pb-8 print:max-w-[148mm] print:p-0 print:m-0 print:bg-white print-document-wrapper">
       {/* Top Action Bar (Hidden when printing) */}
       <div className="flex items-center justify-between gap-4 mb-6 no-print">
         <button
@@ -145,7 +145,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
       </div>
 
       {/* Printable Invoice Container (Sized for A5 on print, centered on A4) */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-900/5 p-8 sm:p-12 print-a5-container">
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-900/5 p-8 sm:p-12 print-a5-container print:bg-white">
         
         {/* 1. KOP SURAT RESMI (FORMAT FORMAL TATA NASKAH & KENDALI MUTU) */}
         <div className="border-b-[3px] border-double border-slate-900 pb-4 mb-5 print-kop">
@@ -156,7 +156,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
                   Pinjam<span className="text-amber-500">In</span>
                 </span>
                 <span className="text-slate-300 font-light text-lg print:hidden">|</span>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 uppercase tracking-wider print:text-[7pt] print:p-0 print:border-none">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 uppercase tracking-wider print:text-[7pt] print:p-0 print:border-none print:bg-transparent">
                   Sistem Inventaris Lab FIT
                 </span>
               </div>
