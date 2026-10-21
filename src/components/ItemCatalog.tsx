@@ -213,43 +213,10 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
 
   const availableCount = items.filter((i) => i.status === 'tersedia').length;
 
-  useEffect(() => {
-    const revealNodes = Array.from(document.querySelectorAll('.scroll-reveal'));
-
-    if (!revealNodes.length) return;
-
-    const applyReveal = () => {
-      if (!('IntersectionObserver' in window)) {
-        revealNodes.forEach((node) => node.classList.add('is-visible'));
-        return;
-      }
-
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('is-visible');
-              observer.unobserve(entry.target);
-            }
-          });
-        },
-        {
-          threshold: 0.12,
-          rootMargin: '0px 0px -30px 0px',
-        }
-      );
-
-      revealNodes.forEach((node) => observer.observe(node));
-    };
-
-    const frame = requestAnimationFrame(applyReveal);
-    return () => cancelAnimationFrame(frame);
-  }, [filteredItems.length, loading]);
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Welcome Banner (Ringkas di ponsel) */}
-      <div className="scroll-reveal mb-4 sm:mb-8 bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-950 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xl shadow-indigo-950/10 relative overflow-hidden">
+      <div className="mb-4 sm:mb-8 bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-950 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xl shadow-indigo-950/10 relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-radial from-amber-500/10 to-transparent pointer-events-none" />
         <div className="relative z-10 max-w-2xl">
           <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-amber-300 text-xs font-semibold mb-3 border border-white/10">
@@ -275,7 +242,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="scroll-reveal bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 sm:p-5 mb-6 sm:mb-8 space-y-3 sm:space-y-4 transition-[transform,box-shadow] duration-300 ease-out hover:shadow-md">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 sm:p-5 mb-6 sm:mb-8 space-y-3 sm:space-y-4 transition-[transform,box-shadow] duration-300 ease-out hover:shadow-md">
         <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
           {/* Search Input (44px height, 16px font on mobile) */}
           <div className="relative flex-1">
@@ -399,8 +366,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
               <div
                 key={item.id}
                 onClick={() => handleOpenDetail(item)}
-                style={{ transitionDelay: `${index * 35}ms` }}
-                className={`scroll-reveal bg-white rounded-2xl border transition-all duration-300 ease-out flex flex-col justify-between overflow-hidden group cursor-pointer hover:-translate-y-1 ${
+                className={`bg-white rounded-2xl border transition-all duration-300 ease-out flex flex-col justify-between overflow-hidden group cursor-pointer hover:-translate-y-1 ${
                   !isBookable ? 'opacity-80 hover:opacity-100' : ''
                 } ${
                   isSelected
