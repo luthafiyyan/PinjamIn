@@ -152,9 +152,12 @@
     }
 
     .print-document-meta {
+      background: transparent !important;
+      border: none !important;
+      border-bottom: 0.5pt solid #cbd5e1 !important;
       margin-bottom: 2mm !important;
-      padding: 1.5mm 2mm !important;
-      border-radius: 1.5mm !important;
+      padding: 0 0 1.5mm 0 !important;
+      border-radius: 0 !important;
     }
 
     .print-document-meta-grid {
@@ -164,6 +167,8 @@
     .print-document-meta-card {
       padding: 1mm 1.5mm !important;
       border-radius: 1mm !important;
+      background: #ffffff !important;
+      border: 0.5pt solid #cbd5e1 !important;
     }
 
     .print-logo {
@@ -172,8 +177,12 @@
     }
 
     .print-status {
+      background: transparent !important;
+      border: none !important;
+      border-bottom: 0.5pt solid #e2e8f0 !important;
       margin-bottom: 2mm !important;
-      padding: 1mm 1.5mm !important;
+      padding: 0.5mm 0 !important;
+      border-radius: 0 !important;
     }
 
     /* Compact 2-column info grid */
@@ -186,11 +195,11 @@
 
     .print-info-card {
       border: 0.5pt solid #cbd5e1 !important;
-      background-color: #f8fafc !important;
+      background-color: #ffffff !important;
       padding: 1.5mm 2mm !important;
       font-size: 7.5pt !important;
       line-height: 1.2 !important;
-      border-radius: 1.5mm !important;
+      border-radius: 1mm !important;
     }
 
     .print-info-card > :not([hidden]) ~ :not([hidden]) {
@@ -234,11 +243,13 @@
     }
 
     .print-table th {
-      background-color: #f1f5f9 !important;
+      background-color: #ffffff !important;
       color: #0f172a !important;
       font-weight: 700 !important;
-      padding: 1mm 1.2mm !important;
-      border: 0.5pt solid #94a3b8 !important;
+      padding: 1.2mm 1.5mm !important;
+      border: 0.5pt solid #cbd5e1 !important;
+      border-top: 1.2pt solid #0f172a !important;
+      border-bottom: 1.2pt solid #0f172a !important;
       font-size: 7pt !important;
     }
 
@@ -257,13 +268,14 @@
     /* Rules section */
     .print-rules {
       font-size: 7.5pt !important;
-      line-height: 1.2 !important;
+      line-height: 1.25 !important;
       color: #475569 !important;
-      background-color: #f8fafc !important;
-      border: 0.5pt solid #e2e8f0 !important;
-      padding: 1mm 1.5mm !important;
+      background-color: transparent !important;
+      border: none !important;
+      border-left: 1.5pt solid #94a3b8 !important;
+      padding: 0.5mm 0 0.5mm 1.5mm !important;
       margin-bottom: 1.5mm !important;
-      border-radius: 1.5mm !important;
+      border-radius: 0 !important;
       break-inside: avoid !important;
       page-break-inside: avoid !important;
     }
