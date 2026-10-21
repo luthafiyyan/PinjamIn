@@ -272,6 +272,5 @@ Proyek ini dikembangkan untuk kebutuhan internal laboratorium dan didistribusika
 ---
 
 <p align="center">
-  Dikelola dengan ❤️ oleh <strong>Tim Laboratorium FIT</strong><br/>
-  Layanan Bantuan WhatsApp: <strong>0851-7208-8181</strong>
+  Developed by <strong>Luthafiyyan</strong> untuk <strong>Laboratorium FIT</strong>
 </p>
