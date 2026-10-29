@@ -246,8 +246,8 @@ function MainApp() {
 
       {/* Unauthorized Notice Banner */}
       {unauthorizedMsg && (
-        <div className="bg-rose-600 text-white px-4 py-2.5 text-xs font-semibold flex items-center justify-between shadow-md">
-          <div className="flex items-center gap-2 max-w-7xl mx-auto w-full">
+        <div className="bg-rose-600 text-white px-4 sm:px-6 lg:px-8 xl:px-12 py-2.5 text-xs font-semibold flex items-center justify-between shadow-md">
+          <div className="flex items-center gap-2 w-full">
             <Icon name="ExclamationTriangle" size={16} className="text-white shrink-0" />
             <span>{unauthorizedMsg}</span>
           </div>
@@ -344,7 +344,7 @@ function MainApp() {
 
       {/* Screen Footer */}
       <footer className="no-print border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-900">
               Pinjam<span className="text-amber-500">In</span>

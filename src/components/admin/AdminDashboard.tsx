@@ -1360,7 +1360,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
   const maxItemCount = Math.max(1, ...topBorrowedItems.map(({ count }) => count));
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
       {/* Toast Notification */}
       {toastMsg && (
         <div
@@ -2945,7 +2945,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
 
       {/* TAB 6: PENGATURAN ATURAN PEMINJAMAN */}
       {activeTab === 'pengaturan' && (
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 max-w-4xl">
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 w-full">
           <h2 className="text-[18px] sm:text-[20px] font-semibold text-slate-900 mb-1 flex items-center gap-2">
             <Icon name="Gear" size={20} className="text-indigo-600" />
             <span>Pengaturan Batas Peminjaman Lab FIT</span>
@@ -3194,7 +3194,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
 
       {/* TAB 7: PANDUAN ADMIN & INDEKS FIRESTORE */}
       {activeTab === 'panduan' && (
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 max-w-4xl space-y-6">
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 w-full space-y-6">
           <div>
             <h2 className="text-[18px] sm:text-[20px] font-semibold text-slate-900 flex items-center gap-2">
               <Icon name="JournalBookmark" size={20} className="text-indigo-600" />

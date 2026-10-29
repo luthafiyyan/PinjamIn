@@ -214,7 +214,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
   const availableCount = items.filter((i) => i.status === 'tersedia').length;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8">
       {/* Hero Welcome Banner (Ringkas di ponsel) */}
       <div className="mb-4 sm:mb-8 bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-950 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xl shadow-indigo-950/10 relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-radial from-amber-500/10 to-transparent pointer-events-none" />
@@ -318,7 +318,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
 
       {/* Items Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 min-[340px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+        <div className="grid grid-cols-1 min-[340px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-5">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
             <div key={n} className="bg-white rounded-2xl border border-slate-200 p-3.5 animate-pulse space-y-3">
               <div className="aspect-[4/3] bg-slate-200 rounded-xl" />
@@ -356,7 +356,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 min-[340px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+        <div className="grid grid-cols-1 min-[340px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-5">
           {filteredItems.map((item, index) => {
             const isSelected = cart.some((c) => c.id === item.id);
             const isBookable = item.status !== 'rusak' && item.status !== 'perawatan';
