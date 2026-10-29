@@ -247,8 +247,8 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
               <tr>
                 <td className="font-bold text-black py-0.5 whitespace-nowrap">KEPERLUAN</td>
                 <td className="text-center py-0.5">:</td>
-                <td className="text-black py-0.5 italic">
-                  "{loan.keperluan}"
+                <td className="text-black py-0.5 capitalize">
+                  {loan.keperluan}
                 </td>
               </tr>
               <tr>
