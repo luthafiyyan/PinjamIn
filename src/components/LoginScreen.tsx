@@ -290,28 +290,106 @@ export const LoginScreen: React.FC = () => {
               </div>
 
               <div className="inv lp-reveal" aria-hidden="true">
-                <div className="inv-h">
+                {/* Kop Surat Formal Blanko Lab FIT */}
+                <div className="inv-kop">
+                  <h4>FORM BUKTI PEMINJAMAN ALAT</h4>
+                  <h5>ADMINISTRASI LABORATORIUM</h5>
+                  <h6>LABORATORIUM FAKULTAS ILMU TERAPAN</h6>
+                  <p>Gedung Selaru FIT, Telkom University Bandung</p>
+                </div>
+
+                {/* Metadata Peminjaman Dua Kolom */}
+                <div className="inv-meta">
                   <div>
-                    <b>Pinjam<i>In</i></b>
-                    <small>Pinjam alat, tanpa ribet · Laboratorium FIT</small>
+                    <div className="inv-meta-row">
+                      <span className="inv-meta-label">NO. INVOICE</span>
+                      <span className="inv-meta-colon">:</span>
+                      <span className="inv-meta-val" style={{ fontFamily: 'monospace', fontWeight: 700 }}>PIN-20261015-001</span>
+                    </div>
+                    <div className="inv-meta-row">
+                      <span className="inv-meta-label">PEMINJAM</span>
+                      <span className="inv-meta-colon">:</span>
+                      <span className="inv-meta-val">Nama Peminjam</span>
+                    </div>
+                    <div className="inv-meta-row">
+                      <span className="inv-meta-label">NIM</span>
+                      <span className="inv-meta-colon">:</span>
+                      <span className="inv-meta-val">6701220001</span>
+                    </div>
                   </div>
-                  <div className="no"><strong>PIN-20261015-001</strong>15 Okt 2026</div>
+                  <div>
+                    <div className="inv-meta-row">
+                      <span className="inv-meta-label">TGL PINJAM</span>
+                      <span className="inv-meta-colon">:</span>
+                      <span className="inv-meta-val">15 Okt 2026</span>
+                    </div>
+                    <div className="inv-meta-row">
+                      <span className="inv-meta-label">BATAS KEMBALI</span>
+                      <span className="inv-meta-colon">:</span>
+                      <span className="inv-meta-val" style={{ fontWeight: 700 }}>18 Okt 2026</span>
+                    </div>
+                    <div className="inv-meta-row">
+                      <span className="inv-meta-label">KEPERLUAN</span>
+                      <span className="inv-meta-colon">:</span>
+                      <span className="inv-meta-val capitalize">Abdimas CoE</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="inv-r">
-                  <div>Peminjam<b>Nama Peminjam</b>Mahasiswa</div>
-                  <div>Batas kembali<b>18 Okt 2026</b>Keperluan: Tugas kuliah</div>
-                </div>
-                <table>
+
+                {/* Tabel Barang Formal */}
+                <table className="inv-table">
                   <thead>
-                    <tr><th>Kode</th><th>Alat</th><th>Kondisi</th></tr>
+                    <tr>
+                      <th className="center" style={{ width: '22px' }}>NO</th>
+                      <th>NAMA BARANG</th>
+                      <th className="center" style={{ width: '58px' }}>KODE</th>
+                      <th className="center" style={{ width: '44px' }}>JUMLAH</th>
+                    </tr>
                   </thead>
                   <tbody>
-                    <tr><td>CAM-001</td><td>Sony Alpha A6400</td><td>Baik</td></tr>
-                    <tr><td>TRP-001</td><td>Tripod Manfrotto</td><td>Baik</td></tr>
+                    <tr>
+                      <td className="center">1</td>
+                      <td>
+                        <div><strong>Sony Alpha A6400</strong></div>
+                        <div style={{ fontSize: '6.8px', color: '#64748b' }}>Kondisi Pinjam: Baik</div>
+                      </td>
+                      <td className="center" style={{ fontFamily: 'monospace' }}>CAM-001</td>
+                      <td className="center">1 Unit</td>
+                    </tr>
+                    <tr>
+                      <td className="center">2</td>
+                      <td>
+                        <div><strong>Tripod Manfrotto</strong></div>
+                        <div style={{ fontSize: '6.8px', color: '#64748b' }}>Kondisi Pinjam: Baik</div>
+                      </td>
+                      <td className="center" style={{ fontFamily: 'monospace' }}>TRP-001</td>
+                      <td className="center">1 Unit</td>
+                    </tr>
                   </tbody>
                 </table>
-                <div className="sig"><div>Peminjam</div><div>Admin</div></div>
-                <span className="stamp">INVOICE TERBIT</span>
+
+                {/* Tanda Tangan Formal 2 Pihak */}
+                <div className="inv-sig">
+                  <div className="inv-sig-box">
+                    <div className="inv-sig-role">Petugas Lab FIT,</div>
+                    <div className="inv-sig-name">( Petugas Lab )</div>
+                    <div className="inv-sig-id">NIP. 19850101...</div>
+                  </div>
+                  <div className="inv-sig-box">
+                    <div className="inv-sig-role">Peminjam,</div>
+                    <div className="inv-sig-name">( Nama Peminjam )</div>
+                    <div className="inv-sig-id">NIM. 6701220001</div>
+                  </div>
+                </div>
+
+                {/* Footer Dokumen */}
+                <div className="inv-foot">
+                  <span>Dicetak via <strong>PinjamIn</strong> — Lab FIT</span>
+                  <span style={{ fontWeight: 700, color: '#059669' }}>STATUS: DISETUJUI</span>
+                </div>
+
+                {/* Stamp Resmi */}
+                <span className="stamp">BUKTI RESMI TERBIT</span>
               </div>
             </div>
           </div>
