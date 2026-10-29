@@ -376,7 +376,6 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
           {/* Footer Dokumen */}
           <div className="mt-4 pt-1.5 border-t border-slate-300 flex justify-between items-center text-[9px] text-slate-500 print:text-[6.5pt] print:mt-2">
             <span>Dicetak via <strong>PinjamIn</strong> — Sistem Inventaris Lab FIT</span>
-            <span>Dok. Terkendali • FIT-LAB-INV</span>
           </div>
         </div>
 
