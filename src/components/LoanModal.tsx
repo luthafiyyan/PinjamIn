@@ -10,9 +10,18 @@ import {
   where,
   getDocs
 } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
-import { Item, JenisKeperluan, PeminjamanSettings, RuleSetting, Loan, ItemBooking } from '../types';
+import { 
+  Item, 
+  JenisKeperluan, 
+  PeminjamanSettings, 
+  RuleSetting, 
+  Loan, 
+  ItemBooking, 
+  TipePeminjam, 
+  UserProfile 
+} from '../types';
 import { isAdmin as checkIsAdmin } from '../lib/adminConfig';
 import { 
   checkItemBookingConflicts, 
@@ -43,7 +52,8 @@ export const LoanModal: React.FC<LoanModalProps> = ({
   onClearCart,
   onSuccess,
 }) => {
-  const { profile, currentUser } = useAuth();
+  const { profile, currentUser, isAdmin } = useAuth();
+  const isUserAdmin = checkIsAdmin(currentUser) || isAdmin || profile?.role === 'admin';
 
   // Settings
   const [settings, setSettings] = useState<RuleSetting>(
@@ -58,6 +68,18 @@ export const LoanModal: React.FC<LoanModalProps> = ({
   const [keperluan, setKeperluan] = useState('');
   const [penanggungJawabNama, setPenanggungJawabNama] = useState('');
   const [penanggungJawabNip, setPenanggungJawabNip] = useState('');
+
+  // Admin custom borrower states
+  const [adminBorrowerNama, setAdminBorrowerNama] = useState('');
+  const [adminBorrowerTipe, setAdminBorrowerTipe] = useState<TipePeminjam>('mahasiswa');
+  const [adminBorrowerIdentitas, setAdminBorrowerIdentitas] = useState('');
+  const [adminBorrowerUnit, setAdminBorrowerUnit] = useState('');
+  const [adminBorrowerNoHp, setAdminBorrowerNoHp] = useState('');
+  const [adminBorrowerEmail, setAdminBorrowerEmail] = useState('');
+  const [adminBorrowerMode, setAdminBorrowerMode] = useState<'manual' | 'registered'>('manual');
+  const [selectedUserUid, setSelectedUserUid] = useState<string>('');
+  const [adminInitialStatus, setAdminInitialStatus] = useState<'dipinjam' | 'disetujui' | 'menunggu_persetujuan'>('dipinjam');
+  const [registeredUsers, setRegisteredUsers] = useState<UserProfile[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -96,6 +118,40 @@ export const LoanModal: React.FC<LoanModalProps> = ({
       setTglRencanaKembali(tmrw.toISOString().split('T')[0]);
     }
   }, [isOpen, profile]);
+
+  // Load registered users if current user is admin
+  useEffect(() => {
+    if (!isOpen || !isUserAdmin) return;
+    async function fetchUsers() {
+      try {
+        const snap = await getDocs(collection(db, 'users'));
+        const list: UserProfile[] = [];
+        snap.forEach((d) => {
+          const data = d.data();
+          if (data.nama && data.role !== 'admin') {
+            list.push({ ...data, uid: d.id } as UserProfile);
+          }
+        });
+        setRegisteredUsers(list.sort((a, b) => (a.nama || '').localeCompare(b.nama || '')));
+      } catch (err) {
+        console.warn('Gagal memuat pengguna untuk admin:', err);
+      }
+    }
+    fetchUsers();
+  }, [isOpen, isUserAdmin]);
+
+  const handleSelectRegisteredUser = (uid: string) => {
+    setSelectedUserUid(uid);
+    const u = registeredUsers.find((user) => user.uid === uid);
+    if (u) {
+      setAdminBorrowerNama(u.nama || '');
+      setAdminBorrowerTipe(u.tipePeminjam || 'mahasiswa');
+      setAdminBorrowerIdentitas(u.nomorIdentitas || '');
+      setAdminBorrowerUnit(u.unitAsal || '');
+      setAdminBorrowerNoHp(u.nomorHp || u.noHp || '');
+      setAdminBorrowerEmail(u.email || '');
+    }
+  };
 
   // Cek ketersediaan jadwal barang di kalender saat rentang tanggal atau keranjang berubah
   useEffect(() => {
@@ -146,14 +202,10 @@ export const LoanModal: React.FC<LoanModalProps> = ({
   // Options for jenis keperluan based on user type
   const getJenisKeperluanOptions = () => {
     const opts: { value: JenisKeperluan; label: string }[] = [];
-    if (profile?.tipePeminjam === 'mahasiswa') {
-      opts.push({ value: 'tugas_kuliah', label: 'Tugas Kuliah / Praktikum' });
-    }
+    opts.push({ value: 'tugas_kuliah', label: 'Tugas Kuliah / Praktikum' });
     opts.push({ value: 'penelitian', label: 'Penelitian / Tugas Akhir / Riset' });
     opts.push({ value: 'kegiatan_organisasi', label: 'Kegiatan Organisasi Mahasiswa / Himpunan' });
-    if (profile?.tipePeminjam === 'tendik') {
-      opts.push({ value: 'kegiatan_unit', label: 'Kegiatan Unit Kerja / Layanan Lab' });
-    }
+    opts.push({ value: 'kegiatan_unit', label: 'Kegiatan Unit Kerja / Layanan Lab' });
     opts.push({ value: 'lainnya', label: 'Keperluan Lainnya' });
     return opts;
   };
@@ -168,8 +220,8 @@ export const LoanModal: React.FC<LoanModalProps> = ({
   };
 
   const durationDays = getDurationDays();
-  const isDurationExceeded = durationDays > settings.maxDurasiHari;
-  const isItemsCountExceeded = cart.length > settings.maxBarang;
+  const isDurationExceeded = !isUserAdmin && durationDays > settings.maxDurasiHari;
+  const isItemsCountExceeded = !isUserAdmin && cart.length > settings.maxBarang;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,12 +255,17 @@ export const LoanModal: React.FC<LoanModalProps> = ({
       return;
     }
 
+    if (isUserAdmin && !adminBorrowerNama.trim()) {
+      setErrorMsg('Nama peminjam wajib diisi oleh Admin.');
+      return;
+    }
+
     if (!keperluan.trim()) {
       setErrorMsg('Deskripsi keperluan wajib diisi.');
       return;
     }
 
-    if (settings.wajibPenanggungJawab) {
+    if (!isUserAdmin && settings.wajibPenanggungJawab) {
       if (!penanggungJawabNama.trim() || !penanggungJawabNip.trim()) {
         setErrorMsg('Data Dosen/Pembimbing Penanggung Jawab wajib diisi untuk mahasiswa.');
         return;
@@ -226,6 +283,30 @@ export const LoanModal: React.FC<LoanModalProps> = ({
       const dd = String(now.getDate()).padStart(2, '0');
       const yyyymmdd = `${yyyy}${mm}${dd}`;
 
+      // Target Borrower Data
+      const borrowerData = isUserAdmin ? {
+        nama: adminBorrowerNama.trim(),
+        email: adminBorrowerEmail.trim() || profile.email,
+        noHp: adminBorrowerNoHp.trim() || '',
+        tipePeminjam: adminBorrowerTipe,
+        nomorIdentitas: adminBorrowerIdentitas.trim() || '-',
+        unitAsal: adminBorrowerUnit.trim() || 'Fakultas Ilmu Terapan',
+        angkatan: adminBorrowerTipe === 'mahasiswa' && adminBorrowerIdentitas.length >= 4 
+          ? `20${adminBorrowerIdentitas.slice(2, 4)}` 
+          : '',
+      } : {
+        nama: profile.nama,
+        email: profile.email,
+        noHp: profile.nomorHp || profile.noHp || '',
+        tipePeminjam: profile.tipePeminjam,
+        nomorIdentitas: profile.nomorIdentitas,
+        unitAsal: profile.unitAsal,
+        angkatan: profile.angkatan || '',
+      };
+
+      const targetUserId = (isUserAdmin && selectedUserUid) ? selectedUserUid : profile.uid;
+      const initialStatus = isUserAdmin ? adminInitialStatus : 'menunggu_persetujuan';
+
       // RUN STRICT CLIENT-SIDE TRANSACTION
       const result = await runTransaction(db, async (transaction) => {
         // STEP 1: Read user profile
@@ -235,19 +316,18 @@ export const LoanModal: React.FC<LoanModalProps> = ({
           throw new Error('Profil pengguna tidak ditemukan.');
         }
         const userData = userSnap.data();
-        const isUserAdmin = checkIsAdmin(currentUser);
         if (!userData.terverifikasi && !isUserAdmin) {
           throw new Error('Akun Anda belum diverifikasi oleh admin. Peminjaman tidak dapat diproses.');
         }
 
-        // STEP 2: Read settings
+        // STEP 2: Read settings (regular user check)
         const settingsRef = doc(db, 'settings', 'peminjaman');
         const settingsSnap = await transaction.get(settingsRef);
         const activeSettings = settingsSnap.exists()
           ? (settingsSnap.data() as PeminjamanSettings)[profile.tipePeminjam] || settings
           : settings;
 
-        if (cart.length > activeSettings.maxBarang) {
+        if (!isUserAdmin && cart.length > activeSettings.maxBarang) {
           throw new Error(`Jumlah barang melebihi batas (${activeSettings.maxBarang} barang).`);
         }
 
@@ -278,26 +358,15 @@ export const LoanModal: React.FC<LoanModalProps> = ({
         // Prepare new document references
         const loansCollectionRef = collection(db, 'loans');
         const newLoanDocRef = doc(loansCollectionRef);
+        const bookingDocRef = doc(db, 'bookings', newLoanDocRef.id);
 
         // STEP 5: ATOMIC WRITES
-        // Write Loan Document (Status awal: menunggu_persetujuan)
-        // Barang fisik tetap berada di laboratorium (tidak mengunci item fisik) sampai diserahkan oleh admin.
-
-        // Write Loan Document
-        transaction.set(newLoanDocRef, {
-          userId: profile.uid,
-          peminjam: {
-            nama: profile.nama,
-            email: profile.email,
-            noHp: profile.nomorHp || profile.noHp || '',
-            tipePeminjam: profile.tipePeminjam,
-            nomorIdentitas: profile.nomorIdentitas,
-            unitAsal: profile.unitAsal,
-            angkatan: profile.angkatan || '',
-          },
+        const loanPayload: any = {
+          userId: targetUserId,
+          peminjam: borrowerData,
           jenisKeperluan,
           keperluan: keperluan.trim(),
-          penanggungJawab: activeSettings.wajibPenanggungJawab
+          penanggungJawab: penanggungJawabNama.trim()
             ? {
                 nama: penanggungJawabNama.trim(),
                 nip: penanggungJawabNip.trim(),
@@ -306,7 +375,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
           tglPinjam,
           tglRencanaKembali,
           tglKembaliAktual: null,
-          status: 'menunggu_persetujuan',
+          status: initialStatus,
           items: cart.map((it) => ({
             itemId: it.id,
             kodeAset: it.kodeAset,
@@ -322,10 +391,51 @@ export const LoanModal: React.FC<LoanModalProps> = ({
           dikembalikanOleh: null,
           catatanPengembalian: null,
           createdAt: serverTimestamp(),
-        });
+        };
 
-        // Write Sanitized Booking Document for public calendar schedule (without personal borrower PII)
-        const bookingDocRef = doc(db, 'bookings', newLoanDocRef.id);
+        if (isUserAdmin) {
+          loanPayload.recordedByAdmin = true;
+          loanPayload.adminOperator = profile.nama || 'Petugas Laboratorium';
+        }
+
+        if (initialStatus === 'dipinjam') {
+          loanPayload.diserahkanAt = serverTimestamp();
+          loanPayload.diserahkanOleh = profile.nama || 'Petugas Laboratorium';
+
+          // Update item fisik menjadi dipinjam
+          cart.forEach((it) => {
+            transaction.update(doc(db, 'items', it.id), {
+              status: 'dipinjam',
+              currentLoanId: newLoanDocRef.id,
+            });
+          });
+
+          // Buat record invoice
+          const invoiceDocRef = doc(collection(db, 'invoices'));
+          transaction.set(invoiceDocRef, {
+            loanId: newLoanDocRef.id,
+            userId: targetUserId,
+            noInvoice,
+            tglTerbit: new Date().toISOString(),
+            catatan: 'Bukti Peminjaman Laboratorium FIT',
+            createdAt: serverTimestamp(),
+          });
+        } else if (initialStatus === 'disetujui') {
+          loanPayload.approvedAt = serverTimestamp();
+          const invoiceDocRef = doc(collection(db, 'invoices'));
+          transaction.set(invoiceDocRef, {
+            loanId: newLoanDocRef.id,
+            userId: targetUserId,
+            noInvoice,
+            tglTerbit: new Date().toISOString(),
+            catatan: 'Bukti Booking Laboratorium FIT',
+            createdAt: serverTimestamp(),
+          });
+        }
+
+        transaction.set(newLoanDocRef, loanPayload);
+
+        // Booking Sanitized Document for Calendar
         transaction.set(bookingDocRef, {
           loanId: newLoanDocRef.id,
           noInvoice,
@@ -337,11 +447,11 @@ export const LoanModal: React.FC<LoanModalProps> = ({
           })),
           tglPinjam,
           tglRencanaKembali,
-          status: 'menunggu_persetujuan',
+          status: initialStatus,
           createdAt: serverTimestamp(),
         });
 
-        // Write Counter Document
+        // Counter Document
         transaction.set(counterRef, { last: lastCount }, { merge: true });
 
         return { loanId: newLoanDocRef.id };
@@ -362,7 +472,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
       <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden sm:my-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-4 sm:p-6 flex items-center justify-between shrink-0">
+        <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-4 sm:p-6 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -376,7 +486,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
             <div>
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-amber-300 text-xs font-semibold mb-1">
                 <Icon name="Stars" size={16} className="text-amber-400" />
-                Keranjang Peminjaman
+                {isUserAdmin ? 'Peminjaman via Petugas / Admin' : 'Keranjang Peminjaman'}
               </div>
               <h2 className="text-[18px] sm:text-[20px] font-semibold tracking-normal">Formulir Peminjaman Alat</h2>
               <p className="text-xs text-indigo-100">Laboratorium Fakultas Ilmu Terapan</p>
@@ -401,6 +511,162 @@ export const LoanModal: React.FC<LoanModalProps> = ({
             </div>
           )}
 
+          {/* ADMIN BORROWER INPUT SECTION */}
+          {isUserAdmin && (
+            <div className="p-4 bg-amber-50/90 border border-amber-200 rounded-2xl space-y-3.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Icon name="PersonBadge" size={18} className="text-amber-800" />
+                  <span className="font-bold text-amber-950 text-xs sm:text-sm">
+                    Identitas Peminjam (Diisi oleh Admin)
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200 text-amber-900 uppercase tracking-wider">
+                  Admin Input
+                </span>
+              </div>
+              
+              <p className="text-xs text-amber-900/80 leading-relaxed">
+                Tentukan nama peminjam sebenarnya (mahasiswa/dosen/staf) agar tercetak akurat di surat peminjaman dan bukti tanda tangan fisik.
+              </p>
+
+              {/* Mode Pemilihan Peminjam */}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdminBorrowerMode('manual');
+                    setSelectedUserUid('');
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    adminBorrowerMode === 'manual'
+                      ? 'bg-amber-800 text-white shadow-sm'
+                      : 'bg-white text-amber-900 border border-amber-300 hover:bg-amber-100/50'
+                  }`}
+                >
+                  Ketik Manual / Tamu
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAdminBorrowerMode('registered')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    adminBorrowerMode === 'registered'
+                      ? 'bg-amber-800 text-white shadow-sm'
+                      : 'bg-white text-amber-900 border border-amber-300 hover:bg-amber-100/50'
+                  }`}
+                >
+                  Pilih Pengguna Terdaftar ({registeredUsers.length})
+                </button>
+              </div>
+
+              {adminBorrowerMode === 'registered' && (
+                <div>
+                  <label className="block text-xs font-bold text-amber-950 mb-1">
+                    Cari / Pilih Akun Pengguna
+                  </label>
+                  <select
+                    value={selectedUserUid}
+                    onChange={(e) => handleSelectRegisteredUser(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                  >
+                    <option value="">-- Pilih Nama Mahasiswa / Dosen / Tendik --</option>
+                    {registeredUsers.map((u) => (
+                      <option key={u.uid} value={u.uid}>
+                        {u.nama} ({u.nomorIdentitas || '-'}) — {u.unitAsal || u.tipePeminjam}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Grid Isian Data Peminjam */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="block text-xs font-bold text-amber-950 mb-1">
+                    Nama Lengkap Peminjam <span className="text-rose-600">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={adminBorrowerNama}
+                    onChange={(e) => setAdminBorrowerNama(e.target.value)}
+                    placeholder="Contoh: Ahmad Fauzi"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                    required={isUserAdmin}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-amber-950 mb-1">
+                    Tipe Peminjam
+                  </label>
+                  <select
+                    value={adminBorrowerTipe}
+                    onChange={(e) => setAdminBorrowerTipe(e.target.value as TipePeminjam)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 bg-white text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                  >
+                    <option value="mahasiswa">Mahasiswa</option>
+                    <option value="dosen">Dosen</option>
+                    <option value="tendik">Tenaga Kependidikan / Tendik</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-amber-950 mb-1">
+                    Nomor Identitas (NIM / NIP)
+                  </label>
+                  <input
+                    type="text"
+                    value={adminBorrowerIdentitas}
+                    onChange={(e) => setAdminBorrowerIdentitas(e.target.value)}
+                    placeholder="Contoh: 6706220015"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 bg-white text-slate-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-amber-950 mb-1">
+                    Program Studi / Unit Asal
+                  </label>
+                  <input
+                    type="text"
+                    value={adminBorrowerUnit}
+                    onChange={(e) => setAdminBorrowerUnit(e.target.value)}
+                    placeholder="Contoh: D3 Rekayasa Perangkat Lunak"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-amber-950 mb-1">
+                    No. HP / WhatsApp Peminjam
+                  </label>
+                  <input
+                    type="tel"
+                    value={adminBorrowerNoHp}
+                    onChange={(e) => setAdminBorrowerNoHp(e.target.value)}
+                    placeholder="Contoh: 081234567890"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 bg-white text-slate-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-amber-950 mb-1">
+                    Status Peminjaman Awal
+                  </label>
+                  <select
+                    value={adminInitialStatus}
+                    onChange={(e) => setAdminInitialStatus(e.target.value as any)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                  >
+                    <option value="dipinjam">Langsung Diserahkan (Sedang Dipinjam)</option>
+                    <option value="disetujui">Booking Disetujui (Menunggu Pengambilan)</option>
+                    <option value="menunggu_persetujuan">Menunggu Persetujuan</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
           {conflicts.length > 0 && (
             <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-900 space-y-2">
               <div className="flex items-center gap-2 font-bold text-rose-800">
@@ -420,26 +686,22 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                   </div>
                 ))}
               </div>
-              <p className="text-[11px] text-rose-600 font-medium">
-                💡 Saran: Sesuaikan tanggal kembali sebelum tanggal peminjam lain, atau hapus alat yang bentrok dari keranjang.
-              </p>
             </div>
           )}
 
-          {/* Aturan Peminjaman Info Box */}
-          <div className="p-3.5 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex items-start gap-3 text-xs text-indigo-950">
-            <Icon name="InfoCircle" size={16} className="text-indigo-600 shrink-0 mt-0.5" />
-            <div className="space-y-0.5">
-              <span className="font-semibold">Ketentuan untuk {profile?.tipePeminjam}:</span>
-              <p className="text-slate-600">
-                Maksimal <b>{settings.maxBarang} barang</b> sekaligus, durasi maksimal <b>{settings.maxDurasiHari} hari</b>.
-                {settings.wajibPenanggungJawab && ' Wajib menyertakan Dosen Penanggung Jawab.'}
-              </p>
-              <p className="text-slate-600">
-                Sistem Booking Kalender: Jadwal diamankan setelah disetujui admin. Barang fisik tetap di lab dan diserahkan pada hari-H.
-              </p>
+          {/* Aturan Peminjaman Info Box (Untuk User Reguler) */}
+          {!isUserAdmin && (
+            <div className="p-3.5 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex items-start gap-3 text-xs text-indigo-950">
+              <Icon name="InfoCircle" size={16} className="text-indigo-600 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <span className="font-semibold">Ketentuan untuk {profile?.tipePeminjam}:</span>
+                <p className="text-slate-600">
+                  Maksimal <b>{settings.maxBarang} barang</b> sekaligus, durasi maksimal <b>{settings.maxDurasiHari} hari</b>.
+                  {settings.wajibPenanggungJawab && ' Wajib menyertakan Dosen Penanggung Jawab.'}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Selected Items List */}
           <div>
@@ -519,7 +781,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
             )}
           </div>
 
-          {/* Keperluan & Deskripsi */}
+          {/* Keperluan & Jadwal */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -589,19 +851,21 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                 rows={2}
                 value={keperluan}
                 onChange={(e) => setKeperluan(e.target.value)}
-                placeholder="Contoh: Pengambilan video tugas akhir mata kuliah Multimedia..."
+                placeholder="Contoh: Praktikum Mandiri Mata Kuliah Jaringan..."
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white"
                 required
               />
             </div>
           </div>
 
-          {/* Penanggung Jawab Section (Wajib jika settings mensyaratkan, e.g. Mahasiswa) */}
-          {settings.wajibPenanggungJawab && (
+          {/* Penanggung Jawab Section */}
+          {(settings.wajibPenanggungJawab || isUserAdmin) && (
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800">
-                <Icon name="Person" size={16} className="text-indigo-600" />
-                <span>Dosen / Pembimbing Penanggung Jawab (Wajib)</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800">
+                  <Icon name="Person" size={16} className="text-indigo-600" />
+                  <span>Dosen / Pembimbing Penanggung Jawab {!isUserAdmin ? '(Wajib)' : '(Opsional)'}</span>
+                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -614,7 +878,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                     onChange={(e) => setPenanggungJawabNama(e.target.value)}
                     placeholder="Contoh: Dr. Ir. Budi Santoso, M.T."
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white"
-                    required={settings.wajibPenanggungJawab}
+                    required={!isUserAdmin && settings.wajibPenanggungJawab}
                   />
                 </div>
                 <div>
@@ -627,7 +891,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                     onChange={(e) => setPenanggungJawabNip(e.target.value)}
                     placeholder="Contoh: 198501012010121001"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white tabular-nums"
-                    required={settings.wajibPenanggungJawab}
+                    required={!isUserAdmin && settings.wajibPenanggungJawab}
                   />
                 </div>
               </div>
@@ -648,7 +912,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
             <button
               type="submit"
               disabled={loading || cart.length === 0 || isItemsCountExceeded || isDurationExceeded || conflicts.length > 0 || checkingAvailability}
-              className="w-full sm:w-auto min-h-[48px] px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-base sm:text-sm font-semibold rounded-xl shadow-md shadow-indigo-200 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto min-h-[48px] px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white text-base sm:text-sm font-semibold rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -657,11 +921,15 @@ export const LoanModal: React.FC<LoanModalProps> = ({
               )}
               <span>
                 {loading
-                  ? 'Mengirim Pengajuan...'
+                  ? 'Memproses Peminjaman...'
                   : checkingAvailability
                   ? 'Mengecek Jadwal...'
                   : conflicts.length > 0
                   ? 'Jadwal Bentrok'
+                  : isUserAdmin
+                  ? adminInitialStatus === 'dipinjam'
+                    ? 'Serahkan Alat & Cetak Formulir'
+                    : 'Simpan Peminjaman'
                   : 'Ajukan Booking'}
               </span>
             </button>
