@@ -100,6 +100,30 @@ export function formatDateIndo(dateStr?: string | null): string {
 }
 
 /**
+ * Format tanggal YYYY-MM-DD ke format lengkap Indonesia dengan nama bulan penuh (misal: "29 Oktober 2026").
+ */
+export function formatDateIndoFull(dateStr?: string | null): string {
+  if (!dateStr) return '-';
+  try {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const monthIndex = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const months = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      ];
+      return `${day} ${months[monthIndex] || parts[1]} ${year}`;
+    }
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+}
+
+/**
  * Mendapatkan tanggal hari ini dalam format YYYY-MM-DD lokal.
  */
 export function getTodayDateStr(): string {

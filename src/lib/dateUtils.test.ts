@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { 
   isDateRangeOverlapping, 
   checkItemBookingConflicts, 
-  formatDateIndo 
+  formatDateIndo,
+  formatDateIndoFull 
 } from './dateUtils';
 import { Loan } from '../types';
 
@@ -155,6 +156,14 @@ describe('Sistem Booking Kalender & Validasi Tanggal (QA Tests)', () => {
       expect(formatDateIndo('2026-10-24')).toBe('24 Okt 2026');
       expect(formatDateIndo('2026-01-05')).toBe('5 Jan 2026');
       expect(formatDateIndo(null)).toBe('-');
+    });
+  });
+
+  describe('formatDateIndoFull', () => {
+    it('memformat tanggal YYYY-MM-DD ke Bahasa Indonesia lengkap dengan nama bulan penuh', () => {
+      expect(formatDateIndoFull('2026-10-29')).toBe('29 Oktober 2026');
+      expect(formatDateIndoFull('2026-01-05')).toBe('5 Januari 2026');
+      expect(formatDateIndoFull(null)).toBe('-');
     });
   });
 });

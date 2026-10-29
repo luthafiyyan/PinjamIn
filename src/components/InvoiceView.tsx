@@ -7,6 +7,7 @@ import { Icon } from './Icon';
 import { db } from '../lib/firebase';
 import { Loan } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { formatDateIndoFull } from '../lib/dateUtils';
 
 interface InvoiceViewProps {
   loanId: string;
@@ -348,7 +349,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
         <div className="pt-1 print:pt-0">
           {/* Tanggal Terbit di Kanan Atas Tanda Tangan */}
           <div className="text-right text-xs text-black mb-1 font-medium print:text-[8pt] print:mb-0.5">
-            Bandung, {loan.tglPinjam}
+            Bandung, {formatDateIndoFull(loan.tglPinjam)}
           </div>
 
           <div className="grid grid-cols-2 gap-8 text-xs text-center print:text-[8pt] print:gap-4">
