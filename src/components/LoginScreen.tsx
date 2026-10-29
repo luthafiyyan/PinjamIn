@@ -196,7 +196,7 @@ export const LoginScreen: React.FC = () => {
                 Pinjam alat lab, <em>tanpa ribet</em>
               </h1>
               <p className="lead">
-                Peminjaman kamera, tripod, lighting, audio, dan perlengkapan lainnya di Laboratorium FIT kini dicatat
+                Peminjaman kamera, tripod, lighting, audio, dan perlengkapan lainnya di Unit Laboratorium FIT kini dicatat
                 secara digital.
               </p>
 
