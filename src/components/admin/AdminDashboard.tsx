@@ -401,7 +401,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
       showToast(`Pengajuan ${loan.noInvoice} ditolak.`);
     } catch (err: any) {
       console.error('Error saat menolak peminjaman:', err);
-      showToast(err.message || 'Gagal menolak peminjaman.', 'error');
+      const isPermissionErr = err.code === 'permission-denied' || String(err.message).toLowerCase().includes('permission');
+      const errorText = isPermissionErr
+        ? 'Akses ditolak (Missing or insufficient permissions). Pastikan aturan keamanan Firestore di Firebase Console sudah diperbarui.'
+        : (err.message || 'Gagal menolak peminjaman.');
+      showToast(errorText, 'error');
     } finally {
       setLoanActionId(null);
     }

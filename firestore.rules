@@ -12,9 +12,11 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return request.auth != null
-        && request.auth.token.email_verified == true
-        && request.auth.token.email == "hafiyyanluthfii@gmail.com";
+      return request.auth != null && (
+        (request.auth.token.email == "hafiyyanluthfii@gmail.com") ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin")
+      );
     }
 
     function isOwner(userId) {
@@ -105,8 +107,8 @@ service cloud.firestore {
       // Dibuat bersamaan secara atomik saat peminjaman diajukan
       allow create: if isVerifiedUser() || isAdmin();
 
-      // Hanya admin yang dapat memperbarui atau menghapus status booking
-      allow update, delete: if isAdmin();
+      // Admin dapat memperbarui, membuat, atau menghapus status booking
+      allow write: if isAdmin();
     }
 
     // INVOICES
