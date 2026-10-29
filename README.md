@@ -69,16 +69,21 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
   * **Persetujuan / Penolakan:** Menyetujui pengajuan atau memberikan alasan penolakan yang jelas.
   * **Serah Terima (*Handover*):** Mengonfirmasi penyerahan fisik barang kepada peminjam.
   * **Inspeksi Pengembalian (*Return Checklist*):** Formulir inspeksi kondisi fisik barang (*Baik / Perlu Cek / Rusak*) dan checklist kelengkapan aksesoris saat barang dikembalikan, dilengkapi catatan laboran.
+* **Pencatatan Peminjaman Walk-In / Manual:** Staf laboran dapat mencatatkan peminjaman langsung untuk peminjam *offline* / di tempat dengan memilih pengguna terdaftar atau mengisi identitas peminjam kustom (Nama, Kontak, Tipe Peminjam, NIM/NIP, Unit Asal) serta memilih status awal langsung (*Disetujui* atau *Langsung Dipinjamkan*).
 * **Manajemen Inventaris & Aset:** Tambah, edit, dan hapus aset laboratorium lengkap dengan foto, kode aset terstandarisasi, nomor seri, dan tahun perolehan.
 * **Kategori & Prefix Otomatis:** Pengelompokan aset dengan kode prefix otomatis (misal: `CAM` untuk Kamera, `AUD` untuk Audio, `KOM` untuk Komputer).
 * **Konfigurasi Kebijakan Fleksibel:** Pengaturan batas maksimal durasi pinjam, batas maksimal jumlah barang, dan kewajiban penanggung jawab yang dapat disesuaikan per kategori peminjam (Mahasiswa, Dosen, Tendik).
 * **Statistik & Analisis Riwayat:** Ringkasan metrik peminjaman aktif, barang dalam perbaikan, dan grafik tren peminjaman berdasarkan filter waktu (30 hari, 3 bulan, 1 tahun, atau semua waktu).
+* **Desain Desktop Full-Width Responsif:** Dasbor administrasi, katalog, dan bilah navigasi memanfaatkan layar monitor desktop *widescreen* secara optimal (*fluid full-width layout*) agar tabel data dan metrik tidak sempit.
 
-### 📄 Invoice Digital & Bukti Peminjaman
-* **Nomor Invoice Otomatis:** Format penomoran dokumen resmi unik per transaksi.
-* **Bukti Serah Terima Resmi:** Dokumen digital memuat data peminjam, dosen penanggung jawab, daftar alat beserta kelengkapan, tanggal pinjam, batas pengembalian, dan cap verifikasi.
-* **Akses Cepat & Cetak:** Fitur cetak/simpan PDF langsung dari browser dan tautan cepat ke WhatsApp Helpdesk Laboratorium FIT (`0851-7208-8181`).
-* **Proteksi Akses:** Peminjam hanya dapat membuka invoice miliknya sendiri, sementara administrator dapat mengakses seluruh arsip invoice.
+### 📄 Form Bukti Peminjaman Resmi (Invoice A5)
+* **Format Blanko Formal Laboratorium FIT:** Mengikuti standar resmi Administrasi Laboratorium Fakultas Ilmu Terapan dengan kop surat simetris dan logo resmi Lab FIT.
+* **Titimangsa Formal Bahasa Indonesia:** Penulisan tanggal surat resmi otomatis (`Bandung, [DD] [Nama Bulan] [YYYY]`, contoh: *Bandung, 29 Oktober 2026*).
+* **Metadata Peminjaman 2 Kolom Sejajar:** Data terstruktur mencakup Nomor Invoice unik, Nama Peminjam, Nomor Identitas (NIM/NIP), Kontak HP/WA, Tanggal Pinjam, Batas Pengembalian, Keperluan (*Capitalized Case*), dan Status persetujuan.
+* **Tabel Barang Solid Klasik:** Daftar inventaris rapi dengan kolom No, Nama Barang & Spesifikasi Teknis, Kode Aset, Jumlah Unit, serta Keterangan Kelengkapan dan Kondisi Pinjam.
+* **Tanda Tangan Dua Pihak:** Blok pengesahan resmi berdampingan antara Petugas Laboratorium FIT (kiri) dan Peminjam (kanan).
+* **Siap Cetak Kertas A5:** Tampilan dan styling cetak (`@media print`) dioptimalkan khusus untuk ukuran kertas A5 tanpa terpotong atau berantakan saat dicetak atau disimpan ke PDF.
+* **Proteksi Akses Dokumen:** Peminjam hanya dapat membuka bukti peminjaman miliknya sendiri, sementara administrator dapat mengakses seluruh arsip invoice.
 
 ---
 
@@ -234,17 +239,27 @@ Pastikan lingkungan pengembangan Anda telah terpasang:
 
 ## 🔐 Aturan Keamanan & Hak Akses (RBAC)
 
-PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Security Rules**:
+PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Security Rules** dan **HTTP Security Headers**:
 
 1. **Peminjam (Mahasiswa, Dosen, Tendik):**
    * Hanya dapat membaca dan memperbarui profil miliknya sendiri (nomor HP, unit kerja, angkatan, permohonan koreksi).
    * Hanya dapat membaca katalog barang dan riwayat peminjaman miliknya sendiri.
    * Hanya dapat melihat invoice peminjaman yang diajukan oleh akun miliknya.
-   * Tidak dapat mengubah status transaksi atau memodifikasi data inventaris.
+   * Tidak dapat mengubah status peminjaman atau memodifikasi data inventaris.
 
 2. **Administrator & Laboran:**
-   * Diidentifikasi melalui alamat email resmi administrator yang terverifikasi (`hafiyyanluthfii@gmail.com` yang dikonfigurasi di `adminConfig.ts` & `firestore.rules`).
-   * Memiliki akses penuh untuk membaca, membuat, menyetujui, dan memperbarui seluruh data inventaris, pengguna, transaksi, dan aturan peminjaman.
+   * Diidentifikasi melalui alamat email resmi administrator yang terverifikasi (`hafiyyanluthfii@gmail.com` yang dikonfigurasi di `adminConfig.ts` & `firestore.rules`) atau akun dengan atribut `role: "admin"`.
+   * Memiliki akses penuh untuk membaca, membuat, menyetujui, dan memperbarui seluruh data inventaris, pengguna, peminjaman, dan aturan peminjaman.
+
+3. **Kepatuhan Privasi Data Pribadi (UU PDP):**
+   * Data kontak dan identitas peminjam (*PII - Personally Identifiable Information*) diisolasi ketat di dokumen privat.
+   * Ketersediaan slot kalender untuk pengecekan bentrok jadwal diakses publik via koleksi tersanitasi (`/bookings`) tanpa memuat data peminjam.
+
+4. **HTTP Security Headers (Vercel):**
+   * **`X-Frame-Options: SAMEORIGIN`** & **`Content-Security-Policy: frame-ancestors 'self'`**: Memblokir serangan *Clickjacking* dari situs pihak ketiga sekaligus mengizinkan *auth relay iframe* Firebase.
+   * **`Cross-Origin-Opener-Policy: same-origin-allow-popups`**: Mencegah serangan *cross-origin window tampering* dengan tetap mengizinkan komunikasi jendela popup Google Sign-In.
+   * **`X-Content-Type-Options: nosniff`**: Mencegah *MIME-type sniffing exploits*.
+   * **`Referrer-Policy: strict-origin-when-cross-origin`**: Menjaga privasi path URL dan parameter dari kebocoran ke pihak ketiga.
 
 Deploy aturan Firestore ke lingkungan Firebase Anda:
 ```bash
