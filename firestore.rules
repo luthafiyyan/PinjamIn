@@ -75,13 +75,18 @@ service cloud.firestore {
 
     // LOANS
     match /loans/{loanId} {
-      // Any signed in user can read loan schedules for calendar booking availability
-      allow read: if isSignedIn();
+      // Peminjam hanya boleh membaca peminjaman miliknya sendiri, Admin boleh membaca semua
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.userId == request.auth.uid
+      );
 
       // Create: verified user creating loan for themselves, or admin
       allow create: if isAdmin() || (
         isVerifiedUser() &&
         request.resource.data.userId == request.auth.uid &&
+        request.resource.data.peminjam.email == request.auth.token.email &&
         request.resource.data.status == "menunggu_persetujuan" &&
         request.resource.data.itemIds is list &&
         request.resource.data.itemIds.size() > 0
@@ -90,6 +95,18 @@ service cloud.firestore {
       // Update & Delete: admin can update loan status (e.g. approve, handover, returns)
       allow update: if isAdmin();
       allow delete: if isAdmin();
+    }
+
+    // BOOKINGS (Sanitized calendar booking slots without PII - UU PDP compliance)
+    match /bookings/{bookingId} {
+      // Pengguna terautentikasi dapat melihat jadwal slot booking untuk cek ketersediaan alat
+      allow read: if isSignedIn();
+
+      // Dibuat bersamaan secara atomik saat peminjaman diajukan
+      allow create: if isVerifiedUser() || isAdmin();
+
+      // Hanya admin yang dapat memperbarui atau menghapus status booking
+      allow update, delete: if isAdmin();
     }
 
     // INVOICES
@@ -107,8 +124,11 @@ service cloud.firestore {
     // COUNTERS
     match /counters/{counterId} {
       allow read: if isSignedIn();
-      // Any verified user or admin can update the invoice counter during loan transaction
-      allow write: if isVerifiedUser() || isAdmin();
+      // Validasi penambahan counter nomor invoice oleh user terverifikasi atau admin
+      allow write: if (isVerifiedUser() || isAdmin()) &&
+        request.resource.data.keys().hasOnly(['last']) &&
+        request.resource.data.last is int &&
+        (!exists(resource) || request.resource.data.last == resource.data.last + 1);
     }
   }
 }

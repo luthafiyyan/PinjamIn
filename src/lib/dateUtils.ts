@@ -1,4 +1,4 @@
-import { Loan, LoanStatus } from '../types';
+import { Loan, LoanStatus, ItemBooking } from '../types';
 
 /**
  * Memeriksa apakah dua rentang tanggal bersinggungan (overlap) secara inklusif dengan buffer 0 hari.
@@ -43,13 +43,14 @@ export function checkItemBookingConflicts(
   itemIds: string[],
   startDate: string,
   endDate: string,
-  existingLoans: Loan[],
+  existingLoans: (Loan | ItemBooking)[],
   excludeLoanId?: string
 ): BookingConflict[] {
   const conflicts: BookingConflict[] = [];
 
   for (const loan of existingLoans) {
-    if (excludeLoanId && loan.id === excludeLoanId) continue;
+    const loanUniqueId = 'loanId' in loan && loan.loanId ? loan.loanId : loan.id;
+    if (excludeLoanId && loanUniqueId === excludeLoanId) continue;
     if (!ACTIVE_BOOKING_STATUSES.includes(loan.status)) continue;
 
     // Periksa apakah rentang tanggal bersinggungan
@@ -60,7 +61,7 @@ export function checkItemBookingConflicts(
           conflicts.push({
             itemId: it.itemId,
             itemName: it.nama,
-            loanId: loan.id,
+            loanId: loanUniqueId,
             noInvoice: loan.noInvoice,
             tglPinjam: loan.tglPinjam,
             tglRencanaKembali: loan.tglRencanaKembali,

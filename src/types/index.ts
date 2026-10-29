@@ -117,6 +117,22 @@ export interface Loan {
   createdAt?: any;
 }
 
+export interface ItemBooking {
+  id: string;
+  loanId: string;
+  itemIds: string[];
+  items: {
+    itemId: string;
+    kodeAset: string;
+    nama: string;
+  }[];
+  tglPinjam: string;
+  tglRencanaKembali: string;
+  status: LoanStatus;
+  noInvoice: string;
+  createdAt?: any;
+}
+
 export interface Invoice {
   id: string;
   loanId: string;

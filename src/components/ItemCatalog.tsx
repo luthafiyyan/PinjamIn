@@ -7,7 +7,7 @@ import {
 } from 'firebase/firestore';
 import { Icon, getCategoryIconName } from './Icon';
 import { db } from '../lib/firebase';
-import { Item, Category, ItemStatus, Loan } from '../types';
+import { Item, Category, ItemStatus, ItemBooking } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { formatDateIndo } from '../lib/dateUtils';
 
@@ -36,7 +36,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
   const [internalDetailItem, setInternalDetailItem] = useState<Item | null>(null);
   const [detailImgError, setDetailImgError] = useState(false);
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
-  const [activeLoans, setActiveLoans] = useState<Loan[]>([]);
+  const [activeBookings, setActiveBookings] = useState<ItemBooking[]>([]);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
 
   const activeDetail = controlledDetailItem !== undefined ? controlledDetailItem : internalDetailItem;
@@ -108,27 +108,27 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
     return () => unsubscribeItems();
   }, []);
 
-  // Real-time snapshot for active loans (jadwal kalender booking)
+  // Real-time snapshot for active bookings (jadwal kalender booking teranonimisasi)
   useEffect(() => {
-    const qLoans = query(
-      collection(db, 'loans'),
+    const qBookings = query(
+      collection(db, 'bookings'),
       where('status', 'in', ['menunggu_persetujuan', 'disetujui', 'dipinjam'])
     );
-    const unsubscribeLoans = onSnapshot(
-      qLoans,
+    const unsubscribeBookings = onSnapshot(
+      qBookings,
       (snapshot) => {
-        const list: Loan[] = [];
+        const list: ItemBooking[] = [];
         snapshot.forEach((doc) => {
-          list.push({ id: doc.id, ...(doc.data() as Omit<Loan, 'id'>) });
+          list.push({ id: doc.id, ...(doc.data() as Omit<ItemBooking, 'id'>) });
         });
-        setActiveLoans(list);
+        setActiveBookings(list);
       },
       (error) => {
-        console.warn('Error fetching active loans snapshot for calendar:', error);
+        console.warn('Error fetching active bookings snapshot for calendar:', error);
       }
     );
 
-    return () => unsubscribeLoans();
+    return () => unsubscribeBookings();
   }, []);
 
   const getStatusBadge = (status: ItemStatus, isCompact = false) => {
@@ -622,8 +622,8 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
 
               {/* Jadwal Kalender Booking Alat */}
               {(() => {
-                const itemBookings = activeLoans.filter((l) =>
-                  l.items.some((it) => it.itemId === activeDetail.id)
+                const itemBookings = activeBookings.filter((b) =>
+                  b.items.some((it) => it.itemId === activeDetail.id)
                 );
 
                 return (

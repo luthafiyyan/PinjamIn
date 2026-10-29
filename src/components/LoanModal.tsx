@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
-import { Item, JenisKeperluan, PeminjamanSettings, RuleSetting, Loan } from '../types';
+import { Item, JenisKeperluan, PeminjamanSettings, RuleSetting, Loan, ItemBooking } from '../types';
 import { isAdmin as checkIsAdmin } from '../lib/adminConfig';
 import { 
   checkItemBookingConflicts, 
@@ -108,14 +108,14 @@ export const LoanModal: React.FC<LoanModalProps> = ({
 
       try {
         setCheckingAvailability(true);
-        const qLoans = query(
-          collection(db, 'loans'),
+        const qBookings = query(
+          collection(db, 'bookings'),
           where('status', 'in', ['menunggu_persetujuan', 'disetujui', 'dipinjam'])
         );
-        const snap = await getDocs(qLoans);
-        const activeLoans: Loan[] = [];
+        const snap = await getDocs(qBookings);
+        const activeBookings: ItemBooking[] = [];
         snap.forEach((d) => {
-          activeLoans.push({ id: d.id, ...(d.data() as Omit<Loan, 'id'>) });
+          activeBookings.push({ id: d.id, ...(d.data() as Omit<ItemBooking, 'id'>) });
         });
 
         if (isMounted) {
@@ -123,7 +123,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
             cart.map((c) => c.id),
             tglPinjam,
             tglRencanaKembali,
-            activeLoans
+            activeBookings
           );
           setConflicts(foundConflicts);
         }
@@ -321,6 +321,23 @@ export const LoanModal: React.FC<LoanModalProps> = ({
           alasanPenolakan: null,
           dikembalikanOleh: null,
           catatanPengembalian: null,
+          createdAt: serverTimestamp(),
+        });
+
+        // Write Sanitized Booking Document for public calendar schedule (without personal borrower PII)
+        const bookingDocRef = doc(db, 'bookings', newLoanDocRef.id);
+        transaction.set(bookingDocRef, {
+          loanId: newLoanDocRef.id,
+          noInvoice,
+          itemIds: cart.map((it) => it.id),
+          items: cart.map((it) => ({
+            itemId: it.id,
+            kodeAset: it.kodeAset,
+            nama: it.nama,
+          })),
+          tglPinjam,
+          tglRencanaKembali,
+          status: 'menunggu_persetujuan',
           createdAt: serverTimestamp(),
         });
 

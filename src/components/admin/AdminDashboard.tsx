@@ -294,6 +294,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           approvedAt: serverTimestamp(),
         });
 
+        // Sinkronisasi status jadwal kalender publik (tanpa PII)
+        const bookingRef = doc(db, 'bookings', loan.id);
+        transaction.set(bookingRef, { status: 'disetujui' }, { merge: true });
+
         // Pada sistem kalender, barang fisik tetap berada di lab sampai diserahkan pada hari-H
         transaction.set(invoiceRef, {
           loanId: loan.id,
@@ -346,6 +350,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           diserahkanOleh: profile?.nama || currentUser?.displayName || 'Petugas Laboratorium',
         });
 
+        // Sinkronisasi status jadwal kalender publik (tanpa PII)
+        const bookingRef = doc(db, 'bookings', loan.id);
+        transaction.set(bookingRef, { status: 'dipinjam' }, { merge: true });
+
         // Update status fisik barang menjadi 'dipinjam'
         itemRefs.forEach((itemRef) => {
           transaction.update(itemRef, {
@@ -385,6 +393,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           alasanPenolakan: reason.trim(),
           rejectedAt: serverTimestamp(),
         });
+
+        // Sinkronisasi status jadwal kalender publik (tanpa PII)
+        const bookingRef = doc(db, 'bookings', loan.id);
+        transaction.set(bookingRef, { status: 'ditolak' }, { merge: true });
       });
       showToast(`Pengajuan ${loan.noInvoice} ditolak.`);
     } catch (err: any) {
@@ -515,6 +527,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           catatanPengembalian: returnNote.trim() || 'Pengembalian peralatan telah dicek dan diterima oleh laboran.',
           items: updatedLoanItems,
         });
+
+        // Sinkronisasi status jadwal kalender publik (tanpa PII)
+        const bookingRef = doc(db, 'bookings', returnModalLoan.id);
+        transaction.set(bookingRef, { status: 'dikembalikan' }, { merge: true });
 
         for (let i = 0; i < itemRefs.length; i++) {
           const it = returnModalLoan.items[i];
