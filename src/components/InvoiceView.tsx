@@ -159,10 +159,10 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
       {/* Printable Invoice Container (Model Blanko Formal Lab FIT) */}
       <div className="bg-white rounded-2xl border border-slate-300 shadow-xl p-6 sm:p-10 print-a5-container print:bg-white print:border-none print:shadow-none print:p-0 text-slate-900">
         
-        {/* 1. KOP SURAT RESMI (HANYA LOGO LAB FIT DI KIRI & TEKS TERPUSAT) */}
+        {/* 1. KOP SURAT RESMI (HANYA LOGO LAB FIT DI KIRI & TEKS TERPUSAT SECARA SIMETRIS) */}
         <div className="border-b-[2.5px] border-black pb-3 mb-4 print:pb-2 print:mb-3">
           <div className="flex items-center justify-between gap-3">
-            {/* Logo Laboratorium FIT Saja */}
+            {/* Logo Laboratorium FIT Saja (Kiri) */}
             <div className="w-28 sm:w-32 shrink-0">
               <img
                 src="https://web.labfit.id/wp-content/uploads/2025/06/Logo-Lab-FIT-2024_Lengkap-Utama-2048x306.png"
@@ -175,8 +175,8 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
               />
             </div>
 
-            {/* Teks Judul & Lembaga Terpusat */}
-            <div className="flex-1 text-center pr-2">
+            {/* Teks Judul & Lembaga Terpusat di Tengah Dokumen */}
+            <div className="flex-1 text-center">
               <h2 className="text-xs sm:text-sm font-extrabold uppercase tracking-tight text-black leading-tight print:text-[10pt]">
                 FORM BUKTI PEMINJAMAN ALAT
               </h2>
@@ -190,6 +190,9 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
                 Gedung Selaru Fakultas Ilmu Terapan, Jl. Telekomunikasi No. 1 Terusan Buah Batu, Bandung
               </p>
             </div>
+
+            {/* Spacer Penyeimbang Kanan agar Teks Benar-Benar di Tengah Dokumen */}
+            <div className="w-28 sm:w-32 shrink-0 invisible pointer-events-none" aria-hidden="true" />
           </div>
         </div>
 
@@ -245,7 +248,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
                 <td className="font-bold text-black py-0.5 whitespace-nowrap">KEPERLUAN</td>
                 <td className="text-center py-0.5">:</td>
                 <td className="text-black py-0.5 italic">
-                  "{loan.keperluan}" ({formatJenisKeperluan(loan.jenisKeperluan)})
+                  "{loan.keperluan}"
                 </td>
               </tr>
               <tr>
