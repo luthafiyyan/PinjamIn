@@ -213,7 +213,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
             Riwayat Peminjaman Saya
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
-            Pantau status barang yang sedang Anda bawa dan riwayat transaksi laboratorium FIT.
+            Pantau status barang yang sedang Anda bawa dan riwayat peminjaman laboratorium FIT.
           </p>
         </div>
 
@@ -448,7 +448,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
             Peminjaman tidak ditemukan
           </h4>
           <p className="text-xs text-slate-500 mb-4 font-normal leading-relaxed">
-            Tidak ada transaksi yang cocok dengan kata kunci <span className="font-semibold text-slate-700">"{searchQuery}"</span> atau filter yang dipilih.
+            Tidak ada peminjaman yang cocok dengan kata kunci <span className="font-semibold text-slate-700">"{searchQuery}"</span> atau filter yang dipilih.
           </p>
           <button
             onClick={handleResetFilters}
@@ -557,7 +557,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                     ) : loan.status === 'ditolak' ? (
                       <span className="text-slate-400">Peminjaman tidak disetujui</span>
                     ) : (
-                      <span className="text-emerald-700 font-medium">Transaksi peminjaman telah tuntas</span>
+                      <span className="text-emerald-700 font-medium">Peminjaman telah selesai dikembalikan</span>
                     )}
                   </div>
 
