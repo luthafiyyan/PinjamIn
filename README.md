@@ -165,11 +165,13 @@ PinjamIn/
 │   ├── index.css                 # Konfigurasi Tailwind CSS v4 & styling global
 │   ├── landing.css               # Styling dekoratif & animasi landing page
 │   └── main.tsx                  # Entry point aplikasi React
+├── .firebaserc                   # Target proyek Firebase CLI
+├── firebase.json                 # Pemetaan deployment database Firestore
 ├── firestore.rules               # Aturan keamanan database Cloud Firestore
 ├── firebase-applet-config.json   # Konfigurasi kredensial Firebase web client
 ├── package.json                  # Metadata proyek & daftar dependensi
 ├── tsconfig.json                 # Konfigurasi kompilator TypeScript
-├── vercel.json                   # Konfigurasi rewrite SPA untuk deployment Vercel
+├── vercel.json                   # Konfigurasi rewrite SPA & security headers Vercel
 ├── vite.config.ts                # Konfigurasi Vite & Tailwind plugin
 └── README.md                     # Dokumentasi resmi proyek
 ```
@@ -248,18 +250,21 @@ PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Securit
    * Tidak dapat mengubah status peminjaman atau memodifikasi data inventaris.
 
 2. **Administrator & Laboran:**
-   * Diidentifikasi melalui alamat email resmi administrator yang terverifikasi (`hafiyyanluthfii@gmail.com` yang dikonfigurasi di `adminConfig.ts` & `firestore.rules`) atau akun dengan atribut `role: "admin"`.
+   * Diidentifikasi melalui alamat email resmi administrator yang terverifikasi (`hafiyyanluthfii@gmail.com` dengan validasi server-side `email_verified == true` di `firestore.rules`) atau akun dengan atribut `role: "admin"`.
    * Memiliki akses penuh untuk membaca, membuat, menyetujui, dan memperbarui seluruh data inventaris, pengguna, peminjaman, dan aturan peminjaman.
 
-3. **Kepatuhan Privasi Data Pribadi (UU PDP):**
-   * Data kontak dan identitas peminjam (*PII - Personally Identifiable Information*) diisolasi ketat di dokumen privat.
-   * Ketersediaan slot kalender untuk pengecekan bentrok jadwal diakses publik via koleksi tersanitasi (`/bookings`) tanpa memuat data peminjam.
+3. **Validasi Transaksi & Privasi Data Pribadi (UU PDP):**
+   * **Integritas Transaksi Server-Side:** Aturan Firestore membatasi maksimal 10 barang per pengajuan, mewajibkan urutan tanggal valid (`tglRencanaKembali >= tglPinjam`), dan memastikan pemetaan identik antara slot booking kalender dengan ID peminjaman (`loanId == bookingId`).
+   * **Proteksi PII:** Data kontak dan identitas peminjam (*PII - Personally Identifiable Information*) diisolasi ketat di dokumen privat.
+   * **Sanitasi Kalender Publik:** Ketersediaan slot kalender untuk pengecekan bentrok jadwal diakses via koleksi tersanitasi (`/bookings`) tanpa memuat data diri peminjam.
 
 4. **HTTP Security Headers (Vercel):**
    * **`X-Frame-Options: SAMEORIGIN`** & **`Content-Security-Policy: frame-ancestors 'self'`**: Memblokir serangan *Clickjacking* dari situs pihak ketiga sekaligus mengizinkan *auth relay iframe* Firebase.
-   * **`Cross-Origin-Opener-Policy: same-origin-allow-popups`**: Mencegah serangan *cross-origin window tampering* dengan tetap mengizinkan komunikasi jendela popup Google Sign-In.
-   * **`X-Content-Type-Options: nosniff`**: Mencegah *MIME-type sniffing exploits*.
+   * **`Strict-Transport-Security` (HSTS)**: `max-age=31536000; includeSubDomains; preload` mewajibkan browser untuk selalu menggunakan koneksi HTTPS yang aman dan terenkripsi.
+   * **`Permissions-Policy: camera=(), microphone=(), geolocation=()`**: Menonaktifkan izin akses perangkat keras sensitif yang tidak dibutuhkan oleh aplikasi.
+   * **`X-Content-Type-Options: nosniff`**: Mencegah eksploitasi *MIME-type sniffing*.
    * **`Referrer-Policy: strict-origin-when-cross-origin`**: Menjaga privasi path URL dan parameter dari kebocoran ke pihak ketiga.
+   * *Catatan Popup Auth:* Header COOP (*Cross-Origin-Opener-Policy*) dilepas secara sengaja agar jendela popup Google Sign-In dapat berkomunikasi dengan jendela utama dan menutup otomatis (*auto-close*) setelah otentikasi berhasil.
 
 Deploy aturan Firestore ke lingkungan Firebase Anda:
 ```bash
