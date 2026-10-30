@@ -1,0 +1,8 @@
+{
+  "firestore": [
+    {
+      "database": "ai-studio-pinjamin-88fd4b93-76bd-4a3d-b5b7-73f8f451f4ae",
+      "rules": "firestore.rules"
+    }
+  ]
+}

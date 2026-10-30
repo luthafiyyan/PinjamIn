@@ -11,7 +11,7 @@ import {
   setDoc, 
   serverTimestamp 
 } from 'firebase/firestore';
-import { auth, db, googleProvider, handleFirestoreError, OperationType, testFirestoreConnection } from '../lib/firebase';
+import { auth, db, googleProvider, handleFirestoreError, OperationType } from '../lib/firebase';
 import { UserProfile } from '../types';
 import { isAdmin as checkIsAdmin } from '../lib/adminConfig';
 
@@ -32,10 +32,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    testFirestoreConnection();
-  }, []);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {

@@ -13,7 +13,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return request.auth != null && (
-        (request.auth.token.email == "hafiyyanluthfii@gmail.com") ||
+        (request.auth.token.email == "hafiyyanluthfii@gmail.com" && request.auth.token.email_verified == true) ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin")
       );
@@ -91,7 +91,13 @@ service cloud.firestore {
         request.resource.data.peminjam.email == request.auth.token.email &&
         request.resource.data.status == "menunggu_persetujuan" &&
         request.resource.data.itemIds is list &&
-        request.resource.data.itemIds.size() > 0
+        request.resource.data.itemIds.size() > 0 &&
+        request.resource.data.itemIds.size() <= 10 &&
+        request.resource.data.items is list &&
+        request.resource.data.items.size() == request.resource.data.itemIds.size() &&
+        request.resource.data.tglPinjam is string &&
+        request.resource.data.tglRencanaKembali is string &&
+        request.resource.data.tglRencanaKembali >= request.resource.data.tglPinjam
       );
 
       // Update & Delete: admin can update loan status (e.g. approve, handover, returns)
@@ -105,7 +111,14 @@ service cloud.firestore {
       allow read: if isSignedIn();
 
       // Dibuat bersamaan secara atomik saat peminjaman diajukan
-      allow create: if isVerifiedUser() || isAdmin();
+      allow create: if isAdmin() || (
+        isVerifiedUser() &&
+        request.resource.data.loanId == bookingId &&
+        request.resource.data.itemIds is list &&
+        request.resource.data.itemIds.size() > 0 &&
+        request.resource.data.itemIds.size() <= 10 &&
+        request.resource.data.status == "menunggu_persetujuan"
+      );
 
       // Admin dapat memperbarui, membuat, atau menghapus status booking
       allow write: if isAdmin();
