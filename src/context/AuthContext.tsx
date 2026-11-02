@@ -87,10 +87,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
+      // 1. Bersihkan sisa hash route di URL
       if (window.location.hash) {
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
       }
+
+      // 2. Putuskan sesi Firebase Auth
       await signOut(auth);
+
+      // 3. Bersihkan seluruh web storage (localStorage & sessionStorage) untuk keamanan PC bersama di Lab
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (storageErr) {
+        console.warn('Gagal membersihkan web storage saat logout:', storageErr);
+      }
+
+      // 4. Reset state pengguna di memori React
+      setCurrentUser(null);
+      setProfile(null);
     } catch (error) {
       console.error('Error saat logout:', error);
     }

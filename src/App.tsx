@@ -138,6 +138,11 @@ function MainApp() {
 
   const handleLogout = async () => {
     handleClearCart();
+    setActiveInvoiceLoanId(null);
+    setActiveDetailItem(null);
+    setIsLoanModalOpen(false);
+    setUnauthorizedMsg(null);
+    setCurrentTab('katalog');
     await logout();
     window.location.hash = '';
   };
