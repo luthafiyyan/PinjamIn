@@ -2,32 +2,44 @@ import { User } from 'firebase/auth';
 import { UserProfile } from '../types';
 
 /**
- * Email tunggal akun Google administrator sistem PinjamIn Laboratorium FIT.
- */
-export const ADMIN_EMAIL = 'hafiyyanluthfii@gmail.com';
-
-/**
- * Helper untuk menentukan apakah pengguna adalah Administrator.
- * Membandingkan email user (huruf kecil semua) dengan ADMIN_EMAIL
- * dan memastikan status email terverifikasi (emailVerified).
+ * Helper untuk menentukan apakah pengguna memiliki hak akses Administrator (admin atau superadmin).
+ * Ditentukan langsung dari status 'role' pada dokumen profil Firestore pengguna,
+ * sehingga tidak ada email pribadi yang di-hardcode ke dalam kode sumber.
  */
 export function isAdmin(
   user: User | UserProfile | { email?: string | null; emailVerified?: boolean; role?: string } | null | undefined
 ): boolean {
   if (!user) return false;
 
-  // Jika profile dokumen Firestore secara eksplisit memiliki role 'admin'
-  if ('role' in user && user.role === 'admin') {
+  // Jika profile dokumen Firestore secara eksplisit memiliki role 'admin' atau 'superadmin'
+  if ('role' in user && (user.role === 'admin' || user.role === 'superadmin')) {
     return true;
   }
 
-  if (!user.email) return false;
+  return false;
+}
 
-  const normalizedUserEmail = user.email.trim().toLowerCase();
-  const normalizedAdminEmail = ADMIN_EMAIL.toLowerCase();
+/**
+ * Helper untuk menentukan apakah pengguna adalah Superadmin.
+ * Superadmin memiliki wewenang untuk mengangkat atau mencabut hak admin pengguna lain.
+ */
+export function isSuperAdmin(
+  user: User | UserProfile | { email?: string | null; emailVerified?: boolean; role?: string } | null | undefined
+): boolean {
+  if (!user) return false;
+  return 'role' in user && user.role === 'superadmin';
+}
 
-  // Jika objek memiliki field emailVerified (seperti Firebase Auth User), pastikan nilainya true
-  const isEmailVerified = 'emailVerified' in user ? Boolean(user.emailVerified) : true;
-
-  return normalizedUserEmail === normalizedAdminEmail && isEmailVerified;
+/**
+ * Mengecek apakah token Firebase Auth memiliki Custom Claim admin atau superadmin.
+ */
+export async function checkCustomClaimAdmin(user: User | null): Promise<boolean> {
+  if (!user) return false;
+  try {
+    const idTokenResult = await user.getIdTokenResult();
+    return Boolean(idTokenResult.claims.admin || idTokenResult.claims.superadmin);
+  } catch (err) {
+    console.error('Error saat memeriksa custom claim admin:', err);
+    return false;
+  }
 }

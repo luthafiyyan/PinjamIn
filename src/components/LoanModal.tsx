@@ -53,7 +53,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
   onSuccess,
 }) => {
   const { profile, currentUser, isAdmin } = useAuth();
-  const isUserAdmin = checkIsAdmin(currentUser) || isAdmin || profile?.role === 'admin';
+  const isUserAdmin = checkIsAdmin(currentUser) || isAdmin || profile?.role === 'admin' || profile?.role === 'superadmin';
 
   // Settings
   const [settings, setSettings] = useState<RuleSetting>(
@@ -128,7 +128,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
         const list: UserProfile[] = [];
         snap.forEach((d) => {
           const data = d.data();
-          if (data.nama && data.role !== 'admin') {
+          if (data.nama && data.role !== 'admin' && data.role !== 'superadmin') {
             list.push({ ...data, uid: d.id } as UserProfile);
           }
         });

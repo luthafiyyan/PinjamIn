@@ -20,6 +20,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   isVerified: boolean;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
@@ -31,13 +32,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isClaimAdmin, setIsClaimAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
-      if (!user) {
+      if (user) {
+        try {
+          // Periksa apakah token JWT Firebase Auth membawa Custom Claim admin: true
+          const tokenResult = await user.getIdTokenResult();
+          setIsClaimAdmin(Boolean(tokenResult.claims.admin));
+        } catch (err) {
+          console.error('Error saat memeriksa custom claim token:', err);
+          setIsClaimAdmin(false);
+        }
+      } else {
         setProfile(null);
+        setIsClaimAdmin(false);
         setLoading(false);
       }
     });
@@ -106,6 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 4. Reset state pengguna di memori React
       setCurrentUser(null);
       setProfile(null);
+      setIsClaimAdmin(false);
     } catch (error) {
       console.error('Error saat logout:', error);
     }
@@ -140,7 +153,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const isAdmin = checkIsAdmin(currentUser) || checkIsAdmin(profile);
+  // Superadmin ditentukan jika profil di database memiliki role 'superadmin'
+  const isSuperAdmin = profile?.role === 'superadmin';
+  // Admin aktif jika merupakan superadmin, memiliki role 'admin', atau membawa custom claim
+  const isAdmin = isSuperAdmin || profile?.role === 'admin' || isClaimAdmin || checkIsAdmin(currentUser) || checkIsAdmin(profile);
   const isVerified = (profile?.terverifikasi === true) || isAdmin;
 
   return (
@@ -150,6 +166,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         profile,
         loading,
         isAdmin,
+        isSuperAdmin,
         isVerified,
         loginWithGoogle,
         logout,

@@ -11,11 +11,24 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
     function isAdmin() {
       return request.auth != null && (
-        (request.auth.token.email == "hafiyyanluthfii@gmail.com" && request.auth.token.email_verified == true) ||
+        request.auth.token.admin == true ||
+        request.auth.token.superadmin == true ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin")
+         getUserRole() in ['admin', 'superadmin'])
+      );
+    }
+
+    function isSuperAdmin() {
+      return request.auth != null && (
+        request.auth.token.superadmin == true ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         getUserRole() == 'superadmin')
       );
     }
 
@@ -46,15 +59,20 @@ service cloud.firestore {
         )
       );
 
-      // Update profile: peminjam hanya boleh mengubah field: nomorHp, unitAsal, angkatan, dan permintaanPerubahan
-      // Field nama, nomorIdentitas, tipePeminjam, terverifikasi, email, dan createdAt tidak boleh diubah oleh peminjam
-      // Admin (isAdmin() berdasarkan email) boleh mengubah semua field
-      allow update: if isAdmin() || (
+      // Update profile:
+      // - Superadmin boleh mengubah semua field termasuk peran ('role')
+      // - Admin biasa boleh verifikasi / ubah data peminjam, tapi TIDAK BOLEH mengubah field 'role'
+      // - Peminjam biasa hanya boleh mengubah nomorHp, unitAsal, angkatan, permintaanPerubahan
+      allow update: if isSuperAdmin() || (
+        isAdmin() && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role'])
+        )
+      ) || (
         isOwner(userId) &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nomorHp', 'unitAsal', 'angkatan', 'permintaanPerubahan'])
       );
 
-      allow delete: if isAdmin();
+      allow delete: if isSuperAdmin();
     }
 
     // CATEGORIES

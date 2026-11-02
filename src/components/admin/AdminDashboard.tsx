@@ -25,7 +25,7 @@ import {
   PeminjamanSettings, 
   ItemCondition 
 } from '../../types';
-import { isAdmin as checkIsAdmin, ADMIN_EMAIL } from '../../lib/adminConfig';
+import { isAdmin as checkIsAdmin, isSuperAdmin as checkIsSuperAdmin } from '../../lib/adminConfig';
 import { formatDateIndo } from '../../lib/dateUtils';
 
 interface AdminDashboardProps {
@@ -76,7 +76,7 @@ export const INITIAL_CATEGORIES = [
 ];
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice }) => {
-  const { currentUser, profile } = useAuth();
+  const { currentUser, profile, isSuperAdmin } = useAuth();
 
   // Tab State
   const [activeTab, setActiveTab] = useState<
@@ -275,6 +275,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
     } catch (err) {
       console.error(err);
       showToast('Gagal memverifikasi akun.', 'error');
+    }
+  };
+
+  // Action: Superadmin promote / demote user role
+  const handleChangeUserRole = async (targetUser: UserProfile, newRole: 'admin' | 'peminjam') => {
+    if (!isSuperAdmin) {
+      showToast('Hanya Superadmin yang memiliki wewenang mengubah peran pengguna.', 'error');
+      return;
+    }
+
+    const confirmMsg = newRole === 'admin'
+      ? `Apakah Anda yakin ingin mengangkat "${targetUser.nama}" menjadi Admin Laboratorium?`
+      : `Apakah Anda yakin ingin menurunkan hak akses "${targetUser.nama}" menjadi Peminjam biasa?`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const userDocRef = doc(db, 'users', targetUser.uid);
+      await updateDoc(userDocRef, {
+        role: newRole,
+        terverifikasi: true,
+      });
+      showToast(`Peran ${targetUser.nama} berhasil diubah menjadi ${newRole === 'admin' ? 'Admin Lab' : 'Peminjam'}!`);
+    } catch (err: any) {
+      console.error('Gagal memperbarui peran pengguna:', err);
+      showToast('Gagal mengubah peran: ' + (err.message || 'Periksa izin Firestore.'), 'error');
     }
   };
 
@@ -1941,6 +1967,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                     <th className="py-2.5 px-3">NIM / NIP</th>
                     <th className="py-2.5 px-3">Role</th>
                     <th className="py-2.5 px-3">Verifikasi</th>
+                    {isSuperAdmin && <th className="py-2.5 px-3 text-right">Aksi Superadmin</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -1951,9 +1978,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                       <td className="py-2.5 px-3 font-mono text-slate-600 tabular-nums">{u.nomorIdentitas}</td>
                       <td className="py-2.5 px-3">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                          checkIsAdmin(u) ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-slate-100 text-slate-600'
+                          u.role === 'superadmin'
+                            ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                            : checkIsAdmin(u)
+                            ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                            : 'bg-slate-100 text-slate-600'
                         }`}>
-                          {checkIsAdmin(u) ? 'Admin Lab' : 'Peminjam'}
+                          {u.role === 'superadmin' ? 'Superadmin' : checkIsAdmin(u) ? 'Admin Lab' : 'Peminjam'}
                         </span>
                       </td>
                       <td className="py-2.5 px-3">
@@ -1965,6 +1996,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                           <span className="text-amber-700 font-semibold text-[11px]">Menunggu</span>
                         )}
                       </td>
+                      {isSuperAdmin && (
+                        <td className="py-2.5 px-3 text-right">
+                          {u.uid === currentUser?.uid ? (
+                            <span className="text-[10px] text-purple-600 font-semibold italic">Akun Anda</span>
+                          ) : u.role === 'superadmin' ? (
+                            <span className="text-[10px] text-purple-700 font-semibold">Superadmin</span>
+                          ) : u.role === 'admin' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleChangeUserRole(u, 'peminjam')}
+                              className="px-2.5 py-1 text-[10px] font-semibold rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors cursor-pointer"
+                              title="Cabut hak akses admin dan kembalikan ke peminjam"
+                            >
+                              Cabut Admin
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleChangeUserRole(u, 'admin')}
+                              className="px-2.5 py-1 text-[10px] font-semibold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
+                              title="Angkat pengguna ini menjadi Admin Laboratorium"
+                            >
+                              Jadikan Admin
+                            </button>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -3208,20 +3266,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 text-xs leading-relaxed text-slate-700">
             <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[11px]">1</span>
-              Sistem Penentuan Akun Administrator (Laboran)
+              Sistem Penentuan Akun Administrator & Superadmin
             </h3>
             <p>
-              Hak akses Administrator sistem PinjamIn dikunci secara eksklusif ke akun Google <b>{ADMIN_EMAIL}</b> yang telah terverifikasi, dilindungi langsung oleh Cloud Firestore Security Rules.
+              Hak akses sistem PinjamIn dikelola secara aman berbasis database Firestore tanpa mengekspos alamat email pribadi di kode sumber:
             </p>
             <ul className="list-disc pl-5 space-y-1">
               <li>
-                Admin <b>tidak perlu</b> mengubah field <code className="bg-slate-200 px-1 py-0.5 rounded font-mono">role</code> secara manual di database.
+                <b>Superadmin</b> (role: <code className="bg-slate-200 px-1 py-0.5 rounded font-mono">superadmin</code>) memiliki wewenang tertinggi untuk mengangkat atau mencabut hak admin staf lain langsung dari tabel <b>Semua Pengguna Terdaftar</b> di menu Verifikasi.
               </li>
               <li>
-                Saat akun <b>{ADMIN_EMAIL}</b> masuk lewat Google Sign-In, sistem langsung mengarahkan Anda ke <b>Panel Admin</b> tanpa mewajibkan pengisian profil peminjam atau antrean verifikasi.
+                <b>Admin Laboratorium</b> (role: <code className="bg-slate-200 px-1 py-0.5 rounded font-mono">admin</code>) memiliki hak mengelola katalog aset, menyetujui peminjaman, serta memverifikasi akun peminjam baru.
               </li>
               <li>
-                Pengguna non-admin yang mencoba mengakses menu atau URL halaman admin akan ditolak secara otomatis dan dialihkan ke katalog.
+                Pengguna non-admin yang mencoba mengakses menu atau URL rute admin akan ditolak secara otomatis dan dialihkan ke katalog.
               </li>
             </ul>
           </div>

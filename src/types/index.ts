@@ -1,4 +1,4 @@
-export type UserRole = 'peminjam' | 'admin';
+export type UserRole = 'peminjam' | 'admin' | 'superadmin';
 
 export type TipePeminjam = 'mahasiswa' | 'dosen' | 'tendik';
 
