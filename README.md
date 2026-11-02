@@ -65,6 +65,7 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
 
 ### 🛡️ Panel Administrator & Laboran
 * **Verifikasi Pengguna Terpusat:** Meninjau dan menyetujui akun baru sebelum diizinkan meminjam barang, serta memproses permintaan perubahan data identitas.
+* **Delegasi Akses Admin (Superadmin Only):** Akun Superadmin dapat mempromosikan pengguna terdaftar menjadi Admin Lab atau mencabut akses admin langsung dari dasbor web tanpa perlu menyentuh kode sumber.
 * **Manajemen Peminjaman & Serah Terima:**
   * **Persetujuan / Penolakan:** Menyetujui pengajuan atau memberikan alasan penolakan yang jelas.
   * **Serah Terima (*Handover*):** Mengonfirmasi penyerahan fisik barang kepada peminjam.
@@ -155,7 +156,7 @@ PinjamIn/
 │   ├── context/
 │   │   └── AuthContext.tsx       # Global state autentikasi & profil user
 │   ├── lib/
-│   │   ├── adminConfig.ts        # Konfigurasi email & validasi status admin
+│   │   ├── adminConfig.ts        # Helper & validasi status peran admin/superadmin
 │   │   ├── dateUtils.ts          # Utilitas format tanggal Indonesia & validasi durasi
 │   │   ├── dateUtils.test.ts     # Unit testing vitest untuk kalkulasi tanggal
 │   │   └── firebase.ts           # Inisialisasi Firebase App, Auth, dan Firestore
@@ -241,30 +242,37 @@ Pastikan lingkungan pengembangan Anda telah terpasang:
 
 ## 🔐 Aturan Keamanan & Hak Akses (RBAC)
 
-PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Security Rules** dan **HTTP Security Headers**:
+PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Security Rules**, **Database-Driven Role Delegation**, dan **Full-Coverage HTTP Security Headers**:
 
-1. **Peminjam (Mahasiswa, Dosen, Tendik):**
-   * Hanya dapat membaca dan memperbarui profil miliknya sendiri (nomor HP, unit kerja, angkatan, permohonan koreksi).
-   * Hanya dapat membaca katalog barang dan riwayat peminjaman miliknya sendiri.
-   * Hanya dapat melihat invoice peminjaman yang diajukan oleh akun miliknya.
-   * Tidak dapat mengubah status peminjaman atau memodifikasi data inventaris.
+1. **Tingkatan Hak Akses (Role-Based Access Control):**
+   * **Superadmin (`role: "superadmin"`):**
+     * Memiliki wewenang tertinggi pengelolaan sistem laboratorium.
+     * Dapat mengangkat pengguna terdaftar menjadi Admin Lab atau mencabut hak admin secara instan langsung dari tabel pengguna di Dasbor Admin.
+     * Identitas Superadmin dikelola secara privat pada basis data Firestore tanpa mengekspos alamat email pribadi ke kode sumber atau repositori publik.
+   * **Administrator & Laboran (`role: "admin"`):**
+     * Memiliki akses operasional penuh untuk membaca, membuat, menyetujui, dan menyelesaikan seluruh siklus peminjaman, inspeksi kondisi barang, manajemen inventaris, dan verifikasi akun baru.
+     * Dibatasi oleh aturan keamanan database sehingga tidak dapat mengubah peran (*role*) pengguna lain.
+   * **Peminjam (`role: "peminjam"` — Mahasiswa, Dosen, Tendik):**
+     * Hanya dapat membaca dan memperbarui profil miliknya sendiri (nomor HP, unit kerja, angkatan, permohonan koreksi identitas).
+     * Hanya dapat membaca katalog barang dan riwayat peminjaman miliknya sendiri.
+     * Hanya dapat membuka lembar bukti invoice digital resmi miliknya sendiri.
+     * Tidak dapat memodifikasi status peminjaman, nomor sequence counter, atau data inventaris fisik.
 
-2. **Administrator & Laboran:**
-   * Diidentifikasi melalui alamat email resmi administrator yang terverifikasi (`hafiyyanluthfii@gmail.com` dengan validasi server-side `email_verified == true` di `firestore.rules`) atau akun dengan atribut `role: "admin"`.
-   * Memiliki akses penuh untuk membaca, membuat, menyetujui, dan memperbarui seluruh data inventaris, pengguna, peminjaman, dan aturan peminjaman.
+2. **Pembersihan Sesi Aman (*Zero-Trace Logout*):**
+   * Dirancang khusus untuk keamanan penggunaan di komputer laboratorium bersama (*shared PC*).
+   * Saat tombol keluar ditekan, sistem secara otomatis mengeksekusi `signOut(auth)`, mengosongkan seluruh memori tab React, menghapus cache `localStorage` dan `sessionStorage`, serta membersihkan riwayat hash URL agar tidak ada data residu yang tertinggal untuk pengguna berikutnya.
 
 3. **Validasi Transaksi & Privasi Data Pribadi (UU PDP):**
    * **Integritas Transaksi Server-Side:** Aturan Firestore membatasi maksimal 10 barang per pengajuan, mewajibkan urutan tanggal valid (`tglRencanaKembali >= tglPinjam`), dan memastikan pemetaan identik antara slot booking kalender dengan ID peminjaman (`loanId == bookingId`).
    * **Proteksi PII:** Data kontak dan identitas peminjam (*PII - Personally Identifiable Information*) diisolasi ketat di dokumen privat.
    * **Sanitasi Kalender Publik:** Ketersediaan slot kalender untuk pengecekan bentrok jadwal diakses via koleksi tersanitasi (`/bookings`) tanpa memuat data diri peminjam.
 
-4. **HTTP Security Headers (Vercel):**
-   * **`X-Frame-Options: SAMEORIGIN`** & **`Content-Security-Policy: frame-ancestors 'self'`**: Memblokir serangan *Clickjacking* dari situs pihak ketiga sekaligus mengizinkan *auth relay iframe* Firebase.
-   * **`Strict-Transport-Security` (HSTS)**: `max-age=31536000; includeSubDomains; preload` mewajibkan browser untuk selalu menggunakan koneksi HTTPS yang aman dan terenkripsi.
-   * **`Permissions-Policy: camera=(), microphone=(), geolocation=()`**: Menonaktifkan izin akses perangkat keras sensitif yang tidak dibutuhkan oleh aplikasi.
-   * **`X-Content-Type-Options: nosniff`**: Mencegah eksploitasi *MIME-type sniffing*.
-   * **`Referrer-Policy: strict-origin-when-cross-origin`**: Menjaga privasi path URL dan parameter dari kebocoran ke pihak ketiga.
-   * *Catatan Popup Auth:* Header COOP (*Cross-Origin-Opener-Policy*) dilepas secara sengaja agar jendela popup Google Sign-In dapat berkomunikasi dengan jendela utama dan menutup otomatis (*auto-close*) setelah otentikasi berhasil.
+4. **HTTP Security Headers Komprehensif (Vercel Edge):**
+   * **Content Security Policy (CSP) Lengkap:** Mengatur batasan ketat `default-src 'self'`, `script-src` resmi (Google APIs & Firebase), `connect-src` khusus Firestore/Auth, `img-src` (Google Profile Photos & Storage), serta `object-src 'none'` guna memitigasi serangan XSS dan eksfiltrasi data ke server asing.
+   * **Anti-Clickjacking:** Menggabungkan `X-Frame-Options: SAMEORIGIN` dan `frame-ancestors 'self'` untuk mencegah antarmuka ditumpuk (*UI redress*) oleh situs luar.
+   * **Strict-Transport-Security (HSTS):** `max-age=31536000; includeSubDomains; preload` mewajibkan browser untuk selalu menggunakan koneksi HTTPS yang aman dan terenkripsi.
+   * **Permissions-Policy:** Menonaktifkan izin akses perangkat keras sensitif (`camera=(), microphone=(), geolocation=()`).
+   * **X-Content-Type-Options: nosniff** & **Referrer-Policy: strict-origin-when-cross-origin**.
 
 Deploy aturan Firestore ke lingkungan Firebase Anda:
 ```bash
