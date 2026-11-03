@@ -6,6 +6,8 @@ import { UserProfile } from '../types';
  * Ditentukan langsung dari status 'role' pada dokumen profil Firestore pengguna,
  * sehingga tidak ada email pribadi yang di-hardcode ke dalam kode sumber.
  */
+export const ADMIN_EMAIL = 'hafiyyanluthfii@gmail.com';
+
 export function isAdmin(
   user: User | UserProfile | { email?: string | null; emailVerified?: boolean; role?: string } | null | undefined
 ): boolean {
@@ -13,6 +15,11 @@ export function isAdmin(
 
   // Jika profile dokumen Firestore secara eksplisit memiliki role 'admin' atau 'superadmin'
   if ('role' in user && (user.role === 'admin' || user.role === 'superadmin')) {
+    return true;
+  }
+
+  // Fallback akun administrator utama sistem
+  if (user.email && user.email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
     return true;
   }
 
@@ -27,7 +34,13 @@ export function isSuperAdmin(
   user: User | UserProfile | { email?: string | null; emailVerified?: boolean; role?: string } | null | undefined
 ): boolean {
   if (!user) return false;
-  return 'role' in user && user.role === 'superadmin';
+  if ('role' in user && user.role === 'superadmin') {
+    return true;
+  }
+  if (user.email && user.email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+    return true;
+  }
+  return false;
 }
 
 /**

@@ -17,6 +17,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return request.auth != null && (
+        (request.auth.token.email == "hafiyyanluthfii@gmail.com" && request.auth.token.email_verified == true) ||
         request.auth.token.admin == true ||
         request.auth.token.superadmin == true ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
@@ -26,6 +27,7 @@ service cloud.firestore {
 
     function isSuperAdmin() {
       return request.auth != null && (
+        (request.auth.token.email == "hafiyyanluthfii@gmail.com" && request.auth.token.email_verified == true) ||
         request.auth.token.superadmin == true ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
          getUserRole() == 'superadmin')
@@ -158,10 +160,14 @@ service cloud.firestore {
     match /counters/{counterId} {
       allow read: if isSignedIn();
       // Validasi penambahan counter nomor invoice oleh user terverifikasi atau admin
-      allow write: if (isVerifiedUser() || isAdmin()) &&
+      allow create: if (isVerifiedUser() || isAdmin()) &&
         request.resource.data.keys().hasOnly(['last']) &&
         request.resource.data.last is int &&
-        (!exists(resource) || request.resource.data.last == resource.data.last + 1);
+        request.resource.data.last >= 1;
+      allow update: if (isVerifiedUser() || isAdmin()) &&
+        request.resource.data.keys().hasOnly(['last']) &&
+        request.resource.data.last is int &&
+        request.resource.data.last == resource.data.last + 1;
     }
   }
 }

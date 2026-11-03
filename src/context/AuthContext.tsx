@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 import { auth, db, googleProvider, handleFirestoreError, OperationType } from '../lib/firebase';
 import { UserProfile } from '../types';
-import { isAdmin as checkIsAdmin } from '../lib/adminConfig';
+import { isAdmin as checkIsAdmin, isSuperAdmin as checkIsSuperAdmin } from '../lib/adminConfig';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -153,8 +153,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Superadmin ditentukan jika profil di database memiliki role 'superadmin'
-  const isSuperAdmin = profile?.role === 'superadmin';
+  // Superadmin ditentukan jika profil di database memiliki role 'superadmin' atau akun administrator utama
+  const isSuperAdmin = profile?.role === 'superadmin' || checkIsSuperAdmin(currentUser) || checkIsSuperAdmin(profile);
   // Admin aktif jika merupakan superadmin, memiliki role 'admin', atau membawa custom claim
   const isAdmin = isSuperAdmin || profile?.role === 'admin' || isClaimAdmin || checkIsAdmin(currentUser) || checkIsAdmin(profile);
   const isVerified = (profile?.terverifikasi === true) || isAdmin;
