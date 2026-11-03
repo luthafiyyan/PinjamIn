@@ -268,7 +268,7 @@ PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Securit
    * **Sanitasi Kalender Publik:** Ketersediaan slot kalender untuk pengecekan bentrok jadwal diakses via koleksi tersanitasi (`/bookings`) tanpa memuat data diri peminjam.
 
 4. **HTTP Security Headers Komprehensif (Vercel Edge):**
-   * **Content Security Policy (CSP) Lengkap:** Mengatur batasan ketat `default-src 'self'`, `script-src` resmi (Google APIs & Firebase), `connect-src` khusus Firestore/Auth, `img-src` (Google Profile Photos & Storage), serta `object-src 'none'` guna memitigasi serangan XSS dan eksfiltrasi data ke server asing.
+   * **Content Security Policy (CSP) Lengkap:** Mengatur batasan ketat `default-src 'self'`, `script-src` resmi (Google APIs & Firebase), `connect-src` khusus Firestore/Auth, `img-src` fleksibel aman (`'self' data: blob: https:` untuk foto profil & katalog barang terenkripsi HTTPS), serta `object-src 'none'` guna memitigasi serangan XSS dan eksfiltrasi data ke server asing.
    * **Anti-Clickjacking:** Menggabungkan `X-Frame-Options: SAMEORIGIN` dan `frame-ancestors 'self'` untuk mencegah antarmuka ditumpuk (*UI redress*) oleh situs luar.
    * **Strict-Transport-Security (HSTS):** `max-age=31536000; includeSubDomains; preload` mewajibkan browser untuk selalu menggunakan koneksi HTTPS yang aman dan terenkripsi.
    * **Permissions-Policy:** Menonaktifkan izin akses perangkat keras sensitif (`camera=(), microphone=(), geolocation=()`).
