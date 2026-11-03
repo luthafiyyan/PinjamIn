@@ -437,6 +437,63 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
     }
   };
 
+  // Action: Batalkan Peminjaman Aktif (status: 'dipinjam') tanpa skema inspeksi pengembalian
+  const handleCancelActiveLoan = async (loan: Loan) => {
+    const reason = window.prompt(
+      `Batalkan peminjaman ${loan.noInvoice} (${loan.peminjam.nama})?\n\nSemua alat akan otomatis dikembalikan ke status 'Tersedia' tanpa perlu mengisi formulir inspeksi pengembalian.\n\nAlasan pembatalan:`,
+      'Tidak jadi meminjam'
+    );
+    if (reason === null) return;
+    const finalReason = reason.trim() || 'Tidak jadi meminjam';
+
+    try {
+      setLoanActionId(loan.id);
+      await runTransaction(db, async (transaction) => {
+        const loanRef = doc(db, 'loans', loan.id);
+        const loanSnap = await transaction.get(loanRef);
+        if (!loanSnap.exists()) {
+          throw new Error('Dokumen peminjaman tidak ditemukan.');
+        }
+        const currentData = loanSnap.data();
+        if (currentData.status !== 'dipinjam') {
+          throw new Error('Peminjaman ini sudah tidak dalam status aktif/dipinjam.');
+        }
+
+        // 1. Baca referensi dokumen seluruh alat
+        const itemRefs = loan.items.map((it) => doc(db, 'items', it.itemId));
+        await Promise.all(itemRefs.map((r) => transaction.get(r)));
+
+        // 2. Perbarui status peminjaman menjadi dibatalkan
+        transaction.update(loanRef, {
+          status: 'dibatalkan',
+          alasanPenolakan: finalReason,
+          alasanPembatalan: finalReason,
+          cancelledAt: serverTimestamp(),
+          cancelledBy: profile?.nama || currentUser?.displayName || 'Petugas Laboratorium FIT',
+        });
+
+        // 3. Sinkronisasi jadwal slot kalender booking publik
+        const bookingRef = doc(db, 'bookings', loan.id);
+        transaction.set(bookingRef, { status: 'dibatalkan' }, { merge: true });
+
+        // 4. Kembalikan semua barang fisik ke status 'tersedia' dan lepas pinjaman
+        itemRefs.forEach((ref) => {
+          transaction.update(ref, {
+            status: 'tersedia',
+            currentLoanId: null,
+          });
+        });
+      });
+
+      showToast(`Peminjaman ${loan.noInvoice} berhasil dibatalkan. Seluruh peralatan telah kembali tersedia.`);
+    } catch (err: any) {
+      console.error('Error saat membatalkan peminjaman aktif:', err);
+      showToast(err.message || 'Gagal membatalkan peminjaman.', 'error');
+    } finally {
+      setLoanActionId(null);
+    }
+  };
+
   // Action: Reject unverified User
   const handleRejectUser = async (uid: string) => {
     if (!window.confirm('Apakah Anda yakin ingin menolak & menghapus permohonan akun ini?')) return;
@@ -1266,7 +1323,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
     let matchesStatus = true;
     if (historyStatusFilter === 'menunggu_persetujuan') matchesStatus = l.status === 'menunggu_persetujuan';
     else if (historyStatusFilter === 'disetujui') matchesStatus = l.status === 'disetujui';
-    else if (historyStatusFilter === 'ditolak') matchesStatus = l.status === 'ditolak';
+    else if (historyStatusFilter === 'ditolak') matchesStatus = l.status === 'ditolak' || l.status === 'dibatalkan';
     else if (historyStatusFilter === 'dipinjam') matchesStatus = l.status === 'dipinjam' && !isLoanOverdue(l);
     else if (historyStatusFilter === 'terlambat') matchesStatus = isLoanOverdue(l);
     else if (historyStatusFilter === 'dikembalikan') matchesStatus = l.status === 'dikembalikan';
@@ -2275,12 +2332,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
 
                       <div className="flex items-center gap-2 shrink-0">
                         <button
+                          type="button"
                           onClick={() => onViewInvoice(loan.id)}
                           className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
                         >
                           Invoice
                         </button>
                         <button
+                          type="button"
+                          onClick={() => handleCancelActiveLoan(loan)}
+                          disabled={loanActionId !== null}
+                          className="px-3.5 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold rounded-xl disabled:opacity-50 transition-colors cursor-pointer"
+                          title="Batalkan peminjaman jika peminjam tidak jadi meminjam (alat langsung kembali tersedia tanpa skema inspeksi pengembalian)"
+                        >
+                          {loanActionId === loan.id ? 'Membatalkan...' : 'Batalkan'}
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleOpenReturnModal(loan)}
                           className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors cursor-pointer"
                         >
@@ -2885,8 +2953,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         <span className="text-sky-800 font-semibold text-[10px] bg-sky-100 px-2.5 py-0.5 rounded-full">Menunggu</span>
                       ) : loan.status === 'disetujui' ? (
                         <span className="text-indigo-800 font-semibold text-[10px] bg-indigo-100 px-2.5 py-0.5 rounded-full">Disetujui</span>
-                      ) : loan.status === 'ditolak' ? (
-                        <span className="text-rose-700 font-semibold text-[10px] bg-rose-100 px-2.5 py-0.5 rounded-full">Ditolak</span>
+                      ) : (loan.status === 'ditolak' || loan.status === 'dibatalkan') ? (
+                        <span className="text-rose-700 font-semibold text-[10px] bg-rose-100 px-2.5 py-0.5 rounded-full">
+                          {loan.status === 'dibatalkan' ? 'Dibatalkan' : 'Ditolak'}
+                        </span>
                       ) : loan.status === 'dikembalikan' ? (
                         <span className="text-emerald-700 font-semibold text-[10px] bg-emerald-100 px-2.5 py-0.5 rounded-full">
                           Dikembalikan
@@ -2965,8 +3035,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                           <span className="text-sky-800 font-semibold text-[10px] bg-sky-50 px-2 py-0.5 rounded">Menunggu</span>
                         ) : loan.status === 'disetujui' ? (
                           <span className="text-indigo-800 font-semibold text-[10px] bg-indigo-50 px-2 py-0.5 rounded">Disetujui</span>
-                        ) : loan.status === 'ditolak' ? (
-                          <span className="text-rose-700 font-semibold text-[10px] bg-rose-50 px-2 py-0.5 rounded">Ditolak</span>
+                        ) : (loan.status === 'ditolak' || loan.status === 'dibatalkan') ? (
+                          <span className="text-rose-700 font-semibold text-[10px] bg-rose-50 px-2 py-0.5 rounded">
+                            {loan.status === 'dibatalkan' ? 'Dibatalkan' : 'Ditolak'}
+                          </span>
                         ) : loan.status === 'dikembalikan' ? (
                           <span className="text-emerald-700 font-semibold text-[10px] bg-emerald-50 px-2 py-0.5 rounded">
                             Dikembalikan

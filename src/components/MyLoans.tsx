@@ -87,7 +87,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
         active += 1;
       } else if (loan.status === 'dikembalikan') {
         completed += 1;
-      } else if (loan.status === 'ditolak') {
+      } else if (loan.status === 'ditolak' || loan.status === 'dibatalkan') {
         rejected += 1;
       }
 
@@ -114,7 +114,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
       } else if (activeTab === 'completed') {
         if (loan.status !== 'dikembalikan') return false;
       } else if (activeTab === 'rejected') {
-        if (loan.status !== 'ditolak') return false;
+        if (loan.status !== 'ditolak' && loan.status !== 'dibatalkan') return false;
       }
 
       // 2. Search query filter
@@ -163,11 +163,11 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
       );
     }
 
-    if (loan.status === 'ditolak') {
+    if (loan.status === 'ditolak' || loan.status === 'dibatalkan') {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-800 border border-rose-200">
           <Icon name="XCircle" size={13} className="text-rose-600" />
-          Ditolak
+          {loan.status === 'dibatalkan' ? 'Dibatalkan' : 'Ditolak'}
         </span>
       );
     }
@@ -502,12 +502,13 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                     <span className="font-semibold text-slate-900">{loan.keperluan}</span>
                   </p>
 
-                  {/* Alasan Penolakan Jika Ada */}
-                  {loan.status === 'ditolak' && loan.alasanPenolakan && (
+                  {/* Alasan Penolakan / Pembatalan Jika Ada */}
+                  {(loan.status === 'ditolak' || loan.status === 'dibatalkan') && (loan.alasanPenolakan || loan.alasanPembatalan) && (
                     <div className="mt-2 p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-2">
                       <Icon name="ExclamationTriangle" size={14} className="text-rose-500 shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-semibold">Catatan Penolakan:</span> {loan.alasanPenolakan}
+                        <span className="font-semibold">{loan.status === 'dibatalkan' ? 'Alasan Pembatalan:' : 'Catatan Penolakan:'}</span>{' '}
+                        {loan.alasanPembatalan || loan.alasanPenolakan}
                       </div>
                     </div>
                   )}
@@ -554,8 +555,8 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                       <span className={isLate ? 'text-rose-600 font-bold' : 'text-slate-600'}>
                         {isLate ? '⚠️ Melewati batas waktu kembali. Segera hubungi Lab FIT!' : 'Alat sedang dalam tanggung jawab peminjam.'}
                       </span>
-                    ) : loan.status === 'ditolak' ? (
-                      <span className="text-slate-400">Peminjaman tidak disetujui</span>
+                    ) : (loan.status === 'ditolak' || loan.status === 'dibatalkan') ? (
+                      <span className="text-slate-400">{loan.status === 'dibatalkan' ? 'Peminjaman telah dibatalkan' : 'Peminjaman tidak disetujui'}</span>
                     ) : (
                       <span className="text-emerald-700 font-medium">Peminjaman telah selesai dikembalikan</span>
                     )}

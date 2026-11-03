@@ -126,6 +126,8 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
 
   const getStatusText = (status: string) => {
     if (status === 'dikembalikan') return 'SUDAH DIKEMBALIKAN';
+    if (status === 'dibatalkan') return 'DIBATALKAN';
+    if (status === 'ditolak') return 'DITOLAK';
     if (isOverdue) return 'TERLAMBAT PENGEMBALIAN';
     if (status === 'disetujui') return 'DISETUJUI (SIAP DIAMBIL)';
     if (status === 'menunggu_persetujuan') return 'MENUNGGU PERSETUJUAN';

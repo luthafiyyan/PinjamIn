@@ -11,7 +11,8 @@ export type LoanStatus =
   | 'disetujui' 
   | 'dipinjam' 
   | 'ditolak' 
-  | 'dikembalikan';
+  | 'dikembalikan'
+  | 'dibatalkan';
 
 export type JenisKeperluan = 
   | 'tugas_kuliah'
@@ -109,6 +110,9 @@ export interface Loan {
   itemIds?: string[];
   noInvoice: string;
   alasanPenolakan?: string | null;
+  alasanPembatalan?: string | null;
+  cancelledAt?: any;
+  cancelledBy?: string | null;
   dikembalikanOleh: string | null;
   catatanPengembalian: string | null;
   approvedAt?: any;
