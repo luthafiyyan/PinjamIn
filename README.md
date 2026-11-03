@@ -69,6 +69,7 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
 * **Manajemen Peminjaman & Serah Terima:**
   * **Persetujuan / Penolakan:** Menyetujui pengajuan atau memberikan alasan penolakan yang jelas.
   * **Serah Terima (*Handover*):** Mengonfirmasi penyerahan fisik barang kepada peminjam.
+  * **Pembatalan Peminjaman Cepat (*Instant Cancel*):** Tombol pembatalan pada kartu peminjaman aktif jika peminjam tidak jadi menggunakan alat di hari-H. Seluruh alat fisik otomatis dipulihkan ke status *Tersedia* dan slot kalender dibebaskan seketika tanpa perlu mengisi formulir checklist inspeksi pengembalian.
   * **Inspeksi Pengembalian (*Return Checklist*):** Formulir inspeksi kondisi fisik barang (*Baik / Perlu Cek / Rusak*) dan checklist kelengkapan aksesoris saat barang dikembalikan, dilengkapi catatan laboran.
 * **Pencatatan Peminjaman Walk-In / Manual:** Staf laboran dapat mencatatkan peminjaman langsung untuk peminjam *offline* / di tempat dengan memilih pengguna terdaftar atau mengisi identitas peminjam kustom (Nama, Kontak, Tipe Peminjam, NIM/NIP, Unit Asal) serta memilih status awal langsung (*Disetujui* atau *Langsung Dipinjamkan*).
 * **Manajemen Inventaris & Aset:** Tambah, edit, dan hapus aset laboratorium lengkap dengan foto, kode aset terstandarisasi, nomor seri, dan tahun perolehan.
@@ -93,26 +94,30 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
 ```mermaid
 flowchart TD
     A([User Login via Google]) --> B{Profil Lengkap & Terverifikasi?}
-    B -- Belum --> C[Lengkapi Profil & Menunggu Verifikasi Admin]
+    B -- Belum --> C["Lengkapi Profil & Menunggu Verifikasi Admin"]
     C --> D[Admin Verifikasi Akun]
     D --> E[Akun Aktif]
     B -- Sudah --> E
 
-    E --> F[Eksplorasi Katalog & Pilih Barang ke Keranjang]
-    F --> G[Isi Form Peminjaman: Tanggal, Keperluan, Penanggung Jawab]
+    E --> F["Eksplorasi Katalog & Pilih Barang ke Keranjang"]
+    F --> G["Isi Form Peminjaman: Tanggal, Keperluan, Penanggung Jawab"]
     G --> H[Kirim Pengajuan Peminjaman]
     
-    H --> I[Status: Menunggu Persetujuan]
+    H --> I["Status: Menunggu Persetujuan"]
     I --> J{Keputusan Admin}
-    J -- Ditolak --> K([Peminjaman Ditolak + Catatan])
-    J -- Disetujui --> L[Status: Disetujui]
+    J -- Ditolak --> K(["Peminjaman Ditolak + Catatan"])
+    J -- Disetujui --> L["Status: Disetujui"]
 
-    L --> M[Peminjam Datang ke Lab & Serah Terima Barang]
-    M --> N[Status: Dipinjam + Terbit Invoice Digital]
+    L --> M["Peminjam Datang ke Lab & Serah Terima Barang"]
+    L -- Batal Sebelum Diambil --> K
+    M --> N["Status: Dipinjam + Terbit Invoice Digital"]
     
     N --> O[Peminjam Mengembalikan Barang ke Lab]
-    O --> P[Admin Melakukan Inspeksi Fisik & Checklist Kelengkapan]
-    P --> Q([Status: Dikembalikan / Selesai])
+    O --> P["Admin Melakukan Inspeksi Fisik & Checklist Kelengkapan"]
+    P --> Q(["Status: Dikembalikan / Selesai"])
+
+    N -- Batal / Tidak Jadi Pinjam --> R["Admin Batalkan Peminjaman (Lepas Barang & Reset Status)"]
+    R --> S(["Status: Dibatalkan"])
 ```
 
 ---
@@ -263,6 +268,7 @@ PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Securit
    * Saat tombol keluar ditekan, sistem secara otomatis mengeksekusi `signOut(auth)`, mengosongkan seluruh memori tab React, menghapus cache `localStorage` dan `sessionStorage`, serta membersihkan riwayat hash URL agar tidak ada data residu yang tertinggal untuk pengguna berikutnya.
 
 3. **Validasi Transaksi & Privasi Data Pribadi (UU PDP):**
+   * **Siklus Status Peminjaman Formal:** Sistem mengelola 6 status siklus hidup peminjaman yang tervalidasi (`menunggu_persetujuan`, `disetujui`, `dipinjam`, `dikembalikan`, `ditolak`, dan `dibatalkan`), di mana pembatalan langsung mengembalikan ketersediaan aset secara atomik.
    * **Integritas Transaksi Server-Side:** Aturan Firestore membatasi maksimal 10 barang per pengajuan, mewajibkan urutan tanggal valid (`tglRencanaKembali >= tglPinjam`), dan memastikan pemetaan identik antara slot booking kalender dengan ID peminjaman (`loanId == bookingId`).
    * **Proteksi PII:** Data kontak dan identitas peminjam (*PII - Personally Identifiable Information*) diisolasi ketat di dokumen privat.
    * **Sanitasi Kalender Publik:** Ketersediaan slot kalender untuk pengecekan bentrok jadwal diakses via koleksi tersanitasi (`/bookings`) tanpa memuat data diri peminjam.
