@@ -68,7 +68,8 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
 * **Delegasi Akses Admin (Superadmin Only):** Akun Superadmin dapat mempromosikan pengguna terdaftar menjadi Admin Lab atau mencabut akses admin langsung dari dasbor web tanpa perlu menyentuh kode sumber.
 * **Manajemen Peminjaman & Serah Terima:**
   * **Persetujuan / Penolakan:** Menyetujui pengajuan atau memberikan alasan penolakan yang jelas.
-  * **Serah Terima (*Handover*):** Mengonfirmasi penyerahan fisik barang kepada peminjam.
+  * **Penambahan Barang di Hari-H (Skema Addendum Meja Lab):** Fasilitas fleksibel saat peminjam tiba di laboratorium pada hari-H dan membutuhkan alat tambahan yang berstatus *Tersedia*. Admin dapat memilih barang tambahan langsung dari modal interaktif, sistem secara otomatis memeriksa tabrakan jadwal reservasi (*conflict check*), mengevaluasi kuota peran dengan dukungan persetujuan khusus (*Admin Override*), serta menyediakan opsi simpan ke invoice atau simpan & langsung serahkan seluruh barang secara instan dalam 1 nomor invoice yang sama.
+  * **Serah Terima (*Handover*):** Mengonfirmasi penyerahan fisik barang kepada peminjam dengan validasi kondisi alat terbaru secara atomik.
   * **Pembatalan Peminjaman Cepat (*Instant Cancel*):** Tombol pembatalan pada kartu peminjaman aktif jika peminjam tidak jadi menggunakan alat di hari-H. Seluruh alat fisik otomatis dipulihkan ke status *Tersedia* dan slot kalender dibebaskan seketika tanpa perlu mengisi formulir checklist inspeksi pengembalian.
   * **Inspeksi Pengembalian (*Return Checklist*):** Formulir inspeksi kondisi fisik barang (*Baik / Perlu Cek / Rusak*) dan checklist kelengkapan aksesoris saat barang dikembalikan, dilengkapi catatan laboran.
 * **Pencatatan Peminjaman Walk-In / Manual:** Staf laboran dapat mencatatkan peminjaman langsung untuk peminjam *offline* / di tempat dengan memilih pengguna terdaftar atau mengisi identitas peminjam kustom (Nama, Kontak, Tipe Peminjam, NIM/NIP, Unit Asal) serta memilih status awal langsung (*Disetujui* atau *Langsung Dipinjamkan*).
@@ -82,7 +83,7 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
 * **Format Blanko Formal Laboratorium FIT:** Mengikuti standar resmi Administrasi Laboratorium Fakultas Ilmu Terapan dengan kop surat simetris dan logo resmi Lab FIT.
 * **Titimangsa Formal Bahasa Indonesia:** Penulisan tanggal surat resmi otomatis (`Bandung, [DD] [Nama Bulan] [YYYY]`, contoh: *Bandung, 29 Oktober 2026*).
 * **Metadata Peminjaman 2 Kolom Sejajar:** Data terstruktur mencakup Nomor Invoice unik, Nama Peminjam, Nomor Identitas (NIM/NIP), Kontak HP/WA, Tanggal Pinjam, Batas Pengembalian, Keperluan (*Capitalized Case*), dan Status persetujuan.
-* **Tabel Barang Solid Klasik:** Daftar inventaris rapi dengan kolom No, Nama Barang & Spesifikasi Teknis, Kode Aset, Jumlah Unit, serta Keterangan Kelengkapan dan Kondisi Pinjam.
+* **Tabel Barang Solid Klasik:** Daftar inventaris rapi dengan kolom No, Nama Barang & Spesifikasi Teknis, Kode Aset, Jumlah Unit, serta Keterangan Kelengkapan dan Kondisi Pinjam. Seluruh item otomatis tersinkronisasi secara real-time termasuk jika terdapat penambahan barang di hari-H (addendum meja lab).
 * **Tanda Tangan Dua Pihak:** Blok pengesahan resmi berdampingan antara Petugas Laboratorium FIT (kiri) dan Peminjam (kanan).
 * **Siap Cetak Kertas A5:** Tampilan dan styling cetak (`@media print`) dioptimalkan khusus untuk ukuran kertas A5 tanpa terpotong atau berantakan saat dicetak atau disimpan ke PDF.
 * **Proteksi Akses Dokumen:** Peminjam hanya dapat membuka bukti peminjaman miliknya sendiri, sementara administrator dapat mengakses seluruh arsip invoice.
@@ -106,11 +107,13 @@ flowchart TD
     H --> I["Status: Menunggu Persetujuan"]
     I --> J{Keputusan Admin}
     J -- Ditolak --> K(["Peminjaman Ditolak + Catatan"])
-    J -- Disetujui --> L["Status: Disetujui"]
+    J -- Disetujui --> L["Status: Disetujui (Menunggu Diambil)"]
 
-    L --> M["Peminjam Datang ke Lab & Serah Terima Barang"]
+    L --> M{"Hari-H: Kedatangan di Meja Lab"}
+    M -- Butuh Tambahan Barang Ready --> Add["Penambahan Barang Tambahan (Addendum Hari-H)"]
+    Add --> M
+    M -- Serah Terima Barang Fisik --> N["Status: Dipinjam + Terbit Invoice Digital"]
     L -- Batal Sebelum Diambil --> K
-    M --> N["Status: Dipinjam + Terbit Invoice Digital"]
     
     N --> O[Peminjam Mengembalikan Barang ke Lab]
     O --> P["Admin Melakukan Inspeksi Fisik & Checklist Kelengkapan"]
