@@ -23,10 +23,11 @@ import {
   Loan, 
   ItemStatus, 
   PeminjamanSettings, 
-  ItemCondition 
+  ItemCondition,
+  LoanItem 
 } from '../../types';
 import { isAdmin as checkIsAdmin, isSuperAdmin as checkIsSuperAdmin } from '../../lib/adminConfig';
-import { formatDateIndo } from '../../lib/dateUtils';
+import { formatDateIndo, checkItemBookingConflicts, ACTIVE_BOOKING_STATUSES } from '../../lib/dateUtils';
 
 interface AdminDashboardProps {
   onViewInvoice: (loanId: string) => void;
@@ -101,6 +102,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
   const [returnNote, setReturnNote] = useState('');
   const [returnLoading, setReturnLoading] = useState(false);
   const [loanActionId, setLoanActionId] = useState<string | null>(null);
+
+  // Action / Modal states for Adding Additional Items (Hari-H Addendum)
+  const [addItemsModalLoan, setAddItemsModalLoan] = useState<Loan | null>(null);
+  const [selectedAdditionalItemIds, setSelectedAdditionalItemIds] = useState<string[]>([]);
+  const [addItemSearch, setAddItemSearch] = useState('');
+  const [addItemCatFilter, setAddItemCatFilter] = useState('all');
+  const [addItemsAdminNote, setAddItemsAdminNote] = useState('');
+  const [isAddingItemsLoading, setIsAddingItemsLoading] = useState(false);
+  const [overrideLimitConfirmed, setOverrideLimitConfirmed] = useState(false);
 
   // Item Modal state (Add / Edit)
   const [itemModalOpen, setItemModalOpen] = useState(false);
@@ -355,17 +365,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           throw new Error('Peminjaman ini belum disetujui atau sudah diserahkan sebelumnya.');
         }
 
-        const itemRefs = loan.items.map((item) => doc(db, 'items', item.itemId));
+        const freshLoanData = loanSnap.data() as Loan;
+        const currentLoanItems = freshLoanData.items || loan.items;
+
+        const itemRefs = currentLoanItems.map((item) => doc(db, 'items', item.itemId));
         const itemSnaps = await Promise.all(itemRefs.map((itemRef) => transaction.get(itemRef)));
 
         for (let i = 0; i < itemSnaps.length; i++) {
           const itemSnap = itemSnaps[i];
           if (!itemSnap.exists()) {
-            throw new Error(`Barang ${loan.items[i].nama} tidak ditemukan.`);
+            throw new Error(`Barang ${currentLoanItems[i].nama} tidak ditemukan.`);
           }
           const itemData = itemSnap.data();
           if (itemData.status === 'rusak' || itemData.status === 'perawatan') {
-            throw new Error(`Barang [${loan.items[i].nama}] sedang dalam status ${itemData.status}, tidak dapat diserahkan.`);
+            throw new Error(`Barang [${currentLoanItems[i].nama}] sedang dalam status ${itemData.status}, tidak dapat diserahkan.`);
           }
         }
 
@@ -394,6 +407,190 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
       showToast(err.message || 'Gagal menyerahkan barang.', 'error');
     } finally {
       setLoanActionId(null);
+    }
+  };
+
+  // Action: Buka Modal Tambah Barang Hari-H (Skema 1: Addendum)
+  const handleOpenAddItemsModal = (loan: Loan) => {
+    setAddItemsModalLoan(loan);
+    setSelectedAdditionalItemIds([]);
+    setAddItemSearch('');
+    setAddItemCatFilter('all');
+    setAddItemsAdminNote('');
+    setOverrideLimitConfirmed(false);
+  };
+
+  const handleToggleSelectItem = (itemId: string) => {
+    setSelectedAdditionalItemIds((prev) =>
+      prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]
+    );
+  };
+
+  const handleSaveAdditionalItems = async (directHandover: boolean) => {
+    if (!addItemsModalLoan || selectedAdditionalItemIds.length === 0) return;
+
+    const userRole = addItemsModalLoan.peminjam.tipePeminjam;
+    const maxAllowed = settings[userRole]?.maxBarang || 3;
+    const totalAfterAdd = addItemsModalLoan.items.length + selectedAdditionalItemIds.length;
+    if (totalAfterAdd > maxAllowed && !overrideLimitConfirmed) {
+      showToast(
+        `Total barang (${totalAfterAdd}) melampaui kuota peminjam ${userRole} (${maxAllowed} barang). Harap centang persetujuan izin khusus admin.`,
+        'error'
+      );
+      return;
+    }
+
+    try {
+      setIsAddingItemsLoading(true);
+      await runTransaction(db, async (transaction) => {
+        const loanRef = doc(db, 'loans', addItemsModalLoan.id);
+        const loanSnap = await transaction.get(loanRef);
+        if (!loanSnap.exists() || loanSnap.data().status !== 'disetujui') {
+          throw new Error('Peminjaman ini sudah tidak berstatus disetujui atau sudah diproses.');
+        }
+
+        const freshLoanData = loanSnap.data() as Loan;
+        const currentLoanItems: LoanItem[] = freshLoanData.items || [];
+        const currentItemIds: string[] = freshLoanData.itemIds || currentLoanItems.map((i) => i.itemId);
+
+        // Fetch each selected item to ensure availability
+        const newSelectedItems: Item[] = [];
+        for (const itemId of selectedAdditionalItemIds) {
+          const itemRef = doc(db, 'items', itemId);
+          const itemSnap = await transaction.get(itemRef);
+          if (!itemSnap.exists()) {
+            throw new Error(`Barang tidak ditemukan (ID: ${itemId}).`);
+          }
+          const itData = { id: itemSnap.id, ...(itemSnap.data() as Omit<Item, 'id'>) };
+          if (itData.status !== 'tersedia') {
+            throw new Error(`Barang [${itData.nama}] statusnya tidak tersedia (${itData.status}).`);
+          }
+          newSelectedItems.push(itData);
+        }
+
+        // Check conflict with other active bookings
+        const activeLoansForConflict = loans.filter(
+          (l) => l.id !== addItemsModalLoan.id && ACTIVE_BOOKING_STATUSES.includes(l.status)
+        );
+        const conflicts = checkItemBookingConflicts(
+          selectedAdditionalItemIds,
+          freshLoanData.tglPinjam,
+          freshLoanData.tglRencanaKembali,
+          activeLoansForConflict,
+          addItemsModalLoan.id
+        );
+        if (conflicts.length > 0) {
+          throw new Error(`Barang [${conflicts[0].itemName}] memiliki jadwal bentrok dengan peminjaman lain.`);
+        }
+
+        // Build new LoanItem objects
+        const newLoanItems: LoanItem[] = newSelectedItems.map((it) => ({
+          itemId: it.id,
+          kodeAset: it.kodeAset,
+          nama: it.nama,
+          kondisiPinjam: it.kondisi || 'baik',
+          merek: it.merek || '',
+          model: it.model || '',
+          kelengkapan: it.kelengkapan || [],
+        }));
+
+        const mergedItems: LoanItem[] = [...currentLoanItems, ...newLoanItems];
+        const mergedItemIds: string[] = [...currentItemIds, ...selectedAdditionalItemIds];
+
+        const operatorName = profile?.nama || currentUser?.displayName || 'Petugas Laboratorium';
+        const noteDetail = addItemsAdminNote.trim() ? ` (${addItemsAdminNote.trim()})` : '';
+        const addendumNote = `Penambahan ${newSelectedItems.length} barang di hari-H [${newSelectedItems.map((i) => i.kodeAset).join(', ')}] oleh ${operatorName}${noteDetail}`;
+        const updatedCatatanAdmin = freshLoanData.catatanAdmin
+          ? `${freshLoanData.catatanAdmin} | ${addendumNote}`
+          : addendumNote;
+
+        const bookingRef = doc(db, 'bookings', addItemsModalLoan.id);
+
+        if (directHandover) {
+          // Check that existing items can also be handed over
+          const existingItemRefs = currentLoanItems.map((item) => doc(db, 'items', item.itemId));
+          const existingItemSnaps = await Promise.all(existingItemRefs.map((r) => transaction.get(r)));
+          for (let i = 0; i < existingItemSnaps.length; i++) {
+            const snap = existingItemSnaps[i];
+            if (!snap.exists()) {
+              throw new Error(`Barang ${currentLoanItems[i].nama} tidak ditemukan.`);
+            }
+            const data = snap.data();
+            if (data.status === 'rusak' || data.status === 'perawatan') {
+              throw new Error(`Barang [${currentLoanItems[i].nama}] sedang dalam status ${data.status}.`);
+            }
+          }
+
+          // Update loan directly to 'dipinjam'
+          transaction.update(loanRef, {
+            status: 'dipinjam',
+            items: mergedItems,
+            itemIds: mergedItemIds,
+            diserahkanAt: serverTimestamp(),
+            diserahkanOleh: operatorName,
+            catatanAdmin: updatedCatatanAdmin,
+          });
+
+          // Update booking
+          transaction.set(
+            bookingRef,
+            {
+              status: 'dipinjam',
+              items: mergedItems.map((it) => ({
+                itemId: it.itemId,
+                kodeAset: it.kodeAset,
+                nama: it.nama,
+              })),
+              itemIds: mergedItemIds,
+            },
+            { merge: true }
+          );
+
+          // Update all physical items to 'dipinjam'
+          mergedItemIds.forEach((itemId) => {
+            transaction.update(doc(db, 'items', itemId), {
+              status: 'dipinjam',
+              currentLoanId: addItemsModalLoan.id,
+            });
+          });
+        } else {
+          // Update loan and booking with new items while staying 'disetujui'
+          transaction.update(loanRef, {
+            items: mergedItems,
+            itemIds: mergedItemIds,
+            catatanAdmin: updatedCatatanAdmin,
+          });
+
+          transaction.set(
+            bookingRef,
+            {
+              items: mergedItems.map((it) => ({
+                itemId: it.itemId,
+                kodeAset: it.kodeAset,
+                nama: it.nama,
+              })),
+              itemIds: mergedItemIds,
+            },
+            { merge: true }
+          );
+        }
+      });
+
+      if (directHandover) {
+        showToast(
+          `Berhasil menambahkan ${selectedAdditionalItemIds.length} barang dan menyerahkan peminjaman ${addItemsModalLoan.noInvoice}!`
+        );
+      } else {
+        showToast(
+          `Berhasil menambahkan ${selectedAdditionalItemIds.length} barang ke peminjaman ${addItemsModalLoan.noInvoice}.`
+        );
+      }
+      setAddItemsModalLoan(null);
+    } catch (err: any) {
+      console.error('Error saat menambahkan barang ke peminjaman:', err);
+      showToast(err.message || 'Gagal menambahkan barang tambahan.', 'error');
+    } finally {
+      setIsAddingItemsLoading(false);
     }
   };
 
@@ -2202,6 +2399,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                       <p className="text-[11px] text-indigo-900 mt-2 font-medium">
                         Jadwal Pinjam: {formatDateIndo(loan.tglPinjam)} sampai {formatDateIndo(loan.tglRencanaKembali)}
                       </p>
+                      {loan.catatanAdmin && (
+                        <p className="text-[11px] text-amber-900 mt-2 italic bg-amber-50 border border-amber-200/80 px-2 py-1 rounded-md">
+                          <span className="font-semibold not-italic">Catatan:</span> {loan.catatanAdmin}
+                        </p>
+                      )}
                     </div>
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
                       <button
@@ -2218,6 +2420,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         className="min-h-[40px] px-3 py-2 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold disabled:opacity-50 cursor-pointer"
                       >
                         Batalkan
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenAddItemsModal(loan)}
+                        disabled={loanActionId !== null}
+                        className="min-h-[40px] px-3 py-2 rounded-lg border border-indigo-300 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-semibold disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                        title="Tambah barang tambahan pada hari-H"
+                      >
+                        <Icon name="Plus" size={14} />
+                        <span>Tambah Barang</span>
                       </button>
                       <button
                         type="button"
@@ -3603,6 +3815,312 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
         </div>
       </div>
     )}
+
+      {/* MODAL: TAMBAH BARANG TAMBAHAN DI HARI-H (SKEMA 1: ADDENDUM MEJA LAB) */}
+      {addItemsModalLoan && (() => {
+        const borrowerRole = addItemsModalLoan.peminjam.tipePeminjam;
+        const maxAllowed = settings[borrowerRole]?.maxBarang || 3;
+        const currentCount = addItemsModalLoan.items.length;
+        const totalAfterAdd = currentCount + selectedAdditionalItemIds.length;
+        const isExceeding = totalAfterAdd > maxAllowed;
+
+        const existingItemIds = new Set(addItemsModalLoan.items.map((it) => it.itemId));
+
+        // Filter items that are available, not currently in this loan
+        const filteredReadyItems = items.filter((it) => {
+          if (existingItemIds.has(it.id)) return false;
+          if (it.status !== 'tersedia') return false;
+          if (addItemCatFilter !== 'all' && it.categoryId !== addItemCatFilter) return false;
+          if (addItemSearch.trim()) {
+            const q = addItemSearch.toLowerCase();
+            const matchName = it.nama.toLowerCase().includes(q);
+            const matchCode = it.kodeAset.toLowerCase().includes(q);
+            const matchMerk = (it.merek || '').toLowerCase().includes(q);
+            const matchModel = (it.model || '').toLowerCase().includes(q);
+            if (!matchName && !matchCode && !matchMerk && !matchModel) return false;
+          }
+          return true;
+        });
+
+        const activeLoansForConflict = loans.filter(
+          (l) => l.id !== addItemsModalLoan.id && ACTIVE_BOOKING_STATUSES.includes(l.status)
+        );
+
+        return (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+            <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden sm:my-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
+              {/* Header */}
+              <div className="bg-indigo-700 text-white p-5 flex items-center justify-between shrink-0">
+                <div>
+                  <h3 className="font-semibold text-base flex items-center gap-2">
+                    <Icon name="Plus" size={18} />
+                    Tambah Barang ke Peminjaman (Hari-H)
+                  </h3>
+                  <p className="text-xs text-indigo-200">
+                    Invoice: <span className="font-mono font-bold text-white">{addItemsModalLoan.noInvoice}</span> · {addItemsModalLoan.peminjam.nama}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAddItemsModalLoan(null)}
+                  className="text-white/80 hover:text-white p-2 rounded-full cursor-pointer hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  aria-label="Tutup modal tambah barang"
+                  title="Tutup"
+                >
+                  <Icon name="XLg" size={16} />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
+                {/* Info Peminjam & Jadwal */}
+                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <p className="font-bold text-slate-800 text-sm">{addItemsModalLoan.peminjam.nama}</p>
+                    <p className="text-slate-500 text-[11px]">
+                      {addItemsModalLoan.peminjam.tipePeminjam} • {addItemsModalLoan.peminjam.nomorIdentitas} • {addItemsModalLoan.peminjam.noHp || 'Tanpa No HP'}
+                    </p>
+                  </div>
+                  <div className="text-left sm:text-right">
+                    <span className="text-[10px] text-slate-400 font-medium block">Rentang Peminjaman</span>
+                    <span className="font-semibold text-indigo-900 text-xs">
+                      {formatDateIndo(addItemsModalLoan.tglPinjam)} s/d {formatDateIndo(addItemsModalLoan.tglRencanaKembali)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Barang yang Sudah Disetujui */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-slate-700">Barang yang Sudah Disetujui ({currentCount}):</span>
+                    <span className="text-[11px] text-slate-500">Kuota {borrowerRole}: maks {maxAllowed} barang</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    {addItemsModalLoan.items.map((it) => (
+                      <span
+                        key={it.itemId}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-slate-800 text-xs shadow-xs"
+                      >
+                        <span className="font-mono text-[10px] font-bold text-indigo-700">{it.kodeAset}</span>
+                        <span>{it.nama}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Kuota Warning / Override Checkbox */}
+                {isExceeding && (
+                  <div className="p-3.5 rounded-xl border border-amber-300 bg-amber-50/70 text-amber-900 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <Icon name="ExclamationTriangle" size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold text-xs">Perhatian: Melebihi Batas Kuota Standar</p>
+                        <p className="text-[11px] text-amber-800">
+                          Total barang setelah penambahan ({totalAfterAdd} barang) melampaui kuota standar {borrowerRole} ({maxAllowed} barang).
+                        </p>
+                      </div>
+                    </div>
+                    <label className="flex items-center gap-2 pt-1 border-t border-amber-200 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={overrideLimitConfirmed}
+                        onChange={(e) => setOverrideLimitConfirmed(e.target.checked)}
+                        className="rounded border-amber-400 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                      />
+                      <span className="text-xs font-semibold text-amber-950">
+                        Izinkan penambahan melebihi batas kuota (Persetujuan Khusus Meja Lab)
+                      </span>
+                    </label>
+                  </div>
+                )}
+
+                {/* Filter & Cari Barang Ready */}
+                <div>
+                  <label className="font-bold text-slate-700 block mb-2">
+                    Pilih Barang Tambahan yang Tersedia di Lab:
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                    <div className="relative">
+                      <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        value={addItemSearch}
+                        onChange={(e) => setAddItemSearch(e.target.value)}
+                        placeholder="Cari kode aset, nama, merek..."
+                        className="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <select
+                        value={addItemCatFilter}
+                        onChange={(e) => setAddItemCatFilter(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white"
+                      >
+                        <option value="all">Semua Kategori ({categories.length})</option>
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.nama}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* List Barang Ready */}
+                  <div className="border border-slate-200 rounded-2xl max-h-64 overflow-y-auto divide-y divide-slate-100 bg-white">
+                    {filteredReadyItems.length === 0 ? (
+                      <div className="p-6 text-center text-slate-400">
+                        <Icon name="Grid" size={24} className="mx-auto mb-1.5 opacity-50" />
+                        <p className="text-xs font-medium">Tidak ada barang ready yang sesuai pencarian atau kategori.</p>
+                      </div>
+                    ) : (
+                      filteredReadyItems.map((item) => {
+                        const isSelected = selectedAdditionalItemIds.includes(item.id);
+                        const conflicts = checkItemBookingConflicts(
+                          [item.id],
+                          addItemsModalLoan.tglPinjam,
+                          addItemsModalLoan.tglRencanaKembali,
+                          activeLoansForConflict,
+                          addItemsModalLoan.id
+                        );
+                        const hasConflict = conflicts.length > 0;
+
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => {
+                              if (!hasConflict) {
+                                handleToggleSelectItem(item.id);
+                              }
+                            }}
+                            className={`p-3 flex items-start gap-3 transition-colors ${
+                              hasConflict
+                                ? 'opacity-50 bg-slate-50 cursor-not-allowed'
+                                : isSelected
+                                ? 'bg-indigo-50/60 hover:bg-indigo-50 cursor-pointer'
+                                : 'hover:bg-slate-50 cursor-pointer'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              disabled={hasConflict}
+                              onChange={() => {
+                                if (!hasConflict) {
+                                  handleToggleSelectItem(item.id);
+                                }
+                              }}
+                              className="mt-1 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                                <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                  {item.kodeAset}
+                                </span>
+                                <span className="font-semibold text-slate-800 text-xs">{item.nama}</span>
+                                {item.kategoriNama && (
+                                  <span className="text-[10px] text-slate-500 font-medium">({item.kategoriNama})</span>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                                {(item.merek || item.model) && (
+                                  <span>{[item.merek, item.model].filter(Boolean).join(' ')}</span>
+                                )}
+                                {item.lokasiSimpan && (
+                                  <span>• Lokasi: <span className="font-medium text-slate-700">{item.lokasiSimpan}</span></span>
+                                )}
+                                <span>
+                                  • Kondisi:{' '}
+                                  <span
+                                    className={`font-semibold ${
+                                      item.kondisi === 'baik' ? 'text-emerald-700' : 'text-amber-700'
+                                    }`}
+                                  >
+                                    {item.kondisi === 'baik' ? 'Baik' : 'Perlu Cek'}
+                                  </span>
+                                </span>
+                              </div>
+                              {hasConflict && (
+                                <p className="text-[10px] text-rose-600 font-semibold mt-1">
+                                  ⚠️ Jadwal bentrok dengan peminjaman #{conflicts[0].noInvoice} ({formatDateIndo(conflicts[0].tglPinjam)} - {formatDateIndo(conflicts[0].tglRencanaKembali)})
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* Catatan Admin */}
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">
+                    Catatan Penambahan di Meja Lab (Opsional):
+                  </label>
+                  <input
+                    type="text"
+                    value={addItemsAdminNote}
+                    onChange={(e) => setAddItemsAdminNote(e.target.value)}
+                    placeholder="Contoh: Tambahan kabel HDMI & proyektor mendadak untuk tugas akhir..."
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
+                <div className="text-xs text-slate-600 font-medium">
+                  {selectedAdditionalItemIds.length > 0 ? (
+                    <span className="text-indigo-700 font-bold">
+                      {selectedAdditionalItemIds.length} barang tambahan dipilih (Total: {totalAfterAdd} barang)
+                    </span>
+                  ) : (
+                    <span>Pilih minimal 1 barang tambahan</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAddItemsModalLoan(null)}
+                    disabled={isAddingItemsLoading}
+                    className="min-h-[40px] px-3.5 py-2 text-slate-600 hover:bg-slate-200 rounded-xl font-medium cursor-pointer text-xs"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveAdditionalItems(false)}
+                    disabled={
+                      selectedAdditionalItemIds.length === 0 ||
+                      (isExceeding && !overrideLimitConfirmed) ||
+                      isAddingItemsLoading
+                    }
+                    className="min-h-[40px] px-4 py-2 bg-white border border-indigo-300 hover:bg-indigo-50 text-indigo-700 font-semibold rounded-xl transition-colors cursor-pointer disabled:opacity-50 text-xs"
+                    title="Simpan penambahan ke invoice tanpa langsung serah terima"
+                  >
+                    {isAddingItemsLoading ? 'Menyimpan...' : 'Simpan ke Invoice'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveAdditionalItems(true)}
+                    disabled={
+                      selectedAdditionalItemIds.length === 0 ||
+                      (isExceeding && !overrideLimitConfirmed) ||
+                      isAddingItemsLoading
+                    }
+                    className="min-h-[40px] px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5 text-xs"
+                    title="Simpan penambahan dan langsung serahkan semua barang fisik"
+                  >
+                    <Icon name="CheckCircle" size={14} />
+                    <span>{isAddingItemsLoading ? 'Memproses...' : 'Simpan & Langsung Serahkan'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* MODAL: TAMBAH / EDIT BARANG (FORM TERSTRUKTUR: INFORMASI UTAMA, SPESIFIKASI, KELENGKAPAN - BOTTOM SHEET & ACCORDION DI MOBILE) */}
       {itemModalOpen && (
