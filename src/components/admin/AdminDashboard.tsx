@@ -109,8 +109,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
   const [addItemSearch, setAddItemSearch] = useState('');
   const [addItemCatFilter, setAddItemCatFilter] = useState('all');
   const [addItemsAdminNote, setAddItemsAdminNote] = useState('');
+  const [addItemsReturnDate, setAddItemsReturnDate] = useState('');
   const [isAddingItemsLoading, setIsAddingItemsLoading] = useState(false);
   const [overrideLimitConfirmed, setOverrideLimitConfirmed] = useState(false);
+
+  // Action / Modal states for Editing Return Date (Ubah Jadwal Pengembalian)
+  const [editDateModalLoan, setEditDateModalLoan] = useState<Loan | null>(null);
+  const [newReturnDate, setNewReturnDate] = useState('');
+  const [editDateNote, setEditDateNote] = useState('');
+  const [overrideDateLimitConfirmed, setOverrideDateLimitConfirmed] = useState(false);
+  const [isSubmittingDateChange, setIsSubmittingDateChange] = useState(false);
 
   // Item Modal state (Add / Edit)
   const [itemModalOpen, setItemModalOpen] = useState(false);
@@ -417,6 +425,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
     setAddItemSearch('');
     setAddItemCatFilter('all');
     setAddItemsAdminNote('');
+    setAddItemsReturnDate(loan.tglRencanaKembali || loan.tglPinjam);
     setOverrideLimitConfirmed(false);
   };
 
@@ -468,20 +477,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           newSelectedItems.push(itData);
         }
 
-        // Check conflict with other active bookings
-        const activeLoansForConflict = loans.filter(
-          (l) => l.id !== addItemsModalLoan.id && ACTIVE_BOOKING_STATUSES.includes(l.status)
-        );
-        const conflicts = checkItemBookingConflicts(
-          selectedAdditionalItemIds,
-          freshLoanData.tglPinjam,
-          freshLoanData.tglRencanaKembali,
-          activeLoansForConflict,
-          addItemsModalLoan.id
-        );
-        if (conflicts.length > 0) {
-          throw new Error(`Barang [${conflicts[0].itemName}] memiliki jadwal bentrok dengan peminjaman lain.`);
-        }
+        const targetReturnDate = addItemsReturnDate && addItemsReturnDate >= freshLoanData.tglPinjam
+          ? addItemsReturnDate
+          : freshLoanData.tglRencanaKembali;
+        const isDateChanged = targetReturnDate !== freshLoanData.tglRencanaKembali;
 
         // Build new LoanItem objects
         const newLoanItems: LoanItem[] = newSelectedItems.map((it) => ({
@@ -497,9 +496,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
         const mergedItems: LoanItem[] = [...currentLoanItems, ...newLoanItems];
         const mergedItemIds: string[] = [...currentItemIds, ...selectedAdditionalItemIds];
 
+        // Check conflict with other active bookings (check all items if date is extended)
+        const activeLoansForConflict = loans.filter(
+          (l) => l.id !== addItemsModalLoan.id && ACTIVE_BOOKING_STATUSES.includes(l.status)
+        );
+        const itemsToCheckForConflict = isDateChanged ? mergedItemIds : selectedAdditionalItemIds;
+        const conflicts = checkItemBookingConflicts(
+          itemsToCheckForConflict,
+          freshLoanData.tglPinjam,
+          targetReturnDate,
+          activeLoansForConflict,
+          addItemsModalLoan.id
+        );
+        if (conflicts.length > 0) {
+          throw new Error(`Barang [${conflicts[0].itemName}] memiliki jadwal bentrok dengan peminjaman #${conflicts[0].noInvoice}.`);
+        }
+
         const operatorName = profile?.nama || currentUser?.displayName || 'Petugas Laboratorium';
         const noteDetail = addItemsAdminNote.trim() ? ` (${addItemsAdminNote.trim()})` : '';
-        const addendumNote = `Penambahan ${newSelectedItems.length} barang di hari-H [${newSelectedItems.map((i) => i.kodeAset).join(', ')}] oleh ${operatorName}${noteDetail}`;
+        const dateNote = isDateChanged ? ` & penyesuaian batas kembali ke ${formatDateIndo(targetReturnDate)}` : '';
+        const addendumNote = `Penambahan ${newSelectedItems.length} barang di hari-H [${newSelectedItems.map((i) => i.kodeAset).join(', ')}]${dateNote} oleh ${operatorName}${noteDetail}`;
         const updatedCatatanAdmin = freshLoanData.catatanAdmin
           ? `${freshLoanData.catatanAdmin} | ${addendumNote}`
           : addendumNote;
@@ -526,6 +542,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
             status: 'dipinjam',
             items: mergedItems,
             itemIds: mergedItemIds,
+            tglRencanaKembali: targetReturnDate,
             diserahkanAt: serverTimestamp(),
             diserahkanOleh: operatorName,
             catatanAdmin: updatedCatatanAdmin,
@@ -542,6 +559,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                 nama: it.nama,
               })),
               itemIds: mergedItemIds,
+              tglRencanaKembali: targetReturnDate,
             },
             { merge: true }
           );
@@ -558,6 +576,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           transaction.update(loanRef, {
             items: mergedItems,
             itemIds: mergedItemIds,
+            tglRencanaKembali: targetReturnDate,
             catatanAdmin: updatedCatatanAdmin,
           });
 
@@ -570,6 +589,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                 nama: it.nama,
               })),
               itemIds: mergedItemIds,
+              tglRencanaKembali: targetReturnDate,
             },
             { merge: true }
           );
@@ -591,6 +611,112 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
       showToast(err.message || 'Gagal menambahkan barang tambahan.', 'error');
     } finally {
       setIsAddingItemsLoading(false);
+    }
+  };
+
+  // Action: Buka Modal Ubah Jadwal Pengembalian
+  const handleOpenEditDateModal = (loan: Loan) => {
+    setEditDateModalLoan(loan);
+    setNewReturnDate(loan.tglRencanaKembali || loan.tglPinjam);
+    setEditDateNote('');
+    setOverrideDateLimitConfirmed(false);
+  };
+
+  // Action: Simpan Perubahan Jadwal Pengembalian (Perpanjang Hari)
+  const handleSaveDateChange = async () => {
+    if (!editDateModalLoan || !newReturnDate) return;
+
+    if (newReturnDate < editDateModalLoan.tglPinjam) {
+      showToast('Tanggal kembali tidak boleh lebih awal dari tanggal pinjam.', 'error');
+      return;
+    }
+
+    const userRole = editDateModalLoan.peminjam.tipePeminjam;
+    const maxAllowedDuration = settings[userRole]?.maxDurasiHari || 3;
+    const diffDays = Math.ceil(
+      (new Date(newReturnDate).getTime() - new Date(editDateModalLoan.tglPinjam).getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+    if (diffDays > maxAllowedDuration && !overrideDateLimitConfirmed) {
+      showToast(
+        `Durasi peminjaman (${diffDays} hari) melebihi batas kuota ${userRole} (${maxAllowedDuration} hari). Harap centang persetujuan izin khusus admin.`,
+        'error'
+      );
+      return;
+    }
+
+    try {
+      setIsSubmittingDateChange(true);
+      await runTransaction(db, async (transaction) => {
+        const loanRef = doc(db, 'loans', editDateModalLoan.id);
+        const loanSnap = await transaction.get(loanRef);
+        if (!loanSnap.exists()) {
+          throw new Error('Peminjaman tidak ditemukan.');
+        }
+
+        const freshLoanData = loanSnap.data() as Loan;
+        if (
+          freshLoanData.status === 'dikembalikan' ||
+          freshLoanData.status === 'ditolak' ||
+          freshLoanData.status === 'dibatalkan'
+        ) {
+          throw new Error(
+            `Peminjaman ini sudah berstatus ${freshLoanData.status} sehingga jadwal tidak dapat diubah.`
+          );
+        }
+
+        const loanItemIds = (freshLoanData.items || []).map((it) => it.itemId);
+
+        // Conflict check with other active loans
+        const activeLoansForConflict = loans.filter(
+          (l) => l.id !== editDateModalLoan.id && ACTIVE_BOOKING_STATUSES.includes(l.status)
+        );
+        const conflicts = checkItemBookingConflicts(
+          loanItemIds,
+          freshLoanData.tglPinjam,
+          newReturnDate,
+          activeLoansForConflict,
+          editDateModalLoan.id
+        );
+        if (conflicts.length > 0) {
+          throw new Error(
+            `Jadwal baru bentrok dengan peminjaman #${conflicts[0].noInvoice} untuk alat ${conflicts[0].itemName} (${formatDateIndo(conflicts[0].tglPinjam)} - ${formatDateIndo(conflicts[0].tglRencanaKembali)}).`
+          );
+        }
+
+        const operatorName = profile?.nama || currentUser?.displayName || 'Petugas Laboratorium';
+        const noteDetail = editDateNote.trim() ? ` (${editDateNote.trim()})` : '';
+        const changeNote = `Perubahan batas kembali dari ${formatDateIndo(freshLoanData.tglRencanaKembali)} ke ${formatDateIndo(newReturnDate)} oleh ${operatorName}${noteDetail}`;
+        const updatedCatatanAdmin = freshLoanData.catatanAdmin
+          ? `${freshLoanData.catatanAdmin} | ${changeNote}`
+          : changeNote;
+
+        // Update loan document
+        transaction.update(loanRef, {
+          tglRencanaKembali: newReturnDate,
+          catatanAdmin: updatedCatatanAdmin,
+        });
+
+        // Update booking document
+        const bookingRef = doc(db, 'bookings', editDateModalLoan.id);
+        transaction.set(
+          bookingRef,
+          {
+            tglRencanaKembali: newReturnDate,
+          },
+          { merge: true }
+        );
+      });
+
+      showToast(
+        `Jadwal pengembalian invoice ${editDateModalLoan.noInvoice} berhasil diubah menjadi ${formatDateIndo(newReturnDate)}!`
+      );
+      setEditDateModalLoan(null);
+    } catch (err: any) {
+      console.error('Error saat mengubah tanggal pengembalian:', err);
+      showToast(err.message || 'Gagal mengubah tanggal pengembalian.', 'error');
+    } finally {
+      setIsSubmittingDateChange(false);
     }
   };
 
@@ -2337,7 +2463,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         Rencana pinjam: {formatDateIndo(loan.tglPinjam)} sampai {formatDateIndo(loan.tglRencanaKembali)}
                       </p>
                     </div>
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditDateModal(loan)}
+                        disabled={loanActionId !== null}
+                        className="min-h-[40px] px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                        title="Ubah batas tanggal pengembalian sebelum disetujui"
+                      >
+                        <Icon name="Calendar3" size={13} />
+                        <span>Ubah Jadwal</span>
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleRejectLoan(loan)}
@@ -2412,6 +2548,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         className="min-h-[40px] px-3 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold cursor-pointer"
                       >
                         Invoice
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditDateModal(loan)}
+                        disabled={loanActionId !== null}
+                        className="min-h-[40px] px-3 py-2 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-semibold disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                        title="Ubah batas tanggal pengembalian (penambahan hari)"
+                      >
+                        <Icon name="Calendar3" size={13} />
+                        <span>Ubah Jadwal</span>
                       </button>
                       <button
                         type="button"
@@ -3881,11 +4027,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                       {addItemsModalLoan.peminjam.tipePeminjam} • {addItemsModalLoan.peminjam.nomorIdentitas} • {addItemsModalLoan.peminjam.noHp || 'Tanpa No HP'}
                     </p>
                   </div>
-                  <div className="text-left sm:text-right">
-                    <span className="text-[10px] text-slate-400 font-medium block">Rentang Peminjaman</span>
-                    <span className="font-semibold text-indigo-900 text-xs">
-                      {formatDateIndo(addItemsModalLoan.tglPinjam)} s/d {formatDateIndo(addItemsModalLoan.tglRencanaKembali)}
-                    </span>
+                  <div className="text-left sm:text-right flex flex-col items-start sm:items-end">
+                    <span className="text-[10px] text-slate-400 font-medium block">Rentang Peminjaman & Batas Kembali</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="font-semibold text-indigo-900 text-xs">
+                        {formatDateIndo(addItemsModalLoan.tglPinjam)} s/d
+                      </span>
+                      <input
+                        type="date"
+                        min={addItemsModalLoan.tglPinjam}
+                        value={addItemsReturnDate}
+                        onChange={(e) => setAddItemsReturnDate(e.target.value)}
+                        className="px-2 py-0.5 rounded-lg border border-slate-300 bg-white font-mono text-xs text-indigo-900 font-semibold focus:ring-1 focus:ring-indigo-500 outline-none"
+                        title="Sesuaikan tanggal kembali jika ada penambahan hari"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -3979,7 +4135,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         const conflicts = checkItemBookingConflicts(
                           [item.id],
                           addItemsModalLoan.tglPinjam,
-                          addItemsModalLoan.tglRencanaKembali,
+                          addItemsReturnDate || addItemsModalLoan.tglRencanaKembali,
                           activeLoansForConflict,
                           addItemsModalLoan.id
                         );
@@ -4116,6 +4272,227 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                     <span>{isAddingItemsLoading ? 'Memproses...' : 'Simpan & Langsung Serahkan'}</span>
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* MODAL: UBAH JADWAL PENGEMBALIAN (PERPANJANGAN HARI) */}
+      {editDateModalLoan && (() => {
+        const borrowerRole = editDateModalLoan.peminjam.tipePeminjam;
+        const maxAllowedDuration = settings[borrowerRole]?.maxDurasiHari || 3;
+
+        // Calculate new duration
+        const start = new Date(editDateModalLoan.tglPinjam);
+        const end = newReturnDate ? new Date(newReturnDate) : start;
+        const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        const isDurationExceeded = diffDays > maxAllowedDuration;
+        const isDateEarlier = newReturnDate < editDateModalLoan.tglPinjam;
+        const isUnchanged = newReturnDate === editDateModalLoan.tglRencanaKembali;
+
+        const loanItemIds = editDateModalLoan.items.map((it) => it.itemId);
+        const activeLoansForConflict = loans.filter(
+          (l) => l.id !== editDateModalLoan.id && ACTIVE_BOOKING_STATUSES.includes(l.status)
+        );
+
+        const conflicts = newReturnDate && !isDateEarlier
+          ? checkItemBookingConflicts(
+              loanItemIds,
+              editDateModalLoan.tglPinjam,
+              newReturnDate,
+              activeLoansForConflict,
+              editDateModalLoan.id
+            )
+          : [];
+        const hasConflicts = conflicts.length > 0;
+
+        return (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+            <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden sm:my-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
+              {/* Header */}
+              <div className="bg-indigo-700 text-white p-5 flex items-center justify-between shrink-0">
+                <div>
+                  <h3 className="font-semibold text-base flex items-center gap-2">
+                    <Icon name="Calendar3" size={18} />
+                    Ubah Jadwal Pengembalian
+                  </h3>
+                  <p className="text-xs text-indigo-200">
+                    Invoice: <span className="font-mono font-bold text-white">{editDateModalLoan.noInvoice}</span> · {editDateModalLoan.peminjam.nama}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditDateModalLoan(null)}
+                  className="text-white/80 hover:text-white p-2 rounded-full cursor-pointer hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  aria-label="Tutup modal ubah jadwal"
+                  title="Tutup"
+                >
+                  <Icon name="XLg" size={16} />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
+                {/* Info Peminjam & Alat */}
+                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <p className="font-bold text-slate-800 text-sm">{editDateModalLoan.peminjam.nama}</p>
+                      <p className="text-slate-500 text-[11px]">
+                        {editDateModalLoan.peminjam.tipePeminjam} • {editDateModalLoan.peminjam.nomorIdentitas} • {editDateModalLoan.peminjam.noHp || 'Tanpa No HP'}
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2.5 py-0.5 rounded-full capitalize">
+                      {editDateModalLoan.status.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-600 block mb-1">
+                      Alat yang Dipinjam ({editDateModalLoan.items.length}):
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {editDateModalLoan.items.map((it) => (
+                        <span
+                          key={it.itemId}
+                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white border border-slate-300 text-slate-800 text-[11px]"
+                        >
+                          <span className="font-mono font-bold text-indigo-700">{it.kodeAset}</span>
+                          <span>{it.nama}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tanggal Saat Ini vs Baru */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-2xl border border-slate-200 bg-white">
+                  <div>
+                    <label className="text-slate-500 text-[11px] block mb-1 font-medium">Tanggal Pinjam (Awal):</label>
+                    <div className="p-2 rounded-xl bg-slate-100 font-semibold text-slate-800 text-xs font-mono">
+                      {formatDateIndo(editDateModalLoan.tglPinjam)}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-indigo-900 text-[11px] block mb-1 font-bold">Tanggal Kembali Baru:</label>
+                    <input
+                      type="date"
+                      min={editDateModalLoan.tglPinjam}
+                      value={newReturnDate}
+                      onChange={(e) => setNewReturnDate(e.target.value)}
+                      className="w-full p-2 rounded-xl border-2 border-indigo-500 font-semibold text-indigo-950 text-xs font-mono focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Kalkulasi Durasi */}
+                <div className="flex items-center justify-between text-xs px-1">
+                  <span className="text-slate-600 font-medium">
+                    Durasi Baru: <strong className="text-indigo-900">{diffDays} hari</strong>
+                  </span>
+                  <span className="text-slate-500 text-[11px]">
+                    Batas Standar {borrowerRole}: {maxAllowedDuration} hari
+                  </span>
+                </div>
+
+                {/* Peringatan Tanggal Mundur Tidak Valid */}
+                {isDateEarlier && (
+                  <p className="text-xs text-rose-600 font-semibold bg-rose-50 border border-rose-200 p-2.5 rounded-xl">
+                    ⚠️ Tanggal kembali tidak boleh lebih awal dari tanggal pinjam ({formatDateIndo(editDateModalLoan.tglPinjam)}).
+                  </p>
+                )}
+
+                {/* Konflik Booking */}
+                {hasConflicts && (
+                  <div className="p-3.5 rounded-xl border border-rose-300 bg-rose-50 text-rose-900 space-y-1.5">
+                    <p className="font-bold text-xs flex items-center gap-1.5 text-rose-800">
+                      <Icon name="ExclamationTriangle" size={14} className="text-rose-600" />
+                      Tidak dapat memperpanjang: Jadwal Bentrok!
+                    </p>
+                    <p className="text-[11px] text-rose-700">
+                      Terdapat {conflicts.length} barang yang sudah dibooking oleh peminjam lain di rentang tanggal tersebut:
+                    </p>
+                    <ul className="list-disc list-inside space-y-0.5 text-[11px] text-rose-800 font-medium pl-1">
+                      {conflicts.map((c, idx) => (
+                        <li key={idx}>
+                          <strong>{c.itemName}</strong> (Invoice #{c.noInvoice}: {formatDateIndo(c.tglPinjam)} - {formatDateIndo(c.tglRencanaKembali)})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Alert Kuota Melebihi Batas */}
+                {isDurationExceeded && !hasConflicts && (
+                  <div className="p-3.5 rounded-xl border border-amber-300 bg-amber-50/80 text-amber-900 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <Icon name="ExclamationTriangle" size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold text-xs">Perhatian: Melebihi Batas Kuota Durasi</p>
+                        <p className="text-[11px] text-amber-800">
+                          Total durasi ({diffDays} hari) melebihi batas standar untuk {borrowerRole} ({maxAllowedDuration} hari).
+                        </p>
+                      </div>
+                    </div>
+                    <label className="flex items-center gap-2 pt-1 border-t border-amber-200 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={overrideDateLimitConfirmed}
+                        onChange={(e) => setOverrideDateLimitConfirmed(e.target.checked)}
+                        className="rounded border-amber-400 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                      />
+                      <span className="text-xs font-semibold text-amber-950">
+                        Izinkan perpanjangan durasi melebihi batas kuota (Persetujuan Khusus Meja Lab)
+                      </span>
+                    </label>
+                  </div>
+                )}
+
+                {/* Catatan Admin */}
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">
+                    Catatan Perubahan / Alasan Perpanjangan (Opsional):
+                  </label>
+                  <input
+                    type="text"
+                    value={editDateNote}
+                    onChange={(e) => setEditDateNote(e.target.value)}
+                    placeholder="Contoh: Permohonan perpanjangan 1 hari untuk kegiatan pameran..."
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setEditDateModalLoan(null)}
+                  disabled={isSubmittingDateChange}
+                  className="min-h-[40px] px-3.5 py-2 text-slate-600 hover:bg-slate-200 rounded-xl font-medium cursor-pointer text-xs"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveDateChange}
+                  disabled={
+                    !newReturnDate ||
+                    isDateEarlier ||
+                    isUnchanged ||
+                    hasConflicts ||
+                    (isDurationExceeded && !overrideDateLimitConfirmed) ||
+                    isSubmittingDateChange
+                  }
+                  className="min-h-[40px] px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2 text-xs"
+                >
+                  {isSubmittingDateChange ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Icon name="CheckCircle" size={14} />
+                  )}
+                  <span>{isSubmittingDateChange ? 'Menyimpan...' : 'Simpan Perubahan Jadwal'}</span>
+                </button>
               </div>
             </div>
           </div>
