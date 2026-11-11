@@ -67,9 +67,9 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
 * **Verifikasi Pengguna Terpusat:** Meninjau dan menyetujui akun baru sebelum diizinkan meminjam barang, serta memproses permintaan perubahan data identitas.
 * **Delegasi Akses Admin (Superadmin Only):** Akun Superadmin dapat mempromosikan pengguna terdaftar menjadi Admin Lab atau mencabut akses admin langsung dari dasbor web tanpa perlu menyentuh kode sumber.
 * **Manajemen Peminjaman & Serah Terima:**
-  * **Persetujuan / Penolakan:** Menyetujui pengajuan atau memberikan alasan penolakan yang jelas.
-  * **Penambahan Barang di Hari-H (Skema Addendum Meja Lab):** Fasilitas fleksibel saat peminjam tiba di laboratorium pada hari-H dan membutuhkan alat tambahan yang berstatus *Tersedia*. Admin dapat memilih barang tambahan langsung dari modal interaktif, sistem secara otomatis memeriksa tabrakan jadwal reservasi (*conflict check*), mengevaluasi kuota peran dengan dukungan persetujuan khusus (*Admin Override*), serta menyediakan opsi simpan ke invoice atau simpan & langsung serahkan seluruh barang secara instan dalam 1 nomor invoice yang sama.
-  * **Penyesuaian Jadwal Pengembalian (*Extend Loan Schedule*):** Fitur fleksibel untuk memperpanjang batas tanggal kembali sebelum barang diserahkan ke peminjam. Dilengkapi dengan validasi bentrok reservasi secara otomatis, perhitungan durasi hari terhadap kuota role, persetujuan khusus admin (*Admin Override*), dan sinkronisasi instan ke invoice serta kalender ketersediaan alat.
+  * **Persetujuan / Penolakan & Penyesuaian Jadwal:** Meninjau pengajuan, menyetujui, menolak dengan alasan yang transparan, atau menyesuaikan jadwal tanggal kembali sebelum pengajuan disetujui.
+  * **Penambahan Barang di Hari-H (Skema Addendum Meja Lab):** Fasilitas fleksibel saat peminjam tiba di laboratorium pada hari-H dan membutuhkan alat tambahan yang berstatus *Tersedia*. Admin dapat memilih barang tambahan langsung dari modal interaktif, sekaligus menyesuaikan tanggal kembali jika diperlukan, mengevaluasi kuota peran dengan dukungan persetujuan khusus (*Admin Override*), serta memilih opsi simpan ke invoice atau simpan & langsung serahkan seluruh barang secara instan dalam 1 nomor invoice yang sama.
+  * **Penyesuaian Jadwal Pengembalian (*Extend Loan Schedule*):** Fitur fleksibel untuk memperpanjang batas tanggal kembali sebelum barang diserahkan ke peminjam. Dilengkapi dengan validasi bentrok reservasi secara otomatis (*real-time conflict detection*), perhitungan durasi hari terhadap kuota role, persetujuan khusus admin (*Admin Override*), dan sinkronisasi instan ke invoice serta kalender ketersediaan alat.
   * **Serah Terima (*Handover*):** Mengonfirmasi penyerahan fisik barang kepada peminjam dengan validasi kondisi alat terbaru secara atomik.
   * **Pembatalan Peminjaman Cepat (*Instant Cancel*):** Tombol pembatalan pada kartu peminjaman aktif jika peminjam tidak jadi menggunakan alat di hari-H. Seluruh alat fisik otomatis dipulihkan ke status *Tersedia* dan slot kalender dibebaskan seketika tanpa perlu mengisi formulir checklist inspeksi pengembalian.
   * **Inspeksi Pengembalian (*Return Checklist*):** Formulir inspeksi kondisi fisik barang (*Baik / Perlu Cek / Rusak*) dan checklist kelengkapan aksesoris saat barang dikembalikan, dilengkapi catatan laboran.
@@ -83,7 +83,7 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
 ### 📄 Form Bukti Peminjaman Resmi (Invoice A5)
 * **Format Blanko Formal Laboratorium FIT:** Mengikuti standar resmi Administrasi Laboratorium Fakultas Ilmu Terapan dengan kop surat simetris dan logo resmi Lab FIT.
 * **Titimangsa Formal Bahasa Indonesia:** Penulisan tanggal surat resmi otomatis (`Bandung, [DD] [Nama Bulan] [YYYY]`, contoh: *Bandung, 29 Oktober 2026*).
-* **Metadata Peminjaman 2 Kolom Sejajar:** Data terstruktur mencakup Nomor Invoice unik, Nama Peminjam, Nomor Identitas (NIM/NIP), Kontak HP/WA, Tanggal Pinjam, Batas Pengembalian, Keperluan (*Capitalized Case*), dan Status persetujuan.
+* **Metadata Peminjaman 2 Kolom Sejajar:** Data terstruktur mencakup Nomor Invoice unik, Nama Peminjam, Nomor Identitas (NIM/NIP), Kontak HP/WA, Tanggal Pinjam, Batas Pengembalian (otomatis tersinkronisasi saat jadwal diperpanjang), Keperluan (*Capitalized Case*), dan Status persetujuan.
 * **Tabel Barang Solid Klasik:** Daftar inventaris rapi dengan kolom No, Nama Barang & Spesifikasi Teknis, Kode Aset, Jumlah Unit, serta Keterangan Kelengkapan dan Kondisi Pinjam. Seluruh item otomatis tersinkronisasi secara real-time termasuk jika terdapat penambahan barang di hari-H (addendum meja lab).
 * **Tanda Tangan Dua Pihak:** Blok pengesahan resmi berdampingan antara Petugas Laboratorium FIT (kiri) dan Peminjam (kanan).
 * **Siap Cetak Kertas A5:** Tampilan dan styling cetak (`@media print`) dioptimalkan khusus untuk ukuran kertas A5 tanpa terpotong atau berantakan saat dicetak atau disimpan ke PDF.
@@ -106,13 +106,17 @@ flowchart TD
     G --> H[Kirim Pengajuan Peminjaman]
     
     H --> I["Status: Menunggu Persetujuan"]
-    I --> J{Keputusan Admin}
-    J -- Ditolak --> K(["Peminjaman Ditolak + Catatan"])
-    J -- Disetujui --> L["Status: Disetujui (Menunggu Diambil)"]
+    I --> J{Tinjauan Admin}
+    J -- Tolak --> K(["Peminjaman Ditolak + Catatan"])
+    J -- Ubah Jadwal --> AdjPending["Penyesuaian Jadwal / Perpanjang Hari"]
+    AdjPending --> I
+    J -- Setujui --> L["Status: Disetujui (Menunggu Diambil)"]
 
     L --> M{"Hari-H: Kedatangan di Meja Lab"}
-    M -- Butuh Tambahan Barang Ready --> Add["Penambahan Barang Tambahan (Addendum Hari-H)"]
+    M -- Butuh Tambahan Barang Ready --> Add["Penambahan Barang Tambahan (Addendum)"]
+    M -- Minta Perpanjangan Hari --> Ext["Ubah Jadwal Pengembalian (Extend Schedule)"]
     Add --> M
+    Ext --> M
     M -- Serah Terima Barang Fisik --> N["Status: Dipinjam + Terbit Invoice Digital"]
     L -- Batal Sebelum Diambil --> K
     
@@ -274,6 +278,7 @@ PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Securit
 3. **Validasi Transaksi & Privasi Data Pribadi (UU PDP):**
    * **Siklus Status Peminjaman Formal:** Sistem mengelola 6 status siklus hidup peminjaman yang tervalidasi (`menunggu_persetujuan`, `disetujui`, `dipinjam`, `dikembalikan`, `ditolak`, dan `dibatalkan`), di mana pembatalan langsung mengembalikan ketersediaan aset secara atomik.
    * **Integritas Transaksi Server-Side:** Aturan Firestore membatasi maksimal 10 barang per pengajuan, mewajibkan urutan tanggal valid (`tglRencanaKembali >= tglPinjam`), dan memastikan pemetaan identik antara slot booking kalender dengan ID peminjaman (`loanId == bookingId`).
+   * **Pencegahan Bentrok Reservasi Real-time (*Dynamic Conflict Prevention*):** Pengecekan overlap tanggal berjalan secara otomatis saat pengajuan baru, penambahan barang hari-H, maupun perpanjangan tanggal kembali (*extend schedule*), menjamin tidak ada aset lab yang ter-booking ganda pada rentang waktu yang sama.
    * **Proteksi PII:** Data kontak dan identitas peminjam (*PII - Personally Identifiable Information*) diisolasi ketat di dokumen privat.
    * **Sanitasi Kalender Publik:** Ketersediaan slot kalender untuk pengecekan bentrok jadwal diakses via koleksi tersanitasi (`/bookings`) tanpa memuat data diri peminjam.
 
