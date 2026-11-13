@@ -483,9 +483,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* ========================================================
-            BAGIAN A: DATA YANG BISA DIEDIT LANGSUNG OLEH PEMINJAM
-            ======================================================== */}
+        {/* Bagian A: Data kontak & akademik peminjam */}
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-7 space-y-6">
           <div className="border-b border-slate-100 pb-4">
             <div className="flex items-center justify-between">
@@ -603,9 +601,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
           </form>
         </div>
 
-        {/* ========================================================
-            BAGIAN B: DATA YANG TERKUNCI (DIVERIFIKASI ADMIN)
-            ======================================================== */}
+        {/* Bagian B: Data identitas resmi terverifikasi */}
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-7 space-y-6">
           <div className="border-b border-slate-100 pb-4">
             <div className="flex items-center justify-between">
@@ -808,9 +804,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
         </div>
       )}
 
-      {/* ========================================================
-          DIALOG MODAL: AJUKAN PERUBAHAN DATA NAMA / IDENTITAS
-          ======================================================== */}
+      {/* Modal ajukan perubahan data nama dan identitas */}
       {isRequestModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
           <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden sm:my-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] flex flex-col">

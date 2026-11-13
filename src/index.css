@@ -27,6 +27,29 @@
       font-size: 14px;
     }
   }
+
+  /* Interactive affordances and accessible focus indicators */
+  a[href], button, summary, select, label[for], input[type="checkbox"], input[type="radio"], [role="button"] {
+    cursor: pointer;
+  }
+  :disabled, [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+  :focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Hide scrollbar */

@@ -307,9 +307,9 @@ export const LoanModal: React.FC<LoanModalProps> = ({
       const targetUserId = (isUserAdmin && selectedUserUid) ? selectedUserUid : profile.uid;
       const initialStatus = isUserAdmin ? adminInitialStatus : 'menunggu_persetujuan';
 
-      // RUN STRICT CLIENT-SIDE TRANSACTION
+      // Atomic client-side transaction
       const result = await runTransaction(db, async (transaction) => {
-        // STEP 1: Read user profile
+        // Verify borrower verification status
         const userRef = doc(db, 'users', profile.uid);
         const userSnap = await transaction.get(userRef);
         if (!userSnap.exists()) {
@@ -320,7 +320,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
           throw new Error('Akun Anda belum diverifikasi oleh admin. Peminjaman tidak dapat diproses.');
         }
 
-        // STEP 2: Read settings (regular user check)
+        // Check borrowing quota for regular users
         const settingsRef = doc(db, 'settings', 'peminjaman');
         const settingsSnap = await transaction.get(settingsRef);
         const activeSettings = settingsSnap.exists()
@@ -331,7 +331,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
           throw new Error(`Jumlah barang melebihi batas (${activeSettings.maxBarang} barang).`);
         }
 
-        // STEP 3: Read all selected items and verify physical conditions
+        // Validate item availability and condition
         const itemSnaps = await Promise.all(
           cart.map((it) => transaction.get(doc(db, 'items', it.id)))
         );
@@ -348,7 +348,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
           }
         }
 
-        // STEP 4: Read counter
+        // Generate sequential daily invoice number
         const counterRef = doc(db, 'counters', `invoice-${yyyymmdd}`);
         const counterSnap = await transaction.get(counterRef);
         const lastCount = counterSnap.exists() ? (counterSnap.data()?.last || 0) + 1 : 1;
@@ -360,7 +360,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
         const newLoanDocRef = doc(loansCollectionRef);
         const bookingDocRef = doc(db, 'bookings', newLoanDocRef.id);
 
-        // STEP 5: ATOMIC WRITES
+        // Atomic write batch
         const loanPayload: any = {
           userId: targetUserId,
           peminjam: borrowerData,
@@ -572,7 +572,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                     <option value="">-- Pilih Nama Mahasiswa / Dosen / Tendik --</option>
                     {registeredUsers.map((u) => (
                       <option key={u.uid} value={u.uid}>
-                        {u.nama} ({u.nomorIdentitas || '-'}) — {u.unitAsal || u.tipePeminjam}
+                        {u.nama} ({u.nomorIdentitas || '-'}) • {u.unitAsal || u.tipePeminjam}
                       </option>
                     ))}
                   </select>

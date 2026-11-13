@@ -384,7 +384,7 @@ export const LoginScreen: React.FC = () => {
 
                 {/* Footer Dokumen */}
                 <div className="inv-foot">
-                  <span>Dicetak via <strong>PinjamIn</strong> — Lab FIT</span>
+                  <span>Dicetak via <strong>PinjamIn</strong> • Lab FIT</span>
                   <span style={{ fontWeight: 700, color: '#059669' }}>STATUS: DISETUJUI</span>
                 </div>
 

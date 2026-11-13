@@ -62,7 +62,7 @@
   .s-top b{font-size:13px;font-weight:700}
   .s-top .av{width:24px;height:24px;border-radius:50%;background:#c7d2fe}
   .s-search{display:flex;align-items:center;gap:6px;height:30px;border-radius:9px;border:1px solid var(--line);background:#fff;
-    padding:0 9px;font-size:11px;color:#94a3b8;margin-bottom:9px}
+    padding:0 9px;font-size:11px;color:#64748b;margin-bottom:9px}
   .chips{display:flex;gap:5px;margin-bottom:9px;overflow:hidden}
   .chips span{font-size:10px;font-weight:600;padding:5px 9px;border-radius:8px;background:#eef0f6;color:#475569;white-space:nowrap}
   .chips span.on{background:var(--indigo);color:#fff}

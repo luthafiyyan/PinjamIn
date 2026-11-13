@@ -354,7 +354,7 @@ function MainApp() {
             <span className="font-bold text-slate-900">
               Pinjam<span className="text-amber-500">In</span>
             </span>
-            <span>—</span>
+            <span>•</span>
             <span>Pinjam alat, tanpa ribet</span>
           </div>
           <div>
