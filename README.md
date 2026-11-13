@@ -5,7 +5,7 @@
 <h1 align="center">📦 PinjamIn</h1>
 
 <p align="center">
-  <strong>Sistem Manajemen & Peminjaman Alat Laboratorium FIT — <em>Pinjam alat, tanpa ribet</em></strong>
+  <strong>Sistem Manajemen & Peminjaman Alat Laboratorium FIT • <em>Pinjam alat, tanpa ribet</em></strong>
 </p>
 
 <p align="center">
@@ -142,6 +142,7 @@ flowchart TD
 | **Database & Auth** | **Firebase Cloud Firestore & Auth** | Database NoSQL real-time, autentikasi Google, dan keamanan tingkat baris |
 | **Security Rules** | **Firestore Security Rules** | Kontrol hak akses berbasis role (RBAC) di sisi database |
 | **Unit Testing** | **Vitest** | Runner pengujian unit berkecepatan tinggi untuk utilitas tanggal dan logika |
+| **Aksesibilitas & UI** | **WCAG 2.1 AA & Antislop** | Rasio kontras AA, ring fokus keyboard (`:focus-visible`), toleransi *prefers-reduced-motion*, dan bebas AI slop |
 | **Deployment** | **Vercel / Cloud Hosting** | Dukungan SPA routing dengan konfigurasi rewrite (`vercel.json`) |
 
 ---
@@ -265,7 +266,7 @@ PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Securit
    * **Administrator & Laboran (`role: "admin"`):**
      * Memiliki akses operasional penuh untuk membaca, membuat, menyetujui, dan menyelesaikan seluruh siklus peminjaman, inspeksi kondisi barang, manajemen inventaris, dan verifikasi akun baru.
      * Dibatasi oleh aturan keamanan database sehingga tidak dapat mengubah peran (*role*) pengguna lain.
-   * **Peminjam (`role: "peminjam"` — Mahasiswa, Dosen, Tendik):**
+   * **Peminjam (`role: "peminjam"` • Mahasiswa, Dosen, Tendik):**
      * Hanya dapat membaca dan memperbarui profil miliknya sendiri (nomor HP, unit kerja, angkatan, permohonan koreksi identitas).
      * Hanya dapat membaca katalog barang dan riwayat peminjaman miliknya sendiri.
      * Hanya dapat membuka lembar bukti invoice digital resmi miliknya sendiri.
