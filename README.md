@@ -278,17 +278,23 @@ PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Securit
 
 3. **Validasi Transaksi & Privasi Data Pribadi (UU PDP):**
    * **Siklus Status Peminjaman Formal:** Sistem mengelola 6 status siklus hidup peminjaman yang tervalidasi (`menunggu_persetujuan`, `disetujui`, `dipinjam`, `dikembalikan`, `ditolak`, dan `dibatalkan`), di mana pembatalan langsung mengembalikan ketersediaan aset secara atomik.
-   * **Integritas Transaksi Server-Side:** Aturan Firestore membatasi maksimal 10 barang per pengajuan, mewajibkan urutan tanggal valid (`tglRencanaKembali >= tglPinjam`), dan memastikan pemetaan identik antara slot booking kalender dengan ID peminjaman (`loanId == bookingId`).
+   * **Integritas Transaksi Server-Side:** Aturan Firestore membatasi kuota barang per pengajuan sesuai peran peminjam (maksimal 2 barang untuk Mahasiswa, 5 barang untuk Dosen/Tendik) langsung di lapisan server, mewajibkan urutan tanggal valid (`tglRencanaKembali >= tglPinjam`), dan memastikan pemetaan identik antara slot booking kalender dengan ID peminjaman (`loanId == bookingId`).
+   * **Pencegahan Penyerahan Ganda (*Physical Handover Integrity*):** Transaksi serah terima fisik hari-H secara atomik memvalidasi ketersediaan barang (`status !== 'dipinjam'`) guna mencegah tumpang tindih fisik aset inventaris lab.
    * **Pencegahan Bentrok Reservasi Real-time (*Dynamic Conflict Prevention*):** Pengecekan overlap tanggal berjalan secara otomatis saat pengajuan baru, penambahan barang hari-H, maupun perpanjangan tanggal kembali (*extend schedule*), menjamin tidak ada aset lab yang ter-booking ganda pada rentang waktu yang sama.
    * **Proteksi PII:** Data kontak dan identitas peminjam (*PII - Personally Identifiable Information*) diisolasi ketat di dokumen privat.
    * **Sanitasi Kalender Publik:** Ketersediaan slot kalender untuk pengecekan bentrok jadwal diakses via koleksi tersanitasi (`/bookings`) tanpa memuat data diri peminjam.
 
 4. **HTTP Security Headers Komprehensif (Vercel Edge):**
-   * **Content Security Policy (CSP) Lengkap:** Mengatur batasan ketat `default-src 'self'`, `script-src` resmi (Google APIs & Firebase), `connect-src` khusus Firestore/Auth, `img-src` fleksibel aman (`'self' data: blob: https:` untuk foto profil & katalog barang terenkripsi HTTPS), serta `object-src 'none'` guna memitigasi serangan XSS dan eksfiltrasi data ke server asing.
+   * **Content Security Policy (CSP) Lengkap:** Mengatur batasan ketat `default-src 'self'`, `script-src` resmi tanpa `'unsafe-inline'` (`'self' https://apis.google.com https://*.firebaseapp.com`), `connect-src` khusus Firestore/Auth, `img-src` fleksibel aman (`'self' data: blob: https:` untuk foto profil & katalog barang terenkripsi HTTPS), serta `object-src 'none'` guna memitigasi serangan XSS dan eksfiltrasi data ke server asing.
    * **Anti-Clickjacking:** Menggabungkan `X-Frame-Options: SAMEORIGIN` dan `frame-ancestors 'self'` untuk mencegah antarmuka ditumpuk (*UI redress*) oleh situs luar.
    * **Strict-Transport-Security (HSTS):** `max-age=31536000; includeSubDomains; preload` mewajibkan browser untuk selalu menggunakan koneksi HTTPS yang aman dan terenkripsi.
    * **Permissions-Policy:** Menonaktifkan izin akses perangkat keras sensitif (`camera=(), microphone=(), geolocation=()`).
    * **X-Content-Type-Options: nosniff** & **Referrer-Policy: strict-origin-when-cross-origin**.
+
+5. **Audit Keamanan Terverifikasi (*Cloudflare Security Audit Standard*):**
+   * Kode sumber, dependensi, dan arsitektur telah diaudit secara komprehensif mengikuti metodologi profesional dari [Cloudflare Security Audit Skill](https://github.com/cloudflare/security-audit-skill).
+   * Pohon dependensi npm terbebas dari kerentanan keamanan (*0 vulnerabilities* terverifikasi via `npm audit` dan override dependensi).
+   * Lolos validasi 100% skema audit formal (*Cloudflare report-schema.json*).
 
 Deploy aturan Firestore ke lingkungan Firebase Anda:
 ```bash

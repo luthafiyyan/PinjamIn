@@ -15,9 +15,12 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
+    function getUserTipe() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tipePeminjam;
+    }
+
     function isAdmin() {
       return request.auth != null && (
-        (request.auth.token.email == "hafiyyanluthfii@gmail.com" && request.auth.token.email_verified == true) ||
         request.auth.token.admin == true ||
         request.auth.token.superadmin == true ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
@@ -27,7 +30,6 @@ service cloud.firestore {
 
     function isSuperAdmin() {
       return request.auth != null && (
-        (request.auth.token.email == "hafiyyanluthfii@gmail.com" && request.auth.token.email_verified == true) ||
         request.auth.token.superadmin == true ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
          getUserRole() == 'superadmin')
@@ -112,7 +114,11 @@ service cloud.firestore {
         request.resource.data.status == "menunggu_persetujuan" &&
         request.resource.data.itemIds is list &&
         request.resource.data.itemIds.size() > 0 &&
-        request.resource.data.itemIds.size() <= 10 &&
+        (
+          (getUserTipe() == 'mahasiswa' && request.resource.data.itemIds.size() <= 2) ||
+          (getUserTipe() in ['dosen', 'tendik'] && request.resource.data.itemIds.size() <= 5) ||
+          (request.resource.data.itemIds.size() <= 2)
+        ) &&
         request.resource.data.items is list &&
         request.resource.data.items.size() == request.resource.data.itemIds.size() &&
         request.resource.data.tglPinjam is string &&
@@ -136,7 +142,11 @@ service cloud.firestore {
         request.resource.data.loanId == bookingId &&
         request.resource.data.itemIds is list &&
         request.resource.data.itemIds.size() > 0 &&
-        request.resource.data.itemIds.size() <= 10 &&
+        (
+          (getUserTipe() == 'mahasiswa' && request.resource.data.itemIds.size() <= 2) ||
+          (getUserTipe() in ['dosen', 'tendik'] && request.resource.data.itemIds.size() <= 5) ||
+          (request.resource.data.itemIds.size() <= 2)
+        ) &&
         request.resource.data.status == "menunggu_persetujuan"
       );
 

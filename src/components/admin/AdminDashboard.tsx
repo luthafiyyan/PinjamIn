@@ -385,7 +385,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
             throw new Error(`Barang ${currentLoanItems[i].nama} tidak ditemukan.`);
           }
           const itemData = itemSnap.data();
-          if (itemData.status === 'rusak' || itemData.status === 'perawatan') {
+          if (itemData.status === 'rusak' || itemData.status === 'perawatan' || itemData.status === 'dipinjam') {
             throw new Error(`Barang [${currentLoanItems[i].nama}] sedang dalam status ${itemData.status}, tidak dapat diserahkan.`);
           }
         }
