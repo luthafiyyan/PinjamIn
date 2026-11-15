@@ -384,7 +384,7 @@ export const LoginScreen: React.FC = () => {
 
                 {/* Footer Dokumen */}
                 <div className="inv-foot">
-                  <span>Dicetak via <strong>PinjamIn</strong> • Lab FIT</span>
+                  <span>© 2026 Pinjamin Laboratorium FIT | HFYN</span>
                   <span style={{ fontWeight: 700, color: '#059669' }}>STATUS: DISETUJUI</span>
                 </div>
 
@@ -514,8 +514,7 @@ export const LoginScreen: React.FC = () => {
         </div>
       </div>
       <footer className="lp-foot">
-        &copy; {new Date().getFullYear()} Laboratorium Fakultas Ilmu Terapan (FIT)
-        <span className="lp-footer-initials">HFYN</span>
+        © 2026 Pinjamin Laboratorium FIT | HFYN
       </footer>
 
       {/* Tombol masuk menempel (ponsel) */}

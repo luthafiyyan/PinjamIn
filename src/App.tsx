@@ -181,16 +181,21 @@ function MainApp() {
   // 3. First time login: Profile not created yet (hanya wajib bagi peminjam non-admin)
   if (!profile && !isAdmin) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <Navbar
-          currentTab="katalog"
-          setCurrentTab={() => {}}
-          cartCount={0}
-          openCart={() => {}}
-          hideBottomNav={true}
-          onLogout={handleLogout}
-        />
-        <CompleteProfileModal onLogout={handleLogout} />
+      <div className="min-h-screen bg-slate-50 flex flex-col justify-between">
+        <div>
+          <Navbar
+            currentTab="katalog"
+            setCurrentTab={() => {}}
+            cartCount={0}
+            openCart={() => {}}
+            hideBottomNav={true}
+            onLogout={handleLogout}
+          />
+          <CompleteProfileModal onLogout={handleLogout} />
+        </div>
+        <footer className="no-print border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">
+          © 2026 Pinjamin Laboratorium FIT | HFYN
+        </footer>
       </div>
     );
   }
@@ -198,16 +203,21 @@ function MainApp() {
   // 4. Logged in but not verified (hanya berlaku bagi peminjam non-admin)
   if (!isVerified && !isAdmin) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <Navbar
-          currentTab="katalog"
-          setCurrentTab={() => {}}
-          cartCount={0}
-          openCart={() => {}}
-          hideBottomNav={true}
-          onLogout={handleLogout}
-        />
-        <PendingVerificationScreen onLogout={handleLogout} />
+      <div className="min-h-screen bg-slate-50 flex flex-col justify-between">
+        <div>
+          <Navbar
+            currentTab="katalog"
+            setCurrentTab={() => {}}
+            cartCount={0}
+            openCart={() => {}}
+            hideBottomNav={true}
+            onLogout={handleLogout}
+          />
+          <PendingVerificationScreen onLogout={handleLogout} />
+        </div>
+        <footer className="no-print border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">
+          © 2026 Pinjamin Laboratorium FIT | HFYN
+        </footer>
       </div>
     );
   }
@@ -358,7 +368,7 @@ function MainApp() {
             <span>Pinjam alat, tanpa ribet</span>
           </div>
           <div>
-            &copy; {new Date().getFullYear()} Laboratorium Fakultas Ilmu Terapan. Sistem Informasi Peminjaman Aset.
+            © 2026 Pinjamin Laboratorium FIT | HFYN
           </div>
         </div>
       </footer>
