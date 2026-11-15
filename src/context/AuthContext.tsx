@@ -63,9 +63,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     const userDocRef = doc(db, 'users', currentUser.uid);
 
+    let isMounted = true;
+    // Timeout pengaman agar antarmuka tidak tertahan di layar loading jika koneksi Firestore lambat/terkendala
+    const timeoutId = setTimeout(() => {
+      if (isMounted) {
+        console.warn('Profile snapshot timed out, releasing loading state.');
+        setLoading(false);
+      }
+    }, 4000);
+
     const unsubscribeProfile = onSnapshot(
       userDocRef,
       (snapshot) => {
+        clearTimeout(timeoutId);
+        if (!isMounted) return;
         if (snapshot.exists()) {
           const data = snapshot.data() as Omit<UserProfile, 'uid'>;
           setProfile({
@@ -78,12 +89,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
       },
       (error) => {
+        clearTimeout(timeoutId);
+        if (!isMounted) return;
         console.error('Error fetching user profile snapshot:', error);
         setLoading(false);
       }
     );
 
-    return () => unsubscribeProfile();
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+      unsubscribeProfile();
+    };
   }, [currentUser]);
 
   const loginWithGoogle = async () => {
