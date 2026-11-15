@@ -473,24 +473,13 @@ export const LoanModal: React.FC<LoanModalProps> = ({
       <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden sm:my-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-4 sm:p-6 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Kembali"
-              title="Kembali"
-              className="p-2 -ml-2 text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center sm:hidden"
-            >
-              <Icon name="ArrowLeft" size={20} />
-            </button>
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-amber-300 text-xs font-semibold mb-1">
-                <Icon name="Stars" size={16} className="text-amber-400" />
-                {isUserAdmin ? 'Peminjaman via Petugas / Admin' : 'Keranjang Peminjaman'}
-              </div>
-              <h2 className="text-[18px] sm:text-[20px] font-semibold tracking-normal">Formulir Peminjaman Alat</h2>
-              <p className="text-xs text-indigo-100">Laboratorium Fakultas Ilmu Terapan</p>
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-amber-300 text-xs font-semibold mb-1">
+              <Icon name="Stars" size={16} className="text-amber-400" />
+              {isUserAdmin ? 'Peminjaman via Petugas / Admin' : 'Keranjang Peminjaman'}
             </div>
+            <h2 className="text-[18px] sm:text-[20px] font-semibold tracking-normal">Formulir Peminjaman Alat</h2>
+            <p className="text-xs text-indigo-100">Laboratorium Fakultas Ilmu Terapan</p>
           </div>
           <button
             onClick={onClose}
@@ -567,7 +556,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                   <select
                     value={selectedUserUid}
                     onChange={(e) => handleSelectRegisteredUser(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                    className="w-full px-3.5 py-2.5 text-base sm:text-xs rounded-xl border border-amber-300 bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                   >
                     <option value="">-- Pilih Nama Mahasiswa / Dosen / Tendik --</option>
                     {registeredUsers.map((u) => (
@@ -590,7 +579,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                     value={adminBorrowerNama}
                     onChange={(e) => setAdminBorrowerNama(e.target.value)}
                     placeholder="Contoh: Ahmad Fauzi"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                    className="w-full px-3.5 py-2.5 text-base sm:text-xs rounded-xl border border-amber-300 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                     required={isUserAdmin}
                   />
                 </div>
@@ -602,7 +591,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                   <select
                     value={adminBorrowerTipe}
                     onChange={(e) => setAdminBorrowerTipe(e.target.value as TipePeminjam)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 bg-white text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                    className="w-full px-3.5 py-2.5 text-base sm:text-xs rounded-xl border border-amber-300 bg-white text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                   >
                     <option value="mahasiswa">Mahasiswa</option>
                     <option value="dosen">Dosen</option>
@@ -619,7 +608,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                     value={adminBorrowerIdentitas}
                     onChange={(e) => setAdminBorrowerIdentitas(e.target.value)}
                     placeholder="Contoh: 6706220015"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 bg-white text-slate-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                    className="w-full px-3.5 py-2.5 text-base sm:text-xs rounded-xl border border-amber-300 bg-white text-slate-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                   />
                 </div>
 
@@ -632,7 +621,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                     value={adminBorrowerUnit}
                     onChange={(e) => setAdminBorrowerUnit(e.target.value)}
                     placeholder="Contoh: D3 Rekayasa Perangkat Lunak"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                    className="w-full px-3.5 py-2.5 text-base sm:text-xs rounded-xl border border-amber-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                   />
                 </div>
 
@@ -645,7 +634,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                     value={adminBorrowerNoHp}
                     onChange={(e) => setAdminBorrowerNoHp(e.target.value)}
                     placeholder="Contoh: 081234567890"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 bg-white text-slate-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                    className="w-full px-3.5 py-2.5 text-base sm:text-xs rounded-xl border border-amber-300 bg-white text-slate-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                   />
                 </div>
 
@@ -656,7 +645,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                   <select
                     value={adminInitialStatus}
                     onChange={(e) => setAdminInitialStatus(e.target.value as any)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                    className="w-full px-3.5 py-2.5 text-base sm:text-xs rounded-xl border border-amber-300 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                   >
                     <option value="dipinjam">Langsung Diserahkan (Sedang Dipinjam)</option>
                     <option value="disetujui">Booking Disetujui (Menunggu Pengambilan)</option>
@@ -764,9 +753,9 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                       onClick={() => onRemoveItem(item.id)}
                       aria-label="Hapus barang dari keranjang"
                       title="Hapus barang dari keranjang"
-                      className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
+                      className="text-slate-400 hover:text-rose-600 p-2 rounded-xl transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
                     >
-                      <Icon name="Trash" size={16} />
+                      <Icon name="Trash" size={18} />
                     </button>
                   </div>
                 ))}

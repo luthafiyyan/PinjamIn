@@ -256,6 +256,7 @@ function MainApp() {
         cartCount={cart.length}
         openCart={() => setIsLoanModalOpen(true)}
         subPageHeader={subPageHeader}
+        hideBottomNav={currentTab === 'invoice'}
         onLogout={handleLogout}
       />
 

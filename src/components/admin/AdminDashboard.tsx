@@ -2463,22 +2463,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         Rencana pinjam: {formatDateIndo(loan.tglPinjam)} sampai {formatDateIndo(loan.tglRencanaKembali)}
                       </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
                       <button
                         type="button"
                         onClick={() => handleOpenEditDateModal(loan)}
                         disabled={loanActionId !== null}
-                        className="min-h-[40px] px-3 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                        className="flex-1 sm:flex-initial min-h-[44px] px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
                         title="Ubah batas tanggal pengembalian sebelum disetujui"
                       >
-                        <Icon name="Calendar3" size={13} />
+                        <Icon name="Calendar3" size={14} />
                         <span>Ubah Jadwal</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => handleRejectLoan(loan)}
                         disabled={loanActionId !== null}
-                        className="min-h-[40px] px-3 py-2 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold disabled:opacity-50 cursor-pointer"
+                        className="min-h-[44px] px-3.5 py-2.5 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold disabled:opacity-50 cursor-pointer"
                       >
                         Tolak
                       </button>
@@ -2486,9 +2486,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         type="button"
                         onClick={() => handleApproveLoan(loan)}
                         disabled={loanActionId !== null}
-                        className="min-h-[40px] px-3 py-2 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 text-xs font-semibold disabled:opacity-50 cursor-pointer"
+                        className="flex-1 sm:flex-initial min-h-[44px] px-4 py-2.5 rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
                       >
-                        {loanActionId === loan.id ? 'Memproses...' : 'Setujui Booking'}
+                        <Icon name="CheckCircle" size={15} />
+                        <span>{loanActionId === loan.id ? 'Memproses...' : 'Setujui Booking'}</span>
                       </button>
                     </div>
                   </div>
@@ -2541,11 +2542,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         </p>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
                       <button
                         type="button"
                         onClick={() => onViewInvoice(loan.id)}
-                        className="min-h-[40px] px-3 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold cursor-pointer"
+                        className="min-h-[44px] px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold cursor-pointer shadow-xs"
                       >
                         Invoice
                       </button>
@@ -2553,17 +2554,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         type="button"
                         onClick={() => handleOpenEditDateModal(loan)}
                         disabled={loanActionId !== null}
-                        className="min-h-[40px] px-3 py-2 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-semibold disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                        className="min-h-[44px] px-3.5 py-2.5 rounded-xl border border-indigo-200 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
                         title="Ubah batas tanggal pengembalian (penambahan hari)"
                       >
-                        <Icon name="Calendar3" size={13} />
+                        <Icon name="Calendar3" size={14} />
                         <span>Ubah Jadwal</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => handleRejectLoan(loan)}
                         disabled={loanActionId !== null}
-                        className="min-h-[40px] px-3 py-2 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold disabled:opacity-50 cursor-pointer"
+                        className="min-h-[44px] px-3.5 py-2.5 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold disabled:opacity-50 cursor-pointer"
                       >
                         Batalkan
                       </button>
@@ -2571,19 +2572,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         type="button"
                         onClick={() => handleOpenAddItemsModal(loan)}
                         disabled={loanActionId !== null}
-                        className="min-h-[40px] px-3 py-2 rounded-lg border border-indigo-300 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-semibold disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                        className="min-h-[44px] px-3.5 py-2.5 rounded-xl border border-indigo-300 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
                         title="Tambah barang tambahan pada hari-H"
                       >
-                        <Icon name="Plus" size={14} />
+                        <Icon name="Plus" size={15} />
                         <span>Tambah Barang</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => handleHandoverLoan(loan)}
                         disabled={loanActionId !== null}
-                        className="min-h-[40px] px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                        className="flex-1 sm:flex-initial min-h-[44px] px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        <Icon name="CheckCircle" size={14} />
+                        <Icon name="CheckCircle" size={15} />
                         <span>{loanActionId === loan.id ? 'Memproses...' : 'Serahkan Barang'}</span>
                       </button>
                     </div>

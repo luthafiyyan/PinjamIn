@@ -541,15 +541,15 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                 </div>
 
                 {/* Footer Kartu: Informasi Tindak Lanjut & Tombol Lihat Invoice */}
-                <div className="pt-3 mt-1 border-t border-slate-100 flex items-center justify-between gap-3">
-                  <div className="text-[11px] text-slate-500 truncate">
+                <div className="pt-3 mt-1 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
+                  <div className="text-xs sm:text-[11px] text-slate-500">
                     {loan.status === 'menunggu_persetujuan' ? (
-                      <span className="text-sky-700 font-medium flex items-center gap-1">
-                        <Icon name="HourglassSplit" size={12} /> Sedang ditinjau oleh staf Laboratorium FIT
+                      <span className="text-sky-700 font-medium flex items-center gap-1.5">
+                        <Icon name="HourglassSplit" size={13} className="shrink-0" /> Sedang ditinjau oleh staf Laboratorium FIT
                       </span>
                     ) : loan.status === 'disetujui' ? (
-                      <span className="text-indigo-700 font-medium flex items-center gap-1">
-                        <Icon name="CheckCircle" size={12} /> Silakan datang ke Gedung Selaru Lt. 1 untuk serah terima
+                      <span className="text-indigo-700 font-medium flex items-center gap-1.5">
+                        <Icon name="CheckCircle" size={13} className="shrink-0" /> Silakan datang ke Gedung Selaru Lt. 1 untuk serah terima
                       </span>
                     ) : loan.status === 'dipinjam' ? (
                       <span className={isLate ? 'text-rose-600 font-bold' : 'text-slate-600'}>
@@ -558,18 +558,21 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                     ) : (loan.status === 'ditolak' || loan.status === 'dibatalkan') ? (
                       <span className="text-slate-400">{loan.status === 'dibatalkan' ? 'Peminjaman telah dibatalkan' : 'Peminjaman tidak disetujui'}</span>
                     ) : (
-                      <span className="text-emerald-700 font-medium">Peminjaman telah selesai dikembalikan</span>
+                      <span className="text-emerald-700 font-medium flex items-center gap-1.5">
+                        <Icon name="CheckCircle" size={13} className="shrink-0 text-emerald-600" />
+                        <span>Peminjaman telah selesai dikembalikan</span>
+                      </span>
                     )}
                   </div>
 
                   {loan.status === 'disetujui' || loan.status === 'dipinjam' || loan.status === 'dikembalikan' ? (
                     <button
                       onClick={() => onViewInvoice(loan.id)}
-                      className="min-h-[38px] inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-indigo-600 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
+                      className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-indigo-600 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
                     >
-                      <Icon name="Receipt" size={14} />
+                      <Icon name="Receipt" size={15} />
                       <span>Lihat Invoice</span>
-                      <Icon name="ArrowRight" size={12} />
+                      <Icon name="ArrowRight" size={13} />
                     </button>
                   ) : null}
                 </div>

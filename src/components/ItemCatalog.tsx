@@ -511,16 +511,6 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                   </span>
                 </div>
               )}
-              {/* Mobile Back Button */}
-              <button
-                type="button"
-                onClick={handleCloseDetail}
-                aria-label="Kembali ke katalog"
-                title="Kembali ke katalog"
-                className="absolute top-3 left-3 bg-slate-900/60 hover:bg-slate-900 text-white p-2 rounded-full backdrop-blur-sm transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center sm:hidden"
-              >
-                <Icon name="ArrowLeft" size={18} />
-              </button>
               {/* Close Button */}
               <button
                 type="button"
@@ -669,11 +659,11 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
             </div>
 
             {/* Dialog Footer Actions */}
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between safe-area-pb shrink-0">
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end sm:justify-between gap-2.5 sm:gap-3 safe-area-pb shrink-0">
               <button
                 type="button"
                 onClick={handleCloseDetail}
-                className="min-h-[44px] px-5 py-2.5 text-slate-600 hover:bg-slate-200 rounded-xl font-semibold cursor-pointer text-sm"
+                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 text-slate-600 hover:bg-slate-200 rounded-xl font-semibold cursor-pointer text-sm text-center"
               >
                 Tutup
               </button>
@@ -685,7 +675,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                     onToggleCart(activeDetail);
                     handleCloseDetail();
                   }}
-                  className={`min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-semibold shadow transition-all cursor-pointer flex items-center gap-2 ${
+                  className={`w-full sm:w-auto min-h-[48px] sm:min-h-[44px] px-5 py-3 sm:py-2.5 rounded-xl text-sm sm:text-xs font-semibold shadow transition-all cursor-pointer flex items-center justify-center gap-2 ${
                     cart.some((c) => c.id === activeDetail.id)
                       ? 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
                       : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200'
@@ -711,7 +701,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
 
       {/* Mobile Sticky Bottom Bar: "2 barang · Lanjut meminjam" */}
       {cart.length > 0 && (
-        <div className="md:hidden fixed bottom-[64px] left-3 right-3 z-30 animate-in slide-in-from-bottom duration-200">
+        <div className="md:hidden fixed bottom-[calc(68px+env(safe-area-inset-bottom))] left-3 right-3 z-30 animate-in slide-in-from-bottom duration-200">
           <button
             type="button"
             onClick={onOpenCart}

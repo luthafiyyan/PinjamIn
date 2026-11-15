@@ -298,6 +298,32 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             ) : null}
           </div>
+
+          {/* Mobile Right: Avatar / Profile (Tampil saat bukan sub-page) */}
+          {!subPageHeader && currentUser && (
+            <div className="flex md:hidden items-center">
+              <button
+                type="button"
+                onClick={() => setCurrentTab('profil')}
+                className="flex items-center p-1 rounded-full min-h-[44px] min-w-[44px] justify-center cursor-pointer"
+                aria-label="Profil Pengguna"
+                title="Profil Pengguna"
+              >
+                {!photoError && currentUser.photoURL ? (
+                  <img
+                    src={currentUser.photoURL}
+                    alt={displayName}
+                    onError={() => setPhotoError(true)}
+                    className="w-8 h-8 rounded-full ring-2 ring-indigo-500/20 object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-xs shadow-sm">
+                    {initial}
+                  </div>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
