@@ -2414,7 +2414,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
 
       {/* TAB 2: PEMINJAMAN AKTIF & PENGEMBALIAN */}
       {activeTab === 'pengembalian' && (
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 space-y-6">
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-sm p-4 sm:p-6 space-y-5 sm:space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-[18px] sm:text-[20px] font-semibold text-slate-900 flex items-center gap-2">
@@ -2429,16 +2429,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
 
           {pendingLoans.length > 0 && (
             <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-slate-900">
-                  Menunggu Persetujuan ({pendingLoans.length})
-                </h3>
-                <span className="text-[10px] font-semibold text-sky-800 bg-sky-100 px-2 py-0.5 rounded-full">
-                  Menunggu Review Admin
-                </span>
+              <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    Menunggu Persetujuan ({pendingLoans.length})
+                  </h3>
+                  <span className="inline-flex items-center text-[10px] font-semibold text-sky-800 bg-sky-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+                    Menunggu Review Admin
+                  </span>
+                </div>
               </div>
               {pendingLoans.map((loan) => (
-                <div key={loan.id} className="p-4 rounded-2xl border border-sky-200 bg-sky-50/50">
+                <div key={loan.id} className="p-4 sm:p-5 rounded-2xl border border-sky-200 bg-sky-50/50">
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                     <div>
                       <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -2463,30 +2465,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         Rencana pinjam: {formatDateIndo(loan.tglPinjam)} sampai {formatDateIndo(loan.tglRencanaKembali)}
                       </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditDateModal(loan)}
-                        disabled={loanActionId !== null}
-                        className="flex-1 sm:flex-initial min-h-[44px] px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
-                        title="Ubah batas tanggal pengembalian sebelum disetujui"
-                      >
-                        <Icon name="Calendar3" size={14} />
-                        <span>Ubah Jadwal</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRejectLoan(loan)}
-                        disabled={loanActionId !== null}
-                        className="min-h-[44px] px-3.5 py-2.5 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold disabled:opacity-50 cursor-pointer"
-                      >
-                        Tolak
-                      </button>
+                    <div className="w-full sm:w-auto mt-3 sm:mt-0 pt-3 sm:pt-0 border-t border-sky-200/60 sm:border-t-0 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2 sm:shrink-0">
+                      <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditDateModal(loan)}
+                          disabled={loanActionId !== null}
+                          className="min-h-[44px] px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                          title="Ubah batas tanggal pengembalian sebelum disetujui"
+                        >
+                          <Icon name="Calendar3" size={14} />
+                          <span>Ubah Jadwal</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRejectLoan(loan)}
+                          disabled={loanActionId !== null}
+                          className="min-h-[44px] px-3.5 py-2.5 rounded-xl border border-rose-200 bg-white text-rose-700 hover:bg-rose-50 text-xs font-semibold disabled:opacity-50 cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                        >
+                          <Icon name="XLg" size={13} />
+                          <span>Tolak</span>
+                        </button>
+                      </div>
                       <button
                         type="button"
                         onClick={() => handleApproveLoan(loan)}
                         disabled={loanActionId !== null}
-                        className="flex-1 sm:flex-initial min-h-[44px] px-4 py-2.5 rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                        className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 active:bg-emerald-900 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
                       >
                         <Icon name="CheckCircle" size={15} />
                         <span>{loanActionId === loan.id ? 'Memproses...' : 'Setujui Booking'}</span>
@@ -2501,90 +2506,99 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           {/* Section: Booking Disetujui (Menunggu Pengambilan / Serahkan Barang) */}
           {sortedApprovedBookings.length > 0 && (
             <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-slate-900">
-                  Booking Disetujui / Menunggu Pengambilan ({sortedApprovedBookings.length})
-                </h3>
-                <span className="text-[10px] font-semibold text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded-full">
-                  Siap Diserahkan di Lab
-                </span>
+              <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    Booking Disetujui ({sortedApprovedBookings.length})
+                  </h3>
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-indigo-800 bg-indigo-100 border border-indigo-200 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse" />
+                    Siap Diserahkan di Lab
+                  </span>
+                </div>
               </div>
               {sortedApprovedBookings.map((loan) => (
-                <div key={loan.id} className="p-4 rounded-2xl border border-indigo-200 bg-indigo-50/40">
-                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-                    <div>
+                <div key={loan.id} className="p-4 sm:p-5 rounded-2xl border border-indigo-200 bg-indigo-50/40">
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+                    <div className="space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
                         <span className="font-mono text-xs font-semibold text-indigo-700 bg-white px-2 py-0.5 rounded border border-indigo-200">
                           {loan.noInvoice}
                         </span>
-                        <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
-                          Disetujui (Menunggu Diambil)
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 bg-indigo-100 border border-indigo-200/80 px-2.5 py-0.5 rounded-full">
+                          <Icon name="BoxSeam" size={12} />
+                          <span>Siap Diserahkan di Lab</span>
                         </span>
                       </div>
                       <h4 className="text-sm font-bold text-slate-900">{loan.peminjam.nama}</h4>
                       <p className="text-xs text-slate-500">
                         {loan.peminjam.tipePeminjam} · {loan.peminjam.nomorIdentitas} · {loan.peminjam.noHp || 'Tanpa nomor telepon'}
                       </p>
-                      <p className="text-xs text-slate-600 mt-1">Tujuan: <span className="font-medium">{loan.keperluan}</span></p>
-                      <div className="flex flex-wrap gap-1.5 mt-2">
+                      <p className="text-xs text-slate-600">Tujuan: <span className="font-medium">{loan.keperluan}</span></p>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
                         {loan.items.map((item) => (
                           <span key={item.itemId} className="text-[11px] px-2 py-1 rounded-md bg-white border border-slate-200 text-slate-700">
                             <span className="font-mono text-slate-500">{item.kodeAset}</span> {item.nama}
                           </span>
                         ))}
                       </div>
-                      <p className="text-[11px] text-indigo-900 mt-2 font-medium">
-                        Jadwal Pinjam: {formatDateIndo(loan.tglPinjam)} sampai {formatDateIndo(loan.tglRencanaKembali)}
-                      </p>
+                      <div className="p-2 bg-indigo-100/60 rounded-xl border border-indigo-200/60 text-[11px] text-indigo-900 font-medium flex items-center gap-1.5">
+                        <Icon name="Calendar3" size={13} className="text-indigo-700 shrink-0" />
+                        <span>Jadwal Pinjam: {formatDateIndo(loan.tglPinjam)} sampai {formatDateIndo(loan.tglRencanaKembali)}</span>
+                      </div>
                       {loan.catatanAdmin && (
-                        <p className="text-[11px] text-amber-900 mt-2 italic bg-amber-50 border border-amber-200/80 px-2 py-1 rounded-md">
+                        <p className="text-[11px] text-amber-900 italic bg-amber-50 border border-amber-200/80 px-2 py-1 rounded-md">
                           <span className="font-semibold not-italic">Catatan:</span> {loan.catatanAdmin}
                         </p>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
-                      <button
-                        type="button"
-                        onClick={() => onViewInvoice(loan.id)}
-                        className="min-h-[44px] px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold cursor-pointer shadow-xs"
-                      >
-                        Invoice
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditDateModal(loan)}
-                        disabled={loanActionId !== null}
-                        className="min-h-[44px] px-3.5 py-2.5 rounded-xl border border-indigo-200 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
-                        title="Ubah batas tanggal pengembalian (penambahan hari)"
-                      >
-                        <Icon name="Calendar3" size={14} />
-                        <span>Ubah Jadwal</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRejectLoan(loan)}
-                        disabled={loanActionId !== null}
-                        className="min-h-[44px] px-3.5 py-2.5 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold disabled:opacity-50 cursor-pointer"
-                      >
-                        Batalkan
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenAddItemsModal(loan)}
-                        disabled={loanActionId !== null}
-                        className="min-h-[44px] px-3.5 py-2.5 rounded-xl border border-indigo-300 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
-                        title="Tambah barang tambahan pada hari-H"
-                      >
-                        <Icon name="Plus" size={15} />
-                        <span>Tambah Barang</span>
-                      </button>
+                    <div className="w-full lg:w-auto mt-3 lg:mt-0 pt-3 lg:pt-0 border-t border-indigo-200/60 lg:border-t-0 space-y-2 lg:space-y-0 lg:flex lg:flex-wrap lg:items-center lg:gap-2 lg:shrink-0">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => onViewInvoice(loan.id)}
+                          className="min-h-[44px] px-3 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                        >
+                          <Icon name="FileText" size={14} />
+                          <span>Invoice</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditDateModal(loan)}
+                          disabled={loanActionId !== null}
+                          className="min-h-[44px] px-3 py-2.5 rounded-xl border border-indigo-200 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                          title="Ubah batas tanggal pengembalian (penambahan hari)"
+                        >
+                          <Icon name="Calendar3" size={14} />
+                          <span>Ubah Jadwal</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAddItemsModal(loan)}
+                          disabled={loanActionId !== null}
+                          className="min-h-[44px] px-3 py-2.5 rounded-xl border border-indigo-300 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                          title="Tambah barang tambahan pada hari-H"
+                        >
+                          <Icon name="Plus" size={15} />
+                          <span>Tambah Barang</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRejectLoan(loan)}
+                          disabled={loanActionId !== null}
+                          className="min-h-[44px] px-3 py-2.5 rounded-xl border border-rose-200 bg-white text-rose-700 hover:bg-rose-50 text-xs font-semibold disabled:opacity-50 cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                        >
+                          <Icon name="XLg" size={13} />
+                          <span>Batalkan</span>
+                        </button>
+                      </div>
                       <button
                         type="button"
                         onClick={() => handleHandoverLoan(loan)}
                         disabled={loanActionId !== null}
-                        className="flex-1 sm:flex-initial min-h-[44px] px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="w-full lg:w-auto min-h-[44px] px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-bold shadow-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                       >
-                        <Icon name="CheckCircle" size={15} />
+                        <Icon name="CheckCircle" size={16} />
                         <span>{loanActionId === loan.id ? 'Memproses...' : 'Serahkan Barang'}</span>
                       </button>
                     </div>
@@ -2608,15 +2622,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                 return (
                   <div
                     key={loan.id}
-                    className={`p-5 rounded-2xl border transition-all ${
+                    className={`p-4 sm:p-5 rounded-2xl border transition-all ${
                       isLate
                         ? 'border-rose-300 bg-rose-50/40 ring-2 ring-rose-500/20'
                         : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                   >
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                       <div>
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
                           <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
                             {loan.noInvoice}
                           </span>
@@ -2643,26 +2657,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-4 text-xs">
-                        <div>
-                          <span className="text-slate-400 block text-[10px]">Tgl Pinjam</span>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 text-xs pt-1 lg:pt-0">
+                        <div className="bg-slate-50 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none border border-slate-200/60 sm:border-0">
+                          <span className="text-slate-400 block text-[10px] font-medium">Tgl Pinjam</span>
                           <span className="font-semibold text-slate-700">{loan.tglPinjam}</span>
                         </div>
-                        <div>
-                          <span className="text-slate-400 block text-[10px]">Batas Kembali</span>
+                        <div className={`p-2 sm:p-0 rounded-xl sm:rounded-none border ${isLate ? 'bg-rose-50/80 border-rose-200 sm:bg-transparent sm:border-0' : 'bg-slate-50 sm:bg-transparent border-slate-200/60 sm:border-0'}`}>
+                          <span className="text-slate-400 block text-[10px] font-medium">Batas Kembali</span>
                           <span className={`font-bold ${isLate ? 'text-rose-600' : 'text-slate-800'}`}>
                             {loan.tglRencanaKembali}
                           </span>
                         </div>
-                        <div>
-                          <span className="text-slate-400 block text-[10px]">WhatsApp</span>
+                        <div className="col-span-2 sm:col-span-1 bg-slate-50 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none border border-slate-200/60 sm:border-0 flex items-center justify-between sm:block">
+                          <span className="text-slate-400 block text-[10px] font-medium">WhatsApp</span>
                           <a
                             href={`https://wa.me/${loan.peminjam.noHp.replace(/\D/g, '')}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-emerald-600 font-bold hover:underline"
+                            className="text-emerald-600 font-bold hover:underline inline-flex items-center gap-1"
                           >
-                            {loan.peminjam.noHp}
+                            <Icon name="ChatDots" size={12} />
+                            <span>{loan.peminjam.noHp}</span>
                           </a>
                         </div>
                       </div>
@@ -2674,7 +2689,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         {loan.items.map((it, idx) => (
                           <div
                             key={it.itemId || idx}
-                            className="bg-white border border-slate-200 px-2.5 py-1 rounded-lg text-slate-700 font-medium"
+                            className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg text-slate-700 font-medium"
                           >
                             <span className="font-mono text-slate-500 mr-1.5 font-bold">
                               {it.kodeAset}
@@ -2689,29 +2704,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         ))}
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => onViewInvoice(loan.id)}
-                          className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
-                        >
-                          Invoice
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleCancelActiveLoan(loan)}
-                          disabled={loanActionId !== null}
-                          className="px-3.5 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold rounded-xl disabled:opacity-50 transition-colors cursor-pointer"
-                          title="Batalkan peminjaman jika peminjam tidak jadi meminjam (alat langsung kembali tersedia tanpa skema inspeksi pengembalian)"
-                        >
-                          {loanActionId === loan.id ? 'Membatalkan...' : 'Batalkan'}
-                        </button>
+                      <div className="w-full sm:w-auto mt-2 sm:mt-0 pt-2 sm:pt-0 border-t border-slate-100 sm:border-t-0 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2 sm:shrink-0">
+                        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => onViewInvoice(loan.id)}
+                            className="min-h-[44px] px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                          >
+                            <Icon name="FileText" size={14} />
+                            <span>Invoice</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCancelActiveLoan(loan)}
+                            disabled={loanActionId !== null}
+                            className="min-h-[44px] px-3.5 py-2.5 border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold rounded-xl disabled:opacity-50 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                            title="Batalkan peminjaman jika peminjam tidak jadi meminjam (alat langsung kembali tersedia tanpa skema inspeksi pengembalian)"
+                          >
+                            <Icon name="XLg" size={13} />
+                            <span>{loanActionId === loan.id ? 'Membatalkan...' : 'Batalkan'}</span>
+                          </button>
+                        </div>
                         <button
                           type="button"
                           onClick={() => handleOpenReturnModal(loan)}
-                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors cursor-pointer"
+                          className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-bold rounded-xl shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-2"
                         >
-                          Catat Pengembalian
+                          <Icon name="ArrowReturnLeft" size={15} />
+                          <span>Catat Pengembalian</span>
                         </button>
                       </div>
                     </div>
@@ -3807,7 +3827,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                       </div>
 
                       {/* Kondisi Radio */}
-                      <div className="grid grid-cols-3 gap-1.5 pt-1">
+                      <div className="grid grid-cols-3 gap-2 pt-1">
                         <button
                           type="button"
                           onClick={() =>
@@ -3816,10 +3836,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                               [it.itemId]: 'baik',
                             })
                           }
-                          className={`py-1 px-2 rounded-lg text-center font-medium transition-all cursor-pointer ${
+                          className={`min-h-[40px] py-2 px-2.5 rounded-xl text-center text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                             (returnItemConditions[it.itemId] || 'baik') === 'baik'
-                              ? 'bg-emerald-600 text-white font-bold'
-                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                              ? 'bg-emerald-600 text-white font-bold ring-2 ring-emerald-600/30'
+                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                           }`}
                         >
                           Kondisi Baik
@@ -3833,10 +3853,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                               [it.itemId]: 'perlu_cek',
                             })
                           }
-                          className={`py-1 px-2 rounded-lg text-center font-medium transition-all cursor-pointer ${
+                          className={`min-h-[40px] py-2 px-2.5 rounded-xl text-center text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                             returnItemConditions[it.itemId] === 'perlu_cek'
-                              ? 'bg-amber-600 text-white font-bold'
-                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                              ? 'bg-amber-600 text-white font-bold ring-2 ring-amber-600/30'
+                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                           }`}
                         >
                           Perlu Cek
@@ -3850,10 +3870,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                               [it.itemId]: 'rusak',
                             })
                           }
-                          className={`py-1 px-2 rounded-lg text-center font-medium transition-all cursor-pointer ${
+                          className={`min-h-[40px] py-2 px-2.5 rounded-xl text-center text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs ${
                             returnItemConditions[it.itemId] === 'rusak'
-                              ? 'bg-rose-600 text-white font-bold'
-                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                              ? 'bg-rose-600 text-white font-bold ring-2 ring-rose-600/30'
+                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                           }`}
                         >
                           Rusak / Hilang
@@ -3866,7 +3886,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                           <span className="text-xs font-semibold text-slate-700 block">
                             Centang kelengkapan yang kembali ({it.kelengkapan.length} item):
                           </span>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {it.kelengkapan.map((acc, aIdx) => {
                               const checkedList = returnKelengkapanChecked[it.itemId] || [];
                               const isChecked = checkedList.includes(acc);
@@ -3874,7 +3894,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                               return (
                                 <label
                                   key={aIdx}
-                                  className={`flex items-center gap-2 p-1.5 rounded-lg border text-[11px] cursor-pointer transition-colors ${
+                                  className={`flex items-center gap-2.5 p-2.5 min-h-[40px] rounded-xl border text-xs cursor-pointer transition-colors shadow-xs ${
                                     isChecked
                                       ? 'bg-emerald-50/70 border-emerald-200 text-slate-800'
                                       : 'bg-rose-50/70 border-rose-200 text-rose-800 line-through'
@@ -3892,7 +3912,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                                         [it.itemId]: next,
                                       });
                                     }}
-                                    className="w-3.5 h-3.5 text-indigo-600 rounded"
+                                    className="w-4 h-4 text-indigo-600 rounded"
                                   />
                                   <span>{acc}</span>
                                 </label>
@@ -3939,22 +3959,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
             </div>
 
             {/* Sticky Action Footer */}
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3 safe-area-pb shrink-0">
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 safe-area-pb shrink-0">
               <button
                 type="button"
                 onClick={() => setReturnModalLoan(null)}
-                className="min-h-[44px] px-4 py-2.5 text-slate-600 hover:bg-slate-200 rounded-xl font-medium cursor-pointer text-xs"
+                className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 text-slate-700 hover:bg-slate-200 border border-slate-200 sm:border-transparent rounded-xl font-medium cursor-pointer text-xs flex items-center justify-center"
               >
                 Batal
               </button>
               <button
                 type="submit"
                 disabled={returnLoading}
-                className="min-h-[44px] px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2 text-xs"
+                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
               >
                 {returnLoading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : null}
+                ) : (
+                  <Icon name="CheckCircle" size={16} />
+                )}
                 <span>{returnLoading ? 'Menyimpan...' : 'Konfirmasi Pengembalian'}</span>
               </button>
             </div>
@@ -4236,12 +4258,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                     <span>Pilih minimal 1 barang tambahan</span>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center justify-end gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setAddItemsModalLoan(null)}
                     disabled={isAddingItemsLoading}
-                    className="min-h-[40px] px-3.5 py-2 text-slate-600 hover:bg-slate-200 rounded-xl font-medium cursor-pointer text-xs"
+                    className="min-h-[44px] px-3.5 py-2.5 text-slate-600 hover:bg-slate-200 border border-slate-200 sm:border-transparent rounded-xl font-medium cursor-pointer text-xs flex items-center justify-center"
                   >
                     Batal
                   </button>
@@ -4253,7 +4275,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                       (isExceeding && !overrideLimitConfirmed) ||
                       isAddingItemsLoading
                     }
-                    className="min-h-[40px] px-4 py-2 bg-white border border-indigo-300 hover:bg-indigo-50 text-indigo-700 font-semibold rounded-xl transition-colors cursor-pointer disabled:opacity-50 text-xs"
+                    className="min-h-[44px] px-4 py-2.5 bg-white border border-indigo-300 hover:bg-indigo-50 text-indigo-700 font-semibold rounded-xl transition-colors cursor-pointer disabled:opacity-50 text-xs flex items-center justify-center"
                     title="Simpan penambahan ke invoice tanpa langsung serah terima"
                   >
                     {isAddingItemsLoading ? 'Menyimpan...' : 'Simpan ke Invoice'}
@@ -4266,10 +4288,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                       (isExceeding && !overrideLimitConfirmed) ||
                       isAddingItemsLoading
                     }
-                    className="min-h-[40px] px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5 text-xs"
+                    className="min-h-[44px] px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 text-xs"
                     title="Simpan penambahan dan langsung serahkan semua barang fisik"
                   >
-                    <Icon name="CheckCircle" size={14} />
+                    <Icon name="CheckCircle" size={15} />
                     <span>{isAddingItemsLoading ? 'Memproses...' : 'Simpan & Langsung Serahkan'}</span>
                   </button>
                 </div>
@@ -4465,12 +4487,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
               </div>
 
               {/* Footer */}
-              <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0">
+              <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 shrink-0 safe-area-pb">
                 <button
                   type="button"
                   onClick={() => setEditDateModalLoan(null)}
                   disabled={isSubmittingDateChange}
-                  className="min-h-[40px] px-3.5 py-2 text-slate-600 hover:bg-slate-200 rounded-xl font-medium cursor-pointer text-xs"
+                  className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 text-slate-700 hover:bg-slate-200 border border-slate-200 sm:border-transparent rounded-xl font-medium cursor-pointer text-xs flex items-center justify-center"
                 >
                   Batal
                 </button>
@@ -4485,12 +4507,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                     (isDurationExceeded && !overrideDateLimitConfirmed) ||
                     isSubmittingDateChange
                   }
-                  className="min-h-[40px] px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2 text-xs"
+                  className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
                 >
                   {isSubmittingDateChange ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <Icon name="CheckCircle" size={14} />
+                    <Icon name="CheckCircle" size={15} />
                   )}
                   <span>{isSubmittingDateChange ? 'Menyimpan...' : 'Simpan Perubahan Jadwal'}</span>
                 </button>
