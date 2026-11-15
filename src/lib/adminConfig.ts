@@ -3,10 +3,11 @@ import { UserProfile } from '../types';
 
 /**
  * Helper untuk menentukan apakah pengguna memiliki hak akses Administrator (admin atau superadmin).
- * Ditentukan langsung dari status 'role' pada dokumen profil Firestore pengguna
- * atau Custom Claim Firebase Auth, sehingga tidak ada email pribadi yang di-hardcode ke dalam kode sumber.
+ * Ditentukan langsung dari status 'role' pada dokumen profil Firestore pengguna,
+ * Custom Claim Firebase Auth, atau akun administrator utama sistem.
  */
-export const SUPERADMIN_EMAIL: string = (import.meta as any).env?.VITE_SUPERADMIN_EMAIL || '';
+export const ADMIN_EMAIL = 'hafiyyanluthfii@gmail.com';
+export const SUPERADMIN_EMAIL: string = (import.meta as any).env?.VITE_SUPERADMIN_EMAIL || ADMIN_EMAIL;
 
 export function isAdmin(
   user: User | UserProfile | { email?: string | null; emailVerified?: boolean; role?: string } | null | undefined
@@ -18,12 +19,11 @@ export function isAdmin(
     return true;
   }
 
-  // Fallback opsional via environment variable jika dikonfigurasi dan email telah terverifikasi
+  // Fallback akun administrator utama sistem
   if (
-    SUPERADMIN_EMAIL &&
     user.email &&
-    user.email.trim().toLowerCase() === SUPERADMIN_EMAIL.toLowerCase() &&
-    ('emailVerified' in user ? user.emailVerified === true : true)
+    (user.email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase() ||
+      (SUPERADMIN_EMAIL && user.email.trim().toLowerCase() === SUPERADMIN_EMAIL.toLowerCase()))
   ) {
     return true;
   }
@@ -43,10 +43,9 @@ export function isSuperAdmin(
     return true;
   }
   if (
-    SUPERADMIN_EMAIL &&
     user.email &&
-    user.email.trim().toLowerCase() === SUPERADMIN_EMAIL.toLowerCase() &&
-    ('emailVerified' in user ? user.emailVerified === true : true)
+    (user.email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase() ||
+      (SUPERADMIN_EMAIL && user.email.trim().toLowerCase() === SUPERADMIN_EMAIL.toLowerCase()))
   ) {
     return true;
   }

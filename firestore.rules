@@ -21,6 +21,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return request.auth != null && (
+        (request.auth.token.email == "hafiyyanluthfii@gmail.com" && request.auth.token.email_verified == true) ||
         request.auth.token.admin == true ||
         request.auth.token.superadmin == true ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
@@ -30,6 +31,7 @@ service cloud.firestore {
 
     function isSuperAdmin() {
       return request.auth != null && (
+        (request.auth.token.email == "hafiyyanluthfii@gmail.com" && request.auth.token.email_verified == true) ||
         request.auth.token.superadmin == true ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
          getUserRole() == 'superadmin')
