@@ -5,7 +5,7 @@
 <h1 align="center">📦 PinjamIn</h1>
 
 <p align="center">
-  <strong>Sistem Manajemen & Peminjaman Alat Laboratorium FIT • <em>Pinjam alat, tanpa ribet</em></strong>
+  <strong>Sistem Manajemen & Peminjaman Alat Laboratorium FIT</strong>
 </p>
 
 <p align="center">

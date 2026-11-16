@@ -166,7 +166,7 @@ function MainApp() {
           Pinjam<span className="text-amber-500">In</span>
         </h2>
         <p className="text-xs text-slate-500 font-medium mt-1">
-          Pinjam alat, tanpa ribet • Laboratorium FIT
+          Laboratorium FIT
         </p>
         <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mt-6" />
       </div>
@@ -366,7 +366,7 @@ function MainApp() {
               Pinjam<span className="text-amber-500">In</span>
             </span>
             <span>•</span>
-            <span>Pinjam alat, tanpa ribet</span>
+            <span>Laboratorium FIT</span>
           </div>
           <div>
             © 2026 Pinjamin Laboratorium FIT | HFYN

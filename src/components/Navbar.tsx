@@ -92,20 +92,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </h1>
               </div>
             ) : (
-              /* Mobile Main Logo (tagline disembunyikan) */
+              /* Mobile Main Logo */
               <div
                 className="flex md:hidden items-center gap-2.5 cursor-pointer"
                 onClick={() => setCurrentTab('katalog')}
               >
                 <PinjamInIcon className="w-8 h-8 shadow-sm shadow-indigo-200" />
-                <div className="flex items-center gap-1.5">
-                  <span className="text-lg font-bold tracking-tight text-slate-900">
-                    Pinjam<span className="text-amber-500 font-extrabold">In</span>
-                  </span>
-                  <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200/60 uppercase">
-                    Lab FIT
-                  </span>
-                </div>
+                <span className="text-lg font-bold tracking-tight text-slate-900">
+                  Pinjam<span className="text-amber-500 font-extrabold">In</span>
+                </span>
               </div>
             )}
 
@@ -116,16 +111,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <PinjamInIcon className="w-10 h-10 shadow-md shadow-indigo-200" />
               <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xl font-bold tracking-tight text-slate-900">
-                    Pinjam<span className="text-amber-500 font-extrabold">In</span>
-                  </span>
-                  <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200/60 uppercase">
-                    Lab FIT
-                  </span>
-                </div>
+                <span className="text-xl font-bold tracking-tight text-slate-900">
+                  Pinjam<span className="text-amber-500 font-extrabold">In</span>
+                </span>
                 <p className="text-xs text-slate-500 font-medium">
-                  Pinjam alat, tanpa ribet
+                  Laboratorium FIT
                 </p>
               </div>
             </div>
