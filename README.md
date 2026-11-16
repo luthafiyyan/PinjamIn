@@ -10,6 +10,7 @@
 
 <p align="center">
   <a href="#-fitur-utama"><img src="https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge" alt="Status"/></a>
+  <a href="https://github.com/cloudflare/security-audit-skill"><img src="https://img.shields.io/badge/Security-Cloudflare%20Audited-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Cloudflare Security Audit"/></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19"/></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"/></a>
   <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS v4"/></a>
@@ -151,7 +152,8 @@ flowchart TD
 | **Database & Auth** | **Firebase Cloud Firestore & Auth** | Database NoSQL real-time, autentikasi Google, dan keamanan tingkat baris |
 | **Security Rules** | **Firestore Security Rules** | Kontrol hak akses berbasis role (RBAC) di sisi database |
 | **Unit Testing** | **Vitest** | Runner pengujian unit berkecepatan tinggi untuk utilitas tanggal dan logika |
-| **Standar UI/UX** | **UI/UX Pro Max Skill & Superdesign** | Standar target sentuh jempol 44px, bottom-sheet adaptif, pencegahan CLS (<0.1), dan 100% SVG icons |
+| **Audit Keamanan** | **[Cloudflare Security Audit](https://github.com/cloudflare/security-audit-skill)** | Metodologi verifikasi keamanan dependensi, proteksi XSS/CSRF, sanitasi aturan Firestore, dan HTTP headers |
+| **Standar UI/UX** | **[UI/UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) & [Superdesign](https://github.com/superdesigndev/superdesign-skill)** | Standar target sentuh jempol 44px, bottom-sheet adaptif, pencegahan CLS (<0.1), dan 100% SVG icons |
 | **Aksesibilitas & UI** | **WCAG 2.1 AA & Antislop** | Rasio kontras AA, ring fokus keyboard (`:focus-visible`), toleransi *prefers-reduced-motion*, dan bebas AI slop |
 | **Deployment** | **Vercel / Cloud Hosting** | Dukungan SPA routing dengan konfigurasi rewrite (`vercel.json`) |
 
