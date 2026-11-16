@@ -14,6 +14,7 @@ import {
   deleteField 
 } from 'firebase/firestore';
 import { Icon } from '../Icon';
+import { ConfirmModal, ConfirmModalProps } from '../ConfirmModal';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -102,6 +103,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
   const [returnNote, setReturnNote] = useState('');
   const [returnLoading, setReturnLoading] = useState(false);
   const [loanActionId, setLoanActionId] = useState<string | null>(null);
+
+  // Reusable Tailwind Confirmation / Prompt Modal state
+  const [confirmModalConfig, setConfirmModalConfig] = useState<Omit<ConfirmModalProps, 'onClose'>>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const openConfirmModal = (config: Omit<ConfirmModalProps, 'isOpen' | 'onClose'>) => {
+    setConfirmModalConfig({ ...config, isOpen: true });
+  };
+
+  const closeConfirmModal = () => {
+    setConfirmModalConfig((prev) => ({ ...prev, isOpen: false }));
+  };
 
   // Action / Modal states for Adding Additional Items (Hari-H Addendum)
   const [addItemsModalLoan, setAddItemsModalLoan] = useState<Loan | null>(null);
@@ -297,29 +314,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
   };
 
   // Action: Superadmin promote / demote user role
-  const handleChangeUserRole = async (targetUser: UserProfile, newRole: 'admin' | 'peminjam') => {
+  const handleChangeUserRole = (targetUser: UserProfile, newRole: 'admin' | 'peminjam') => {
     if (!isSuperAdmin) {
       showToast('Hanya Superadmin yang memiliki wewenang mengubah peran pengguna.', 'error');
       return;
     }
 
-    const confirmMsg = newRole === 'admin'
-      ? `Apakah Anda yakin ingin mengangkat "${targetUser.nama}" menjadi Admin Laboratorium?`
-      : `Apakah Anda yakin ingin menurunkan hak akses "${targetUser.nama}" menjadi Peminjam biasa?`;
-
-    if (!window.confirm(confirmMsg)) return;
-
-    try {
-      const userDocRef = doc(db, 'users', targetUser.uid);
-      await updateDoc(userDocRef, {
-        role: newRole,
-        terverifikasi: true,
-      });
-      showToast(`Peran ${targetUser.nama} berhasil diubah menjadi ${newRole === 'admin' ? 'Admin Lab' : 'Peminjam'}!`);
-    } catch (err: any) {
-      console.error('Gagal memperbarui peran pengguna:', err);
-      showToast('Gagal mengubah peran: ' + (err.message || 'Periksa izin Firestore.'), 'error');
-    }
+    const isPromote = newRole === 'admin';
+    openConfirmModal({
+      title: isPromote ? 'Angkat Menjadi Admin Lab?' : 'Turunkan Hak Akses Admin?',
+      message: isPromote
+        ? `Apakah Anda yakin ingin mengangkat "${targetUser.nama}" (${targetUser.nomorIdentitas || targetUser.email}) menjadi Admin Laboratorium FIT? Pengguna akan memiliki akses penuh ke panel pengelolaan lab.`
+        : `Apakah Anda yakin ingin menurunkan hak akses "${targetUser.nama}" menjadi Peminjam biasa? Akses ke panel pengelolaan lab akan dicabut.`,
+      variant: isPromote ? 'primary' : 'warning',
+      icon: isPromote ? 'ShieldCheck' : 'ExclamationTriangle',
+      confirmText: isPromote ? 'Ya, Angkat Admin' : 'Ya, Turunkan Peran',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          const userDocRef = doc(db, 'users', targetUser.uid);
+          await updateDoc(userDocRef, {
+            role: newRole,
+            terverifikasi: true,
+          });
+          showToast(`Peran ${targetUser.nama} berhasil diubah menjadi ${isPromote ? 'Admin Lab' : 'Peminjam'}!`);
+        } catch (err: any) {
+          console.error('Gagal memperbarui peran pengguna:', err);
+          showToast('Gagal mengubah peran: ' + (err.message || 'Periksa izin Firestore.'), 'error');
+        }
+      },
+    });
   };
 
   const handleApproveLoan = async (loan: Loan) => {
@@ -361,61 +385,88 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
   };
 
   // Action: Serahkan Barang ke Peminjam (Hari-H saat peminjam datang ke meja lab)
-  const handleHandoverLoan = async (loan: Loan) => {
-    if (!window.confirm(`Serahkan barang untuk peminjaman ${loan.noInvoice} kepada ${loan.peminjam.nama}?`)) return;
+  const handleHandoverLoan = (loan: Loan) => {
+    openConfirmModal({
+      title: 'Serahkan Barang ke Peminjam',
+      message: (
+        <div className="space-y-2">
+          <p>
+            Serahkan seluruh peralatan peminjaman invoice <strong className="font-mono text-indigo-700">{loan.noInvoice}</strong> kepada <strong>{loan.peminjam.nama}</strong>?
+          </p>
+          <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700">
+            <span className="font-semibold block mb-0.5 text-slate-800">Daftar Peralatan ({loan.items.length} item):</span>
+            <ul className="list-disc list-inside space-y-0.5 text-[11px] text-slate-600">
+              {loan.items.map((it) => (
+                <li key={it.itemId}>
+                  <span className="font-mono font-semibold text-slate-800">{it.kodeAset}</span> - {it.nama}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="text-xs text-slate-500">
+            Status peminjaman akan otomatis diubah menjadi aktif (<strong>Dipinjam</strong>) dan status fisik alat diperbarui.
+          </p>
+        </div>
+      ),
+      variant: 'primary',
+      icon: 'BoxSeam',
+      confirmText: 'Serahkan Barang',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          setLoanActionId(loan.id);
+          await runTransaction(db, async (transaction) => {
+            const loanRef = doc(db, 'loans', loan.id);
+            const loanSnap = await transaction.get(loanRef);
+            if (!loanSnap.exists() || loanSnap.data().status !== 'disetujui') {
+              throw new Error('Peminjaman ini belum disetujui atau sudah diserahkan sebelumnya.');
+            }
 
-    try {
-      setLoanActionId(loan.id);
-      await runTransaction(db, async (transaction) => {
-        const loanRef = doc(db, 'loans', loan.id);
-        const loanSnap = await transaction.get(loanRef);
-        if (!loanSnap.exists() || loanSnap.data().status !== 'disetujui') {
-          throw new Error('Peminjaman ini belum disetujui atau sudah diserahkan sebelumnya.');
-        }
+            const freshLoanData = loanSnap.data() as Loan;
+            const currentLoanItems = freshLoanData.items || loan.items;
 
-        const freshLoanData = loanSnap.data() as Loan;
-        const currentLoanItems = freshLoanData.items || loan.items;
+            const itemRefs = currentLoanItems.map((item) => doc(db, 'items', item.itemId));
+            const itemSnaps = await Promise.all(itemRefs.map((itemRef) => transaction.get(itemRef)));
 
-        const itemRefs = currentLoanItems.map((item) => doc(db, 'items', item.itemId));
-        const itemSnaps = await Promise.all(itemRefs.map((itemRef) => transaction.get(itemRef)));
+            for (let i = 0; i < itemSnaps.length; i++) {
+              const itemSnap = itemSnaps[i];
+              if (!itemSnap.exists()) {
+                throw new Error(`Barang ${currentLoanItems[i].nama} tidak ditemukan.`);
+              }
+              const itemData = itemSnap.data();
+              if (itemData.status === 'rusak' || itemData.status === 'perawatan' || itemData.status === 'dipinjam') {
+                throw new Error(`Barang [${currentLoanItems[i].nama}] sedang dalam status ${itemData.status}, tidak dapat diserahkan.`);
+              }
+            }
 
-        for (let i = 0; i < itemSnaps.length; i++) {
-          const itemSnap = itemSnaps[i];
-          if (!itemSnap.exists()) {
-            throw new Error(`Barang ${currentLoanItems[i].nama} tidak ditemukan.`);
-          }
-          const itemData = itemSnap.data();
-          if (itemData.status === 'rusak' || itemData.status === 'perawatan' || itemData.status === 'dipinjam') {
-            throw new Error(`Barang [${currentLoanItems[i].nama}] sedang dalam status ${itemData.status}, tidak dapat diserahkan.`);
-          }
-        }
+            // Update status pinjaman menjadi 'dipinjam' (aktif dibawa)
+            transaction.update(loanRef, {
+              status: 'dipinjam',
+              diserahkanAt: serverTimestamp(),
+              diserahkanOleh: profile?.nama || currentUser?.displayName || 'Petugas Laboratorium',
+            });
 
-        // Update status pinjaman menjadi 'dipinjam' (aktif dibawa)
-        transaction.update(loanRef, {
-          status: 'dipinjam',
-          diserahkanAt: serverTimestamp(),
-          diserahkanOleh: profile?.nama || currentUser?.displayName || 'Petugas Laboratorium',
-        });
+            // Sinkronisasi status jadwal kalender publik (tanpa PII)
+            const bookingRef = doc(db, 'bookings', loan.id);
+            transaction.set(bookingRef, { status: 'dipinjam' }, { merge: true });
 
-        // Sinkronisasi status jadwal kalender publik (tanpa PII)
-        const bookingRef = doc(db, 'bookings', loan.id);
-        transaction.set(bookingRef, { status: 'dipinjam' }, { merge: true });
-
-        // Update status fisik barang menjadi 'dipinjam'
-        itemRefs.forEach((itemRef) => {
-          transaction.update(itemRef, {
-            status: 'dipinjam',
-            currentLoanId: loan.id,
+            // Update status fisik barang menjadi 'dipinjam'
+            itemRefs.forEach((itemRef) => {
+              transaction.update(itemRef, {
+                status: 'dipinjam',
+                currentLoanId: loan.id,
+              });
+            });
           });
-        });
-      });
-      showToast(`Barang untuk invoice ${loan.noInvoice} telah diserahkan ke peminjam.`);
-    } catch (err: any) {
-      console.error('Error saat menyerahkan barang:', err);
-      showToast(err.message || 'Gagal menyerahkan barang.', 'error');
-    } finally {
-      setLoanActionId(null);
-    }
+          showToast(`Barang untuk invoice ${loan.noInvoice} telah diserahkan ke peminjam.`);
+        } catch (err: any) {
+          console.error('Error saat menyerahkan barang:', err);
+          showToast(err.message || 'Gagal menyerahkan barang.', 'error');
+        } finally {
+          setLoanActionId(null);
+        }
+      },
+    });
   };
 
   // Action: Buka Modal Tambah Barang Hari-H (Skema 1: Addendum)
@@ -720,113 +771,150 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
     }
   };
 
-  const handleRejectLoan = async (loan: Loan) => {
-    const reason = window.prompt(`Alasan penolakan pengajuan ${loan.noInvoice}:`);
-    if (reason === null) return;
-    if (!reason.trim()) {
-      showToast('Alasan penolakan wajib diisi.', 'error');
-      return;
-    }
-
-    try {
-      setLoanActionId(loan.id);
-      await runTransaction(db, async (transaction) => {
-        const loanRef = doc(db, 'loans', loan.id);
-        const loanSnap = await transaction.get(loanRef);
-        if (!loanSnap.exists() || (loanSnap.data().status !== 'menunggu_persetujuan' && loanSnap.data().status !== 'disetujui')) {
-          throw new Error('Pengajuan ini sudah diproses atau tidak ditemukan.');
+  const handleRejectLoan = (loan: Loan) => {
+    openConfirmModal({
+      title: 'Tolak Pengajuan Booking',
+      message: `Tolak pengajuan booking peminjaman untuk invoice ${loan.noInvoice} (${loan.peminjam.nama})? Slot kalender booking akan otomatis dibatalkan.`,
+      showInput: true,
+      inputLabel: 'Alasan Penolakan',
+      inputPlaceholder: 'Contoh: Jadwal bertabrakan dengan jadwal praktikum reguler...',
+      inputRequired: true,
+      variant: 'danger',
+      confirmText: 'Tolak Pengajuan',
+      onConfirm: async (reason) => {
+        closeConfirmModal();
+        if (!reason || !reason.trim()) {
+          showToast('Alasan penolakan wajib diisi.', 'error');
+          return;
         }
 
-        transaction.update(loanRef, {
-          status: 'ditolak',
-          alasanPenolakan: reason.trim(),
-          rejectedAt: serverTimestamp(),
-        });
+        try {
+          setLoanActionId(loan.id);
+          await runTransaction(db, async (transaction) => {
+            const loanRef = doc(db, 'loans', loan.id);
+            const loanSnap = await transaction.get(loanRef);
+            if (!loanSnap.exists() || (loanSnap.data().status !== 'menunggu_persetujuan' && loanSnap.data().status !== 'disetujui')) {
+              throw new Error('Pengajuan ini sudah diproses atau tidak ditemukan.');
+            }
 
-        // Sinkronisasi status jadwal kalender publik (tanpa PII)
-        const bookingRef = doc(db, 'bookings', loan.id);
-        transaction.set(bookingRef, { status: 'ditolak' }, { merge: true });
-      });
-      showToast(`Pengajuan ${loan.noInvoice} ditolak.`);
-    } catch (err: any) {
-      console.error('Error saat menolak peminjaman:', err);
-      const isPermissionErr = err.code === 'permission-denied' || String(err.message).toLowerCase().includes('permission');
-      const errorText = isPermissionErr
-        ? 'Akses ditolak (Missing or insufficient permissions). Pastikan aturan keamanan Firestore di Firebase Console sudah diperbarui.'
-        : (err.message || 'Gagal menolak peminjaman.');
-      showToast(errorText, 'error');
-    } finally {
-      setLoanActionId(null);
-    }
+            transaction.update(loanRef, {
+              status: 'ditolak',
+              alasanPenolakan: reason.trim(),
+              rejectedAt: serverTimestamp(),
+            });
+
+            // Sinkronisasi status jadwal kalender publik (tanpa PII)
+            const bookingRef = doc(db, 'bookings', loan.id);
+            transaction.set(bookingRef, { status: 'ditolak' }, { merge: true });
+          });
+          showToast(`Pengajuan ${loan.noInvoice} ditolak.`);
+        } catch (err: any) {
+          console.error('Error saat menolak peminjaman:', err);
+          const isPermissionErr = err.code === 'permission-denied' || String(err.message).toLowerCase().includes('permission');
+          const errorText = isPermissionErr
+            ? 'Akses ditolak (Missing or insufficient permissions). Pastikan aturan keamanan Firestore di Firebase Console sudah diperbarui.'
+            : (err.message || 'Gagal menolak peminjaman.');
+          showToast(errorText, 'error');
+        } finally {
+          setLoanActionId(null);
+        }
+      },
+    });
   };
 
   // Action: Batalkan Peminjaman Aktif (status: 'dipinjam') tanpa skema inspeksi pengembalian
-  const handleCancelActiveLoan = async (loan: Loan) => {
-    const reason = window.prompt(
-      `Batalkan peminjaman ${loan.noInvoice} (${loan.peminjam.nama})?\n\nSemua alat akan otomatis dikembalikan ke status 'Tersedia' tanpa perlu mengisi formulir inspeksi pengembalian.\n\nAlasan pembatalan:`,
-      'Tidak jadi meminjam'
-    );
-    if (reason === null) return;
-    const finalReason = reason.trim() || 'Tidak jadi meminjam';
+  const handleCancelActiveLoan = (loan: Loan) => {
+    openConfirmModal({
+      title: 'Batalkan Peminjaman Aktif',
+      message: (
+        <div className="space-y-2">
+          <p>
+            Batalkan peminjaman invoice <strong className="font-mono text-indigo-700">{loan.noInvoice}</strong> ({loan.peminjam.nama})?
+          </p>
+          <p className="text-xs text-rose-700 bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+            Seluruh peralatan ({loan.items.length} item) akan langsung dikembalikan ke status <strong>Tersedia</strong> tanpa perlu mengisi formulir inspeksi kelengkapan.
+          </p>
+        </div>
+      ),
+      showInput: true,
+      inputLabel: 'Alasan Pembatalan',
+      initialInputValue: 'Tidak jadi meminjam',
+      inputPlaceholder: 'Tuliskan alasan pembatalan...',
+      inputRequired: true,
+      variant: 'danger',
+      confirmText: 'Ya, Batalkan Peminjaman',
+      onConfirm: async (reason) => {
+        closeConfirmModal();
+        const finalReason = reason?.trim() || 'Tidak jadi meminjam';
 
-    try {
-      setLoanActionId(loan.id);
-      await runTransaction(db, async (transaction) => {
-        const loanRef = doc(db, 'loans', loan.id);
-        const loanSnap = await transaction.get(loanRef);
-        if (!loanSnap.exists()) {
-          throw new Error('Dokumen peminjaman tidak ditemukan.');
-        }
-        const currentData = loanSnap.data();
-        if (currentData.status !== 'dipinjam') {
-          throw new Error('Peminjaman ini sudah tidak dalam status aktif/dipinjam.');
-        }
+        try {
+          setLoanActionId(loan.id);
+          await runTransaction(db, async (transaction) => {
+            const loanRef = doc(db, 'loans', loan.id);
+            const loanSnap = await transaction.get(loanRef);
+            if (!loanSnap.exists()) {
+              throw new Error('Dokumen peminjaman tidak ditemukan.');
+            }
+            const currentData = loanSnap.data();
+            if (currentData.status !== 'dipinjam') {
+              throw new Error('Peminjaman ini sudah tidak dalam status aktif/dipinjam.');
+            }
 
-        // 1. Baca referensi dokumen seluruh alat
-        const itemRefs = loan.items.map((it) => doc(db, 'items', it.itemId));
-        await Promise.all(itemRefs.map((r) => transaction.get(r)));
+            // 1. Baca referensi dokumen seluruh alat
+            const itemRefs = loan.items.map((it) => doc(db, 'items', it.itemId));
+            await Promise.all(itemRefs.map((r) => transaction.get(r)));
 
-        // 2. Perbarui status peminjaman menjadi dibatalkan
-        transaction.update(loanRef, {
-          status: 'dibatalkan',
-          alasanPenolakan: finalReason,
-          alasanPembatalan: finalReason,
-          cancelledAt: serverTimestamp(),
-          cancelledBy: profile?.nama || currentUser?.displayName || 'Petugas Laboratorium FIT',
-        });
+            // 2. Perbarui status peminjaman menjadi dibatalkan
+            transaction.update(loanRef, {
+              status: 'dibatalkan',
+              alasanPenolakan: finalReason,
+              alasanPembatalan: finalReason,
+              cancelledAt: serverTimestamp(),
+              cancelledBy: profile?.nama || currentUser?.displayName || 'Petugas Laboratorium FIT',
+            });
 
-        // 3. Sinkronisasi jadwal slot kalender booking publik
-        const bookingRef = doc(db, 'bookings', loan.id);
-        transaction.set(bookingRef, { status: 'dibatalkan' }, { merge: true });
+            // 3. Sinkronisasi jadwal slot kalender booking publik
+            const bookingRef = doc(db, 'bookings', loan.id);
+            transaction.set(bookingRef, { status: 'dibatalkan' }, { merge: true });
 
-        // 4. Kembalikan semua barang fisik ke status 'tersedia' dan lepas pinjaman
-        itemRefs.forEach((ref) => {
-          transaction.update(ref, {
-            status: 'tersedia',
-            currentLoanId: null,
+            // 4. Kembalikan semua barang fisik ke status 'tersedia' dan lepas pinjaman
+            itemRefs.forEach((ref) => {
+              transaction.update(ref, {
+                status: 'tersedia',
+                currentLoanId: null,
+              });
+            });
           });
-        });
-      });
 
-      showToast(`Peminjaman ${loan.noInvoice} berhasil dibatalkan. Seluruh peralatan telah kembali tersedia.`);
-    } catch (err: any) {
-      console.error('Error saat membatalkan peminjaman aktif:', err);
-      showToast(err.message || 'Gagal membatalkan peminjaman.', 'error');
-    } finally {
-      setLoanActionId(null);
-    }
+          showToast(`Peminjaman ${loan.noInvoice} berhasil dibatalkan. Seluruh peralatan telah kembali tersedia.`);
+        } catch (err: any) {
+          console.error('Error saat membatalkan peminjaman aktif:', err);
+          showToast(err.message || 'Gagal membatalkan peminjaman.', 'error');
+        } finally {
+          setLoanActionId(null);
+        }
+      },
+    });
   };
 
   // Action: Reject unverified User
-  const handleRejectUser = async (uid: string) => {
-    if (!window.confirm('Apakah Anda yakin ingin menolak & menghapus permohonan akun ini?')) return;
-    try {
-      await deleteDoc(doc(db, 'users', uid));
-      showToast('Permohonan akun telah ditolak.');
-    } catch (err) {
-      console.error(err);
-      showToast('Gagal menolak akun.', 'error');
-    }
+  const handleRejectUser = (uid: string) => {
+    openConfirmModal({
+      title: 'Tolak & Hapus Permohonan Akun',
+      message: 'Apakah Anda yakin ingin menolak dan menghapus permohonan akun peminjam ini dari antrean verifikasi? Pengguna harus mengisi ulang data profil jika ingin mendaftar kembali.',
+      variant: 'danger',
+      confirmText: 'Tolak & Hapus Akun',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          await deleteDoc(doc(db, 'users', uid));
+          showToast('Permohonan akun telah ditolak.');
+        } catch (err) {
+          console.error(err);
+          showToast('Gagal menolak akun.', 'error');
+        }
+      },
+    });
   };
 
   // Action: Approve user data change request
@@ -855,19 +943,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
   };
 
   // Action: Reject user data change request
-  const handleRejectChangeRequest = async (targetUser: UserProfile) => {
+  const handleRejectChangeRequest = (targetUser: UserProfile) => {
     if (!targetUser.permintaanPerubahan) return;
-    if (!window.confirm(`Tolak pengajuan perubahan data dari ${targetUser.nama}?`)) return;
 
-    try {
-      await updateDoc(doc(db, 'users', targetUser.uid), {
-        permintaanPerubahan: deleteField(),
-      });
-      showToast('Pengajuan perubahan data telah ditolak.');
-    } catch (err) {
-      console.error('Error saat menolak perubahan data:', err);
-      showToast('Gagal menolak perubahan data.', 'error');
-    }
+    openConfirmModal({
+      title: 'Tolak Pengajuan Perubahan Data',
+      message: `Tolak pengajuan perubahan data dari ${targetUser.nama}? Data profil peminjam saat ini akan tetap dipertahankan.`,
+      variant: 'danger',
+      confirmText: 'Tolak Perubahan',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          await updateDoc(doc(db, 'users', targetUser.uid), {
+            permintaanPerubahan: deleteField(),
+          });
+          showToast('Pengajuan perubahan data telah ditolak.');
+        } catch (err) {
+          console.error('Error saat menolak perubahan data:', err);
+          showToast('Gagal menolak perubahan data.', 'error');
+        }
+      },
+    });
   };
 
   // Action: Open Return Modal
@@ -1113,20 +1209,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
   };
 
   // Action: Delete Item
-  const handleDeleteItem = async (item: Item) => {
+  const handleDeleteItem = (item: Item) => {
     if (item.status === 'dipinjam' || item.status === 'menunggu_persetujuan') {
       showToast('Barang sedang dipinjam atau menunggu persetujuan, tidak dapat dihapus.', 'error');
       return;
     }
-    if (!window.confirm(`Hapus barang "${item.nama}" (${item.kodeAset})?`)) return;
 
-    try {
-      await deleteDoc(doc(db, 'items', item.id));
-      showToast(`Barang ${item.kodeAset} berhasil dihapus.`);
-    } catch (err) {
-      console.error(err);
-      showToast('Gagal menghapus barang.', 'error');
-    }
+    openConfirmModal({
+      title: 'Hapus Barang Inventaris',
+      message: (
+        <div className="space-y-2">
+          <p>
+            Apakah Anda yakin ingin menghapus barang <strong className="text-slate-900">{item.nama}</strong> (<span className="font-mono font-bold text-indigo-700">{item.kodeAset}</span>)?
+          </p>
+          <p className="text-xs text-rose-700 bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+            Tindakan ini permanen. Seluruh data spesifikasi dan kelengkapan barang ini akan dihapus dari inventaris laboratorium.
+          </p>
+        </div>
+      ),
+      variant: 'danger',
+      icon: 'Trash',
+      confirmText: 'Ya, Hapus Barang',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          await deleteDoc(doc(db, 'items', item.id));
+          showToast(`Barang ${item.kodeAset} berhasil dihapus.`);
+        } catch (err) {
+          console.error(err);
+          showToast('Gagal menghapus barang.', 'error');
+        }
+      },
+    });
   };
 
   // Action: Open Category Modal (Add / Edit)
@@ -1203,22 +1317,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
   };
 
   // Action: Delete Category with Validation
-  const handleDeleteCategory = async (cat: Category) => {
+  const handleDeleteCategory = (cat: Category) => {
     const itemsInCat = items.filter((i) => i.categoryId === cat.id);
     if (itemsInCat.length > 0) {
       showToast(`Kategori masih dipakai oleh ${itemsInCat.length} barang. Pindahkan atau hapus barang terlebih dahulu.`, 'error');
       return;
     }
 
-    if (!window.confirm(`Hapus kategori "${cat.nama}" (${cat.prefix})?`)) return;
-
-    try {
-      await deleteDoc(doc(db, 'categories', cat.id));
-      showToast(`Kategori "${cat.nama}" berhasil dihapus.`);
-    } catch (err) {
-      console.error(err);
-      showToast('Gagal menghapus kategori.', 'error');
-    }
+    openConfirmModal({
+      title: 'Hapus Kategori Inventaris',
+      message: (
+        <div className="space-y-2">
+          <p>
+            Apakah Anda yakin ingin menghapus kategori <strong className="text-slate-900">{cat.nama}</strong> (Prefix: <span className="font-mono font-bold text-indigo-700">{cat.prefix}</span>)?
+          </p>
+          <p className="text-xs text-rose-700 bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+            Kategori ini akan dihapus permanen dari daftar inventaris.
+          </p>
+        </div>
+      ),
+      variant: 'danger',
+      icon: 'Trash',
+      confirmText: 'Ya, Hapus Kategori',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          await deleteDoc(doc(db, 'categories', cat.id));
+          showToast(`Kategori "${cat.nama}" berhasil dihapus.`);
+        } catch (err) {
+          console.error(err);
+          showToast('Gagal menghapus kategori.', 'error');
+        }
+      },
+    });
   };
 
   // Action: Save Settings
@@ -1234,45 +1365,54 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
   };
 
   // Action: Seed Sample Data with Rich Specifications & Details
-  const handleSeedData = async () => {
-    if (
-      !window.confirm(
-        'Apakah Anda ingin mengisi/memperbarui 12 kategori standar dan 15 barang contoh Laboratorium FIT dengan spesifikasi lengkap & kelengkapan paket?'
-      )
-    ) {
-      return;
-    }
+  const handleSeedData = () => {
+    openConfirmModal({
+      title: 'Inisialisasi Data Awal Lab FIT',
+      message: (
+        <div className="space-y-2">
+          <p>
+            Apakah Anda ingin mengisi / memperbarui <strong>12 kategori standar</strong> dan <strong>15 barang contoh</strong> Laboratorium FIT dengan spesifikasi lengkap & paket kelengkapan aksesoris?
+          </p>
+          <p className="text-xs text-amber-800 bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+            Data kategori dan inventaris yang sudah ada tidak akan dihapus, melainkan disinkronkan dan dilengkapi.
+          </p>
+        </div>
+      ),
+      variant: 'warning',
+      icon: 'Database',
+      confirmText: 'Isi Data Sekarang',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          showToast('Memproses data awal 12 kategori dan inventaris spesifikasi lengkap...');
 
-    try {
-      showToast('Memproses data awal 12 kategori dan inventaris spesifikasi lengkap...');
+          // 1. Seed 12 Categories without duplicates
+          const existingCatsSnap = await getDocs(collection(db, 'categories'));
+          const existingCatsByName: { [nameLower: string]: string } = {};
+          existingCatsSnap.forEach((d) => {
+            const data = d.data();
+            if (data.nama) {
+              existingCatsByName[data.nama.toLowerCase().trim()] = d.id;
+            }
+          });
 
-      // 1. Seed 12 Categories without duplicates
-      const existingCatsSnap = await getDocs(collection(db, 'categories'));
-      const existingCatsByName: { [nameLower: string]: string } = {};
-      existingCatsSnap.forEach((d) => {
-        const data = d.data();
-        if (data.nama) {
-          existingCatsByName[data.nama.toLowerCase().trim()] = d.id;
-        }
-      });
+          const categoryIdMap: { [prefix: string]: string } = {};
 
-      const categoryIdMap: { [prefix: string]: string } = {};
+          for (const cat of INITIAL_CATEGORIES) {
+            const existingId = existingCatsByName[cat.nama.toLowerCase().trim()];
+            const targetId = existingId || cat.id;
 
-      for (const cat of INITIAL_CATEGORIES) {
-        const existingId = existingCatsByName[cat.nama.toLowerCase().trim()];
-        const targetId = existingId || cat.id;
-
-        await setDoc(
-          doc(db, 'categories', targetId),
-          {
-            nama: cat.nama,
-            prefix: cat.prefix,
-            urutan: cat.urutan,
-          },
-          { merge: true }
-        );
-        categoryIdMap[cat.prefix] = targetId;
-      }
+            await setDoc(
+              doc(db, 'categories', targetId),
+              {
+                nama: cat.nama,
+                prefix: cat.prefix,
+                urutan: cat.urutan,
+              },
+              { merge: true }
+            );
+            categoryIdMap[cat.prefix] = targetId;
+          }
 
       // 2. Seed Sample Items with Merek, Model, Nomor Seri, Spesifikasi, Kelengkapan, Lokasi Simpan
       const sampleItems = [
@@ -1576,7 +1716,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
       console.error('Error saat seeding data:', err);
       showToast(err.message || 'Gagal mengisi data awal.', 'error');
     }
-  };
+  },
+});
+};
 
   // Action: Export CSV
   const handleExportCSV = () => {
@@ -3685,11 +3827,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                 </p>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (window.confirm('Data awal hanya perlu diisi sekali. Lanjutkan?')) {
-                      handleSeedData();
-                    }
-                  }}
+                  onClick={handleSeedData}
                   className="min-h-[44px] px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs rounded-xl shadow-sm transition-colors cursor-pointer flex items-center gap-2"
                 >
                   <Icon name="Database" size={16} />
@@ -5045,6 +5183,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           </div>
         </div>
       )}
+
+      {/* REUSABLE TAILWIND CONFIRMATION / PROMPT MODAL */}
+      <ConfirmModal {...confirmModalConfig} onClose={closeConfirmModal} />
     </div>
   );
 };

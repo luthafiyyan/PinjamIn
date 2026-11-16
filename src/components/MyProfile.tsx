@@ -3,6 +3,7 @@ import { doc, updateDoc, deleteField } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { Icon } from './Icon';
+import { ConfirmModal } from './ConfirmModal';
 
 interface MyProfileProps {
   onBackToCatalog?: () => void;
@@ -30,6 +31,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
   const [submittingRequest, setSubmittingRequest] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [cancellingRequest, setCancellingRequest] = useState(false);
+  const [showCancelRequestModal, setShowCancelRequestModal] = useState(false);
 
   // Logout modal state & photo error
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -353,11 +355,12 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
   };
 
   // Batalkan pengajuan perubahan data yang sedang menunggu
-  const handleCancelRequest = async () => {
-    if (!window.confirm('Apakah Anda yakin ingin membatalkan pengajuan perubahan data ini?')) {
-      return;
-    }
+  const handleCancelRequest = () => {
+    setShowCancelRequestModal(true);
+  };
 
+  const handleConfirmCancelRequest = async () => {
+    setShowCancelRequestModal(false);
     try {
       setCancellingRequest(true);
       const userDocRef = doc(db, 'users', currentUser.uid);
@@ -925,6 +928,19 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
           </div>
         </div>
       )}
+
+      {/* Modal Konfirmasi Pembatalan Pengajuan Data */}
+      <ConfirmModal
+        isOpen={showCancelRequestModal}
+        onClose={() => setShowCancelRequestModal(false)}
+        onConfirm={handleConfirmCancelRequest}
+        title="Batalkan Pengajuan Perubahan Data?"
+        message="Apakah Anda yakin ingin membatalkan pengajuan perubahan data profil ini? Pengajuan akan dihapus dari antrean tinjauan admin."
+        variant="warning"
+        icon="ExclamationTriangle"
+        confirmText="Ya, Batalkan Pengajuan"
+        isLoading={cancellingRequest}
+      />
     </div>
   );
 };
