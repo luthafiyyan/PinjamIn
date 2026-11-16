@@ -149,6 +149,65 @@ describe('Sistem Booking Kalender & Validasi Tanggal (QA Tests)', () => {
       );
       expect(conflicts).toHaveLength(0);
     });
+
+    it('Barang yang sudah dikembalikan sebagian tidak memicu konflik jadwal walaupun peminjaman masih aktif', () => {
+      const partialReturnLoan: Loan = {
+        id: 'loan-partial',
+        userId: 'user-p',
+        peminjam: {
+          nama: 'Peminjam Multi',
+          email: 'p@fit.edu',
+          noHp: '0812345670',
+          tipePeminjam: 'mahasiswa',
+          nomorIdentitas: '6701220003',
+          unitAsal: 'D3 RPLA',
+        },
+        jenisKeperluan: 'tugas_kuliah',
+        keperluan: 'Tugas Akhir',
+        penanggungJawab: null,
+        tglPinjam: '2026-10-23',
+        tglRencanaKembali: '2026-10-26',
+        tglKembaliAktual: null,
+        status: 'dipinjam',
+        items: [
+          {
+            itemId: 'item-kamera-01',
+            kodeAset: 'CAM-001',
+            nama: 'Kamera Sony A6400',
+            kondisiPinjam: 'baik',
+            statusItem: 'dikembalikan',
+          },
+          {
+            itemId: 'item-tripod-01',
+            kodeAset: 'TRP-001',
+            nama: 'Tripod Manfrotto',
+            kondisiPinjam: 'baik',
+            statusItem: 'dipinjam',
+          },
+        ],
+        itemIds: ['item-tripod-01'],
+        noInvoice: 'PIN-20261021-002',
+        dikembalikanOleh: null,
+        catatanPengembalian: null,
+      };
+
+      const conflictsCamera = checkItemBookingConflicts(
+        ['item-kamera-01'],
+        '2026-10-24',
+        '2026-10-25',
+        [partialReturnLoan]
+      );
+      expect(conflictsCamera).toHaveLength(0);
+
+      const conflictsTripod = checkItemBookingConflicts(
+        ['item-tripod-01'],
+        '2026-10-24',
+        '2026-10-25',
+        [partialReturnLoan]
+      );
+      expect(conflictsTripod).toHaveLength(1);
+      expect(conflictsTripod[0].itemId).toBe('item-tripod-01');
+    });
   });
 
   describe('formatDateIndo', () => {

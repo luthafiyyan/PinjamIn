@@ -1085,13 +1085,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
         // Sinkronisasi status jadwal kalender publik (tanpa PII)
         const bookingRef = doc(db, 'bookings', returnModalLoan.id);
         if (allItemsReturned) {
-          transaction.set(bookingRef, { status: 'dikembalikan', itemIds: [] }, { merge: true });
+          transaction.set(bookingRef, { status: 'dikembalikan', itemIds: [], items: [] }, { merge: true });
         } else {
-          // Bebaskan itemIds yang sudah dikembalikan agar slot alat langsung tersedia untuk peminjam lain
-          const remainingBookingItemIds = updatedLoanItems
+          // Bebaskan itemIds dan items yang sudah dikembalikan agar slot alat langsung bebas untuk peminjam lain
+          const remainingBookingItems = updatedLoanItems
             .filter((it) => it.statusItem !== 'dikembalikan')
-            .map((it) => it.itemId);
-          transaction.set(bookingRef, { itemIds: remainingBookingItemIds }, { merge: true });
+            .map((it) => ({
+              itemId: it.itemId,
+              kodeAset: it.kodeAset,
+              nama: it.nama,
+            }));
+          const remainingBookingItemIds = remainingBookingItems.map((it) => it.itemId);
+          transaction.set(
+            bookingRef,
+            {
+              itemIds: remainingBookingItemIds,
+              items: remainingBookingItems,
+            },
+            { merge: true }
+          );
         }
 
         // Update status inventaris fisik aset yang dikembalikan menjadi tersedia/perawatan/rusak

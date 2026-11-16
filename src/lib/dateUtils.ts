@@ -55,8 +55,19 @@ export function checkItemBookingConflicts(
 
     // Periksa apakah rentang tanggal bersinggungan
     if (isDateRangeOverlapping(startDate, endDate, loan.tglPinjam, loan.tglRencanaKembali)) {
-      // Periksa item mana saja yang sama
+      // Periksa item mana saja yang masih aktif dipinjam / dibooking (abaikan item yang sudah kembali)
+      const activeItemIdsInLoan = Array.isArray(loan.itemIds) && loan.itemIds.length > 0
+        ? loan.itemIds
+        : loan.items
+          ? (loan.items as any[]).filter((it) => it.statusItem !== 'dikembalikan').map((it) => it.itemId)
+          : [];
+
       for (const it of loan.items) {
+        // Lewati barang yang sudah berstatus dikembalikan pada pengembalian sebagian / parsial
+        if ((it as any).statusItem === 'dikembalikan') continue;
+        // Lewati jika barang sudah tidak termasuk dalam daftar item aktif peminjaman
+        if (activeItemIdsInLoan.length > 0 && !activeItemIdsInLoan.includes(it.itemId)) continue;
+
         if (itemIds.includes(it.itemId)) {
           conflicts.push({
             itemId: it.itemId,

@@ -612,9 +612,18 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
 
               {/* Jadwal Kalender Booking Alat */}
               {(() => {
-                const itemBookings = activeBookings.filter((b) =>
-                  b.items.some((it) => it.itemId === activeDetail.id)
-                );
+                const itemBookings = activeBookings.filter((b) => {
+                  if (b.status === 'dikembalikan' || b.status === 'dibatalkan' || b.status === 'ditolak') return false;
+                  // Jika properti itemIds tersedia, periksa apakah ID barang masih ada di dalamnya
+                  if (Array.isArray(b.itemIds)) {
+                    return b.itemIds.includes(activeDetail.id);
+                  }
+                  // Fallback: periksa daftar items dan pastikan bukan berstatus dikembalikan
+                  return (
+                    Array.isArray(b.items) &&
+                    b.items.some((it: any) => it.itemId === activeDetail.id && it.statusItem !== 'dikembalikan')
+                  );
+                });
 
                 return (
                   <div className="space-y-2 pt-2 border-t border-slate-100">
