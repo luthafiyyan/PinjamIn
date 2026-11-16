@@ -190,6 +190,16 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
       );
     }
 
+    const returnedCount = loan.items.filter((it) => it.statusItem === 'dikembalikan').length;
+    if (returnedCount > 0 && returnedCount < loan.items.length) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-50 text-cyan-800 border border-cyan-300">
+          <Icon name="CheckCircle" size={13} className="text-cyan-600" />
+          Sebagian Kembali ({returnedCount}/{loan.items.length})
+        </span>
+      );
+    }
+
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
         <Icon name="HourglassSplit" size={13} className="text-amber-600" />
@@ -526,17 +536,29 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                     <span className="text-[11px] font-semibold text-slate-400 mr-1">
                       Peralatan ({loan.items.length}):
                     </span>
-                    {loan.items.map((it, idx) => (
-                      <div
-                        key={it.itemId || idx}
-                        className="inline-flex items-center gap-1.5 text-xs bg-slate-50 border border-slate-200/90 px-2 py-0.5 rounded-lg text-slate-800"
-                      >
-                        <span className="font-mono text-[10px] font-bold text-indigo-700 tabular-nums">
-                          {it.kodeAset}
-                        </span>
-                        <span className="font-medium text-slate-900">{it.nama}</span>
-                      </div>
-                    ))}
+                    {loan.items.map((it, idx) => {
+                      const isItemReturned = it.statusItem === 'dikembalikan' || loan.status === 'dikembalikan';
+                      return (
+                        <div
+                          key={it.itemId || idx}
+                          className={`inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-lg border ${
+                            isItemReturned
+                              ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+                              : 'bg-slate-50 border-slate-200/90 text-slate-800'
+                          }`}
+                        >
+                          <span className={`font-mono text-[10px] font-bold tabular-nums ${isItemReturned ? 'text-emerald-700' : 'text-indigo-700'}`}>
+                            {it.kodeAset}
+                          </span>
+                          <span className="font-medium text-slate-900">{it.nama}</span>
+                          {isItemReturned && loan.status !== 'dikembalikan' && (
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1 rounded">
+                              ✓ Kembali
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -552,9 +574,22 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                         <Icon name="CheckCircle" size={13} className="shrink-0" /> Silakan datang ke Gedung Selaru Lt. 1 untuk serah terima
                       </span>
                     ) : loan.status === 'dipinjam' ? (
-                      <span className={isLate ? 'text-rose-600 font-bold' : 'text-slate-600'}>
-                        {isLate ? '⚠️ Melewati batas waktu kembali. Segera hubungi Lab FIT!' : 'Alat sedang dalam tanggung jawab peminjam.'}
-                      </span>
+                      (() => {
+                        const returnedCount = loan.items.filter((it) => it.statusItem === 'dikembalikan').length;
+                        if (returnedCount > 0) {
+                          return (
+                            <span className="text-cyan-800 font-medium flex items-center gap-1.5">
+                              <Icon name="CheckCircle" size={13} className="shrink-0 text-cyan-600" />
+                              <span>Sebagian alat telah kembali ({returnedCount}/{loan.items.length}). Sisa {loan.items.length - returnedCount} alat masih Anda bawa (Batas: <strong className={isLate ? 'text-rose-600' : 'text-slate-800'}>{loan.tglRencanaKembali}</strong>).</span>
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className={isLate ? 'text-rose-600 font-bold' : 'text-slate-600'}>
+                            {isLate ? '⚠️ Melewati batas waktu kembali. Segera hubungi Lab FIT!' : 'Alat sedang dalam tanggung jawab peminjam.'}
+                          </span>
+                        );
+                      })()
                     ) : (loan.status === 'ditolak' || loan.status === 'dibatalkan') ? (
                       <span className="text-slate-400">{loan.status === 'dibatalkan' ? 'Peminjaman telah dibatalkan' : 'Peminjaman tidak disetujui'}</span>
                     ) : (

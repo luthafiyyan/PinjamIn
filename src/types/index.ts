@@ -82,6 +82,10 @@ export interface LoanItem {
   model?: string;
   kelengkapan?: string[];
   kelengkapanKembali?: string[];
+  statusItem?: 'dipinjam' | 'dikembalikan';
+  tglKembaliAktual?: string | null;
+  dikembalikanOleh?: string | null;
+  catatanPengembalian?: string | null;
 }
 
 export interface Loan {

@@ -125,14 +125,22 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
   };
 
   const getStatusText = (status: string) => {
-    if (status === 'dikembalikan') return 'SUDAH DIKEMBALIKAN';
+    if (status === 'dikembalikan') return 'SUDAH DIKEMBALIKAN (LENGKAP)';
     if (status === 'dibatalkan') return 'DIBATALKAN';
     if (status === 'ditolak') return 'DITOLAK';
     if (isOverdue) return 'TERLAMBAT PENGEMBALIAN';
     if (status === 'disetujui') return 'DISETUJUI (SIAP DIAMBIL)';
     if (status === 'menunggu_persetujuan') return 'MENUNGGU PERSETUJUAN';
+    if (loan.items.some((it) => it.statusItem === 'dikembalikan')) {
+      const retCount = loan.items.filter((it) => it.statusItem === 'dikembalikan').length;
+      return `DIPINJAM (SEBAGIAN KEMBALI ${retCount}/${loan.items.length})`;
+    }
     return 'SEDANG DIPINJAM (AKTIF)';
   };
+
+  const hasReturnedColumn =
+    loan.status === 'dikembalikan' ||
+    loan.items.some((it) => it.statusItem === 'dikembalikan' || it.kondisiKembali);
 
   // Min rows for blanko aesthetic
   const minRows = Math.max(4, loan.items.length);
@@ -277,8 +285,8 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
                 <th className="border border-black py-1 px-2 text-center w-28 print:w-24">Kode Aset</th>
                 <th className="border border-black py-1 px-2 text-center w-14">Jumlah</th>
                 <th className="border border-black py-1 px-2.5 text-left w-36 print:w-32">Keterangan / Kelengkapan</th>
-                {loan.status === 'dikembalikan' && (
-                  <th className="border border-black py-1 px-2 text-center w-24">Kondisi Kembali</th>
+                {hasReturnedColumn && (
+                  <th className="border border-black py-1 px-2 text-center w-28 print:w-24">Status / Kondisi Kembali</th>
                 )}
               </tr>
             </thead>
@@ -312,9 +320,18 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
                       </div>
                     )}
                   </td>
-                  {loan.status === 'dikembalikan' && (
-                    <td className="border border-black py-1 px-2 text-center capitalize font-semibold">
-                      {it.kondisiKembali || '-'}
+                  {hasReturnedColumn && (
+                    <td className="border border-black py-1 px-2 text-center text-[11px] print:text-[7pt]">
+                      {it.statusItem === 'dikembalikan' || loan.status === 'dikembalikan' ? (
+                        <div>
+                          <span className="font-bold text-black uppercase capitalize">{it.kondisiKembali || 'Baik'}</span>
+                          {it.tglKembaliAktual && (
+                            <p className="text-[10px] text-slate-600 print:text-[6.5pt]">{it.tglKembaliAktual}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-500 italic">Masih Dipinjam</span>
+                      )}
                     </td>
                   )}
                 </tr>
@@ -330,7 +347,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
                   <td className="border border-black py-1"></td>
                   <td className="border border-black py-1"></td>
                   <td className="border border-black py-1 px-2.5"></td>
-                  {loan.status === 'dikembalikan' && (
+                  {hasReturnedColumn && (
                     <td className="border border-black py-1"></td>
                   )}
                 </tr>

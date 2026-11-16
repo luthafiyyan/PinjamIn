@@ -100,6 +100,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
   const [returnModalLoan, setReturnModalLoan] = useState<Loan | null>(null);
   const [returnItemConditions, setReturnItemConditions] = useState<{ [itemId: string]: ItemCondition }>({});
   const [returnKelengkapanChecked, setReturnKelengkapanChecked] = useState<{ [itemId: string]: string[] }>({});
+  const [returnSelectedItems, setReturnSelectedItems] = useState<string[]>([]);
+  const [returnMode, setReturnMode] = useState<'all' | 'partial'>('all');
   const [returnNote, setReturnNote] = useState('');
   const [returnLoading, setReturnLoading] = useState(false);
   const [loanActionId, setLoanActionId] = useState<string | null>(null);
@@ -972,9 +974,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
     const initialCond: { [itemId: string]: ItemCondition } = {};
     const initialKelengkapan: { [itemId: string]: string[] } = {};
 
+    // Ambil daftar barang yang belum berstatus dikembalikan
+    const unreturnedItems = loan.items.filter((it) => it.statusItem !== 'dikembalikan');
+    setReturnMode('all');
+    setReturnSelectedItems(unreturnedItems.map((it) => it.itemId));
+
     loan.items.forEach((it) => {
-      initialCond[it.itemId] = 'baik';
-      initialKelengkapan[it.itemId] = it.kelengkapan ? [...it.kelengkapan] : [];
+      initialCond[it.itemId] = it.kondisiKembali || 'baik';
+      initialKelengkapan[it.itemId] =
+        it.kelengkapanKembali && it.kelengkapanKembali.length > 0
+          ? [...it.kelengkapanKembali]
+          : it.kelengkapan
+          ? [...it.kelengkapan]
+          : [];
     });
 
     setReturnItemConditions(initialCond);
@@ -982,20 +994,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
     setReturnNote('');
   };
 
-  // Check if any item has missing accessories during return
+  // Check if any *selected* item has missing accessories during return
   const checkHasMissingAccessories = () => {
     if (!returnModalLoan) return false;
+    const selectedSet = new Set(returnSelectedItems);
     return returnModalLoan.items.some((it) => {
+      if (!selectedSet.has(it.itemId)) return false;
       if (!it.kelengkapan || it.kelengkapan.length === 0) return false;
       const checked = returnKelengkapanChecked[it.itemId] || [];
       return it.kelengkapan.some((acc) => !checked.includes(acc));
     });
   };
 
-  // Action: Process Return in Single Transaction
+  // Action: Process Return in Single Transaction (Supports Full & Partial Return)
   const handleProcessReturn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!returnModalLoan) return;
+
+    if (returnSelectedItems.length === 0) {
+      showToast('Pilih minimal satu barang yang akan dikembalikan!', 'error');
+      return;
+    }
 
     const hasMissing = checkHasMissingAccessories();
     if (hasMissing && !returnNote.trim()) {
@@ -1006,6 +1025,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
     try {
       setReturnLoading(true);
 
+      const selectedIds = new Set(returnSelectedItems);
+      const itemsBeingReturned = returnModalLoan.items.filter((it) => selectedIds.has(it.itemId));
+      const todayStr = new Date().toISOString().split('T')[0];
+      const adminName = profile?.nama || currentUser?.displayName || 'Petugas Laboratorium FIT';
+
       await runTransaction(db, async (transaction) => {
         const loanRef = doc(db, 'loans', returnModalLoan.id);
         const loanSnap = await transaction.get(loanRef);
@@ -1013,33 +1037,66 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           throw new Error('Dokumen peminjaman tidak ditemukan.');
         }
 
-        const itemRefs = returnModalLoan.items.map((it) => doc(db, 'items', it.itemId));
+        // Baca item refs hanya untuk barang yang dikembalikan di transaksi ini
+        const itemRefs = itemsBeingReturned.map((it) => doc(db, 'items', it.itemId));
         await Promise.all(itemRefs.map((r) => transaction.get(r)));
 
         const updatedLoanItems = returnModalLoan.items.map((it) => {
-          const cond = returnItemConditions[it.itemId] || 'baik';
-          const checkedAccessories = returnKelengkapanChecked[it.itemId] || [];
+          if (selectedIds.has(it.itemId)) {
+            const cond = returnItemConditions[it.itemId] || 'baik';
+            const checkedAccessories = returnKelengkapanChecked[it.itemId] || [];
+            return {
+              ...it,
+              statusItem: 'dikembalikan' as const,
+              kondisiKembali: cond,
+              kelengkapanKembali: checkedAccessories,
+              tglKembaliAktual: todayStr,
+              dikembalikanOleh: adminName,
+              catatanPengembalian: returnNote.trim() || 'Pengembalian peralatan telah dicek dan diterima oleh laboran.',
+            };
+          }
           return {
             ...it,
-            kondisiKembali: cond,
-            kelengkapanKembali: checkedAccessories,
+            statusItem: it.statusItem === 'dikembalikan' ? ('dikembalikan' as const) : ('dipinjam' as const),
           };
         });
 
-        transaction.update(loanRef, {
-          status: 'dikembalikan',
-          tglKembaliAktual: new Date().toISOString().split('T')[0],
-          dikembalikanOleh: profile?.nama || currentUser?.displayName || 'Petugas Laboratorium FIT',
-          catatanPengembalian: returnNote.trim() || 'Pengembalian peralatan telah dicek dan diterima oleh laboran.',
+        const allItemsReturned = updatedLoanItems.every((it) => it.statusItem === 'dikembalikan');
+
+        const loanUpdateData: any = {
           items: updatedLoanItems,
-        });
+        };
+
+        if (allItemsReturned) {
+          loanUpdateData.status = 'dikembalikan';
+          loanUpdateData.tglKembaliAktual = todayStr;
+          loanUpdateData.dikembalikanOleh = adminName;
+          loanUpdateData.catatanPengembalian = returnNote.trim() || 'Seluruh peralatan telah dicek dan diterima lengkap oleh laboran.';
+        } else {
+          // Status peminjaman tetap aktif (dipinjam) jika masih ada barang yang dibawa peminjam
+          loanUpdateData.status = 'dipinjam';
+          if (returnNote.trim()) {
+            loanUpdateData.catatanPengembalian = returnNote.trim();
+          }
+        }
+
+        transaction.update(loanRef, loanUpdateData);
 
         // Sinkronisasi status jadwal kalender publik (tanpa PII)
         const bookingRef = doc(db, 'bookings', returnModalLoan.id);
-        transaction.set(bookingRef, { status: 'dikembalikan' }, { merge: true });
+        if (allItemsReturned) {
+          transaction.set(bookingRef, { status: 'dikembalikan', itemIds: [] }, { merge: true });
+        } else {
+          // Bebaskan itemIds yang sudah dikembalikan agar slot alat langsung tersedia untuk peminjam lain
+          const remainingBookingItemIds = updatedLoanItems
+            .filter((it) => it.statusItem !== 'dikembalikan')
+            .map((it) => it.itemId);
+          transaction.set(bookingRef, { itemIds: remainingBookingItemIds }, { merge: true });
+        }
 
+        // Update status inventaris fisik aset yang dikembalikan menjadi tersedia/perawatan/rusak
         for (let i = 0; i < itemRefs.length; i++) {
-          const it = returnModalLoan.items[i];
+          const it = itemsBeingReturned[i];
           const cond = returnItemConditions[it.itemId] || 'baik';
           let newStatus: ItemStatus = 'tersedia';
           if (cond === 'perlu_cek') newStatus = 'perawatan';
@@ -1053,7 +1110,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
         }
       });
 
-      showToast(`Pengembalian untuk invoice ${returnModalLoan.noInvoice} berhasil dicatat!`);
+      const allItemsReturned = returnModalLoan.items.every(
+        (it) => selectedIds.has(it.itemId) || it.statusItem === 'dikembalikan'
+      );
+
+      if (allItemsReturned) {
+        showToast(`Seluruh peralatan untuk invoice ${returnModalLoan.noInvoice} berhasil dikembalikan dan selesai!`);
+      } else {
+        const remainingCount = returnModalLoan.items.length - (
+          returnModalLoan.items.filter(it => it.statusItem === 'dikembalikan').length + itemsBeingReturned.length
+        );
+        showToast(
+          `Pengembalian sebagian (${itemsBeingReturned.length} barang) untuk invoice ${returnModalLoan.noInvoice} berhasil dicatat. Sisa ${remainingCount} barang masih dipinjam.`
+        );
+      }
       setReturnModalLoan(null);
     } catch (err: any) {
       console.error(err);
@@ -2760,6 +2830,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
             <div className="space-y-4">
               {sortedActiveLoans.map((loan) => {
                 const isLate = isLoanOverdue(loan);
+                const returnedItemsCount = loan.items.filter((it) => it.statusItem === 'dikembalikan').length;
+                const isPartialReturn = returnedItemsCount > 0 && returnedItemsCount < loan.items.length;
+                const remainingItemsCount = loan.items.length - returnedItemsCount;
 
                 return (
                   <div
@@ -2767,6 +2840,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                     className={`p-4 sm:p-5 rounded-2xl border transition-all ${
                       isLate
                         ? 'border-rose-300 bg-rose-50/40 ring-2 ring-rose-500/20'
+                        : isPartialReturn
+                        ? 'border-cyan-200 bg-cyan-50/20 hover:border-cyan-300'
                         : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                   >
@@ -2785,6 +2860,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
                               <Icon name="HourglassSplit" size={14} />
                               Dipinjam
+                            </span>
+                          )}
+                          {isPartialReturn && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-cyan-100 text-cyan-800 border border-cyan-300">
+                              <Icon name="CheckCircle" size={13} />
+                              Sebagian Kembali ({returnedItemsCount}/{loan.items.length})
                             </span>
                           )}
                         </div>
@@ -2828,22 +2909,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                     {/* Items and Action */}
                     <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex flex-wrap gap-2 text-xs">
-                        {loan.items.map((it, idx) => (
-                          <div
-                            key={it.itemId || idx}
-                            className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg text-slate-700 font-medium"
-                          >
-                            <span className="font-mono text-slate-500 mr-1.5 font-bold">
-                              {it.kodeAset}
-                            </span>
-                            <span>{it.nama}</span>
-                            {it.kelengkapan && it.kelengkapan.length > 0 && (
-                              <span className="ml-1 text-[10px] text-indigo-600 font-normal">
-                                ({it.kelengkapan.length} aksesori)
+                        {loan.items.map((it, idx) => {
+                          const isItemReturned = it.statusItem === 'dikembalikan';
+
+                          return (
+                            <div
+                              key={it.itemId || idx}
+                              className={`border px-2.5 py-1.5 rounded-lg font-medium flex items-center gap-1.5 ${
+                                isItemReturned
+                                  ? 'bg-emerald-50/80 border-emerald-200 text-emerald-800'
+                                  : 'bg-white border-slate-200 text-slate-700'
+                              }`}
+                            >
+                              <span className={`font-mono mr-0.5 font-bold ${isItemReturned ? 'text-emerald-700' : 'text-slate-500'}`}>
+                                {it.kodeAset}
                               </span>
-                            )}
-                          </div>
-                        ))}
+                              <span>{it.nama}</span>
+                              {isItemReturned ? (
+                                <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-300">
+                                  ✓ Kembali ({it.kondisiKembali || 'baik'})
+                                </span>
+                              ) : it.kelengkapan && it.kelengkapan.length > 0 ? (
+                                <span className="ml-0.5 text-[10px] text-indigo-600 font-normal">
+                                  ({it.kelengkapan.length} aksesori)
+                                </span>
+                              ) : null}
+                            </div>
+                          );
+                        })}
                       </div>
 
                       <div className="w-full sm:w-auto mt-2 sm:mt-0 pt-2 sm:pt-0 border-t border-slate-100 sm:border-t-0 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2 sm:shrink-0">
@@ -2873,7 +2966,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                           className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-bold rounded-xl shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-2"
                         >
                           <Icon name="ArrowReturnLeft" size={15} />
-                          <span>Catat Pengembalian</span>
+                          <span>{isPartialReturn ? `Catat Pengembalian (${remainingItemsCount} Sisa)` : 'Catat Pengembalian'}</span>
                         </button>
                       </div>
                     </div>
@@ -3908,220 +4001,365 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
         </div>
       )}
 
-      {/* MODAL: CATAT PENGEMBALIAN DENGAN CHECKLIST KELENGKAPAN */}
-      {returnModalLoan && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-xl w-full border border-slate-200 overflow-hidden sm:my-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
-            <div className="bg-indigo-700 text-white p-5 flex items-center justify-between shrink-0">
-              <div>
-                <h3 className="font-semibold text-base">Catat Pengembalian Alat & Cek Kelengkapan</h3>
-                <p className="text-xs text-indigo-200">Invoice: {returnModalLoan.noInvoice}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setReturnModalLoan(null)}
-                className="text-white/80 hover:text-white p-2 rounded-full cursor-pointer hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-                aria-label="Tutup modal pengembalian"
-                title="Tutup"
-              >
-                <Icon name="XLg" size={16} />
-              </button>
-            </div>
+      {/* MODAL: CATAT PENGEMBALIAN DENGAN CHECKLIST KELENGKAPAN (MENDUKUNG PENGEMBALIAN PENUH & PARSIAL) */}
+      {returnModalLoan && (() => {
+        const unreturnedItems = returnModalLoan.items.filter((it) => it.statusItem !== 'dikembalikan');
+        const alreadyReturnedItems = returnModalLoan.items.filter((it) => it.statusItem === 'dikembalikan');
+        const isReturningAll = returnSelectedItems.length === unreturnedItems.length;
 
-            <form onSubmit={handleProcessReturn} className="flex flex-col flex-1 overflow-hidden">
-              <div className="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
-                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-                <p className="font-bold text-slate-800">{returnModalLoan.peminjam.nama}</p>
-                <p className="text-slate-500">
-                  {returnModalLoan.peminjam.tipePeminjam} • {returnModalLoan.peminjam.nomorIdentitas}
-                </p>
-                <p className="text-slate-500">
-                  Batas Kembali: <span className="font-semibold text-slate-800">{returnModalLoan.tglRencanaKembali}</span>
-                </p>
+        return (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+            <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-xl w-full border border-slate-200 overflow-hidden sm:my-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
+              <div className="bg-indigo-700 text-white p-5 flex items-center justify-between shrink-0">
+                <div>
+                  <h3 className="font-semibold text-base">Catat Pengembalian Alat & Cek Kelengkapan</h3>
+                  <p className="text-xs text-indigo-200">Invoice: {returnModalLoan.noInvoice}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReturnModalLoan(null)}
+                  className="text-white/80 hover:text-white p-2 rounded-full cursor-pointer hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  aria-label="Tutup modal pengembalian"
+                  title="Tutup"
+                >
+                  <Icon name="XLg" size={16} />
+                </button>
               </div>
 
-              <div>
-                <label className="font-bold text-slate-700 block mb-2">
-                  1. Cek Fisik & Kondisi Saat Kembali:
-                </label>
-                <div className="space-y-3">
-                  {returnModalLoan.items.map((it) => (
-                    <div
-                      key={it.itemId}
-                      className="p-3.5 rounded-2xl border border-slate-200 bg-white space-y-2.5"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 mr-1.5">
-                            {it.kodeAset}
-                          </span>
-                          <span className="font-bold text-slate-900 text-xs">{it.nama}</span>
-                          {(it.merek || it.model) && (
-                            <span className="text-[10px] text-indigo-600 block sm:inline sm:ml-2">
-                              ({[it.merek, it.model].filter(Boolean).join(' • ')})
-                            </span>
-                          )}
-                        </div>
-                      </div>
+              <form onSubmit={handleProcessReturn} className="flex flex-col flex-1 overflow-hidden">
+                <div className="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
+                  <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                    <p className="font-bold text-slate-800">{returnModalLoan.peminjam.nama}</p>
+                    <p className="text-slate-500">
+                      {returnModalLoan.peminjam.tipePeminjam} • {returnModalLoan.peminjam.nomorIdentitas}
+                    </p>
+                    <p className="text-slate-500">
+                      Batas Kembali: <span className="font-semibold text-slate-800">{returnModalLoan.tglRencanaKembali}</span>
+                    </p>
+                    {alreadyReturnedItems.length > 0 && (
+                      <p className="text-xs text-emerald-700 font-semibold pt-1">
+                        Progress: {alreadyReturnedItems.length} dari {returnModalLoan.items.length} barang telah dikembalikan sebelumnya.
+                      </p>
+                    )}
+                  </div>
 
-                      {/* Kondisi Radio */}
-                      <div className="grid grid-cols-3 gap-2 pt-1">
+                  {/* Opsi Skema Pengembalian (Hanya jika ada lebih dari 1 barang yang belum kembali) */}
+                  {unreturnedItems.length > 1 && (
+                    <div className="p-3.5 bg-indigo-50/70 rounded-2xl border border-indigo-100 space-y-2">
+                      <label className="font-bold text-slate-800 block text-xs">
+                        Pilihan Skema Pengembalian:
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
-                          onClick={() =>
-                            setReturnItemConditions({
-                              ...returnItemConditions,
-                              [it.itemId]: 'baik',
-                            })
-                          }
-                          className={`min-h-[40px] py-2 px-2.5 rounded-xl text-center text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                            (returnItemConditions[it.itemId] || 'baik') === 'baik'
-                              ? 'bg-emerald-600 text-white font-bold ring-2 ring-emerald-600/30'
-                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                          onClick={() => {
+                            setReturnMode('all');
+                            setReturnSelectedItems(unreturnedItems.map((it) => it.itemId));
+                          }}
+                          className={`p-2.5 rounded-xl text-left border text-xs font-medium transition-all cursor-pointer flex items-center gap-2 ${
+                            returnMode === 'all'
+                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                           }`}
                         >
-                          Kondisi Baik
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                            returnMode === 'all' ? 'border-white' : 'border-slate-400'
+                          }`}>
+                            {returnMode === 'all' && <div className="w-2 h-2 rounded-full bg-white" />}
+                          </div>
+                          <div>
+                            <p className="font-bold">Kembalikan Semua</p>
+                            <p className={`text-[10px] ${returnMode === 'all' ? 'text-indigo-100' : 'text-slate-500'}`}>
+                              Seluruh sisa barang ({unreturnedItems.length})
+                            </p>
+                          </div>
                         </button>
 
                         <button
                           type="button"
-                          onClick={() =>
-                            setReturnItemConditions({
-                              ...returnItemConditions,
-                              [it.itemId]: 'perlu_cek',
-                            })
-                          }
-                          className={`min-h-[40px] py-2 px-2.5 rounded-xl text-center text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                            returnItemConditions[it.itemId] === 'perlu_cek'
-                              ? 'bg-amber-600 text-white font-bold ring-2 ring-amber-600/30'
-                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                          onClick={() => {
+                            setReturnMode('partial');
+                          }}
+                          className={`p-2.5 rounded-xl text-left border text-xs font-medium transition-all cursor-pointer flex items-center gap-2 ${
+                            returnMode === 'partial'
+                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                           }`}
                         >
-                          Perlu Cek
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setReturnItemConditions({
-                              ...returnItemConditions,
-                              [it.itemId]: 'rusak',
-                            })
-                          }
-                          className={`min-h-[40px] py-2 px-2.5 rounded-xl text-center text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs ${
-                            returnItemConditions[it.itemId] === 'rusak'
-                              ? 'bg-rose-600 text-white font-bold ring-2 ring-rose-600/30'
-                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                          }`}
-                        >
-                          Rusak / Hilang
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                            returnMode === 'partial' ? 'border-white' : 'border-slate-400'
+                          }`}>
+                            {returnMode === 'partial' && <div className="w-2 h-2 rounded-full bg-white" />}
+                          </div>
+                          <div>
+                            <p className="font-bold">Pengembalian Sebagian</p>
+                            <p className={`text-[10px] ${returnMode === 'partial' ? 'text-indigo-100' : 'text-slate-500'}`}>
+                              Pilih barang tertentu saja
+                            </p>
+                          </div>
                         </button>
                       </div>
+                    </div>
+                  )}
 
-                      {/* Checklist Kelengkapan Barang */}
-                      {it.kelengkapan && it.kelengkapan.length > 0 && (
-                        <div className="pt-2 border-t border-slate-100 space-y-1.5">
-                          <span className="text-xs font-semibold text-slate-700 block">
-                            Centang kelengkapan yang kembali ({it.kelengkapan.length} item):
-                          </span>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {it.kelengkapan.map((acc, aIdx) => {
-                              const checkedList = returnKelengkapanChecked[it.itemId] || [];
-                              const isChecked = checkedList.includes(acc);
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-2">
+                      Daftar Barang & Checklist Kelengkapan:
+                    </label>
+                    <div className="space-y-3">
+                      {returnModalLoan.items.map((it) => {
+                        const isAlreadyReturned = it.statusItem === 'dikembalikan';
+                        const isSelected = returnSelectedItems.includes(it.itemId);
 
-                              return (
-                                <label
-                                  key={aIdx}
-                                  className={`flex items-center gap-2.5 p-2.5 min-h-[40px] rounded-xl border text-xs cursor-pointer transition-colors shadow-xs ${
-                                    isChecked
-                                      ? 'bg-emerald-50/70 border-emerald-200 text-slate-800'
-                                      : 'bg-rose-50/70 border-rose-200 text-rose-800 line-through'
-                                  }`}
-                                >
+                        // 1. Tampilan jika barang sudah dikembalikan sebelumnya
+                        if (isAlreadyReturned) {
+                          return (
+                            <div
+                              key={it.itemId}
+                              className="p-3.5 rounded-2xl border border-emerald-200 bg-emerald-50/60 space-y-1.5"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 mr-1.5">
+                                    {it.kodeAset}
+                                  </span>
+                                  <span className="font-bold text-slate-900 text-xs">{it.nama}</span>
+                                </div>
+                                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full inline-flex items-center gap-1 border border-emerald-300">
+                                  <Icon name="CheckCircle" size={12} />
+                                  Sudah Kembali
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-600">
+                                Dikembalikan pada <strong className="tabular-nums">{it.tglKembaliAktual || '-'}</strong> oleh {it.dikembalikanOleh || 'Petugas'} • Kondisi: <strong className="capitalize">{it.kondisiKembali || 'baik'}</strong>
+                              </p>
+                            </div>
+                          );
+                        }
+
+                        // 2. Tampilan barang yang masih dipinjam
+                        return (
+                          <div
+                            key={it.itemId}
+                            className={`p-3.5 rounded-2xl border transition-all space-y-2.5 ${
+                              isSelected
+                                ? 'border-indigo-200 bg-white ring-1 ring-indigo-500/20'
+                                : 'border-slate-200 bg-slate-50/80 opacity-75'
+                            }`}
+                          >
+                            {/* Header Item + Checkbox Pengembalian Sebagian */}
+                            <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-100">
+                              <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                                {unreturnedItems.length > 1 && (
                                   <input
                                     type="checkbox"
-                                    checked={isChecked}
+                                    checked={isSelected}
                                     onChange={(e) => {
-                                      const next = e.target.checked
-                                        ? [...checkedList, acc]
-                                        : checkedList.filter((x) => x !== acc);
-                                      setReturnKelengkapanChecked({
-                                        ...returnKelengkapanChecked,
-                                        [it.itemId]: next,
-                                      });
+                                      if (e.target.checked) {
+                                        setReturnSelectedItems([...returnSelectedItems, it.itemId]);
+                                      } else {
+                                        setReturnSelectedItems(returnSelectedItems.filter((id) => id !== it.itemId));
+                                      }
                                     }}
-                                    className="w-4 h-4 text-indigo-600 rounded"
+                                    className="w-4 h-4 text-indigo-600 rounded shrink-0 cursor-pointer"
                                   />
-                                  <span>{acc}</span>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+                                )}
+                                <div className="truncate">
+                                  <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 mr-1.5">
+                                    {it.kodeAset}
+                                  </span>
+                                  <span className="font-bold text-slate-900 text-xs">{it.nama}</span>
+                                  {(it.merek || it.model) && (
+                                    <span className="text-[10px] text-indigo-600 ml-1.5">
+                                      ({[it.merek, it.model].filter(Boolean).join(' • ')})
+                                    </span>
+                                  )}
+                                </div>
+                              </label>
 
-              {/* Warning if any accessory is unchecked */}
-              {checkHasMissingAccessories() && (
-                <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl flex items-start gap-2">
-                  <Icon name="ExclamationTriangle" size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                                isSelected
+                                  ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+                              }`}>
+                                {isSelected ? 'Akan Dikembalikan' : 'Tetap Dipinjam'}
+                              </span>
+                            </div>
+
+                            {isSelected ? (
+                              <>
+                                {/* Kondisi Radio */}
+                                <div className="grid grid-cols-3 gap-2 pt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setReturnItemConditions({
+                                        ...returnItemConditions,
+                                        [it.itemId]: 'baik',
+                                      })
+                                    }
+                                    className={`min-h-[40px] py-2 px-2.5 rounded-xl text-center text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                                      (returnItemConditions[it.itemId] || 'baik') === 'baik'
+                                        ? 'bg-emerald-600 text-white font-bold ring-2 ring-emerald-600/30'
+                                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                    }`}
+                                  >
+                                    Kondisi Baik
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setReturnItemConditions({
+                                        ...returnItemConditions,
+                                        [it.itemId]: 'perlu_cek',
+                                      })
+                                    }
+                                    className={`min-h-[40px] py-2 px-2.5 rounded-xl text-center text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                                      returnItemConditions[it.itemId] === 'perlu_cek'
+                                        ? 'bg-amber-600 text-white font-bold ring-2 ring-amber-600/30'
+                                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                    }`}
+                                  >
+                                    Perlu Cek
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setReturnItemConditions({
+                                        ...returnItemConditions,
+                                        [it.itemId]: 'rusak',
+                                      })
+                                    }
+                                    className={`min-h-[40px] py-2 px-2.5 rounded-xl text-center text-xs font-semibold flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                                      returnItemConditions[it.itemId] === 'rusak'
+                                        ? 'bg-rose-600 text-white font-bold ring-2 ring-rose-600/30'
+                                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                    }`}
+                                  >
+                                    Rusak / Hilang
+                                  </button>
+                                </div>
+
+                                {/* Checklist Kelengkapan Barang */}
+                                {it.kelengkapan && it.kelengkapan.length > 0 && (
+                                  <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                                    <span className="text-xs font-semibold text-slate-700 block">
+                                      Centang kelengkapan yang kembali ({it.kelengkapan.length} item):
+                                    </span>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                      {it.kelengkapan.map((acc, aIdx) => {
+                                        const checkedList = returnKelengkapanChecked[it.itemId] || [];
+                                        const isChecked = checkedList.includes(acc);
+
+                                        return (
+                                          <label
+                                            key={aIdx}
+                                            className={`flex items-center gap-2.5 p-2.5 min-h-[40px] rounded-xl border text-xs cursor-pointer transition-colors shadow-xs ${
+                                              isChecked
+                                                ? 'bg-emerald-50/70 border-emerald-200 text-slate-800'
+                                                : 'bg-rose-50/70 border-rose-200 text-rose-800 line-through'
+                                            }`}
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={isChecked}
+                                              onChange={(e) => {
+                                                const next = e.target.checked
+                                                  ? [...checkedList, acc]
+                                                  : checkedList.filter((x) => x !== acc);
+                                                setReturnKelengkapanChecked({
+                                                  ...returnKelengkapanChecked,
+                                                  [it.itemId]: next,
+                                                });
+                                              }}
+                                              className="w-4 h-4 text-indigo-600 rounded"
+                                            />
+                                            <span>{acc}</span>
+                                          </label>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <p className="text-[11px] text-slate-500 italic">
+                                Barang ini tidak dikembalikan pada transaksi ini dan tetap dalam tanggung jawab peminjam.
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Warning if any accessory is unchecked */}
+                  {checkHasMissingAccessories() && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl flex items-start gap-2">
+                      <Icon name="ExclamationTriangle" size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold block">Peringatan: Kelengkapan Belum Lengkap!</span>
+                        <span className="text-[11px]">
+                          Terdapat aksesori yang tidak tercentang kembali pada barang yang dikembalikan. Anda wajib mengisi catatan pengembalian di bawah untuk mendokumentasikan kehilangan/tindak lanjut.
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   <div>
-                    <span className="font-bold block">Peringatan: Kelengkapan Belum Lengkap!</span>
-                    <span className="text-[11px]">
-                      Terdapat aksesori yang tidak tercentang kembali. Anda wajib mengisi catatan pengembalian di bawah untuk mendokumentasikan kehilangan/tindak lanjut.
-                    </span>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      Catatan Pengembalian {checkHasMissingAccessories() ? '(Wajib Diisi)' : '(Opsional)'}:
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={returnNote}
+                      onChange={(e) => setReturnNote(e.target.value)}
+                      placeholder={
+                        checkHasMissingAccessories()
+                          ? 'Wajib: Jelaskan kelengkapan yang belum kembali atau kendala fisik...'
+                          : 'Contoh: Seluruh kabel lengkap, lensa dalam keadaan bersih...'
+                      }
+                      required={checkHasMissingAccessories()}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-base sm:text-xs"
+                    />
                   </div>
                 </div>
-              )}
 
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">
-                  Catatan Pengembalian {checkHasMissingAccessories() ? '(Wajib Diisi)' : '(Opsional)'}:
-                </label>
-                <textarea
-                  rows={2}
-                  value={returnNote}
-                  onChange={(e) => setReturnNote(e.target.value)}
-                  placeholder={
-                    checkHasMissingAccessories()
-                      ? 'Wajib: Jelaskan kelengkapan yang belum kembali atau kendala fisik...'
-                      : 'Contoh: Seluruh kabel lengkap, lensa dalam keadaan bersih...'
-                  }
-                  required={checkHasMissingAccessories()}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-base sm:text-xs"
-                />
-              </div>
+                {/* Sticky Action Footer */}
+                <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 safe-area-pb shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setReturnModalLoan(null)}
+                    className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 text-slate-700 hover:bg-slate-200 border border-slate-200 sm:border-transparent rounded-xl font-medium cursor-pointer text-xs flex items-center justify-center"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={returnLoading || returnSelectedItems.length === 0}
+                    className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
+                  >
+                    {returnLoading ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Icon name="CheckCircle" size={16} />
+                    )}
+                    <span>
+                      {returnLoading
+                        ? 'Menyimpan...'
+                        : isReturningAll
+                        ? `Konfirmasi Pengembalian Penuh (${returnSelectedItems.length} Barang)`
+                        : `Konfirmasi Pengembalian Sebagian (${returnSelectedItems.length} Barang)`}
+                    </span>
+                  </button>
+                </div>
+              </form>
             </div>
-
-            {/* Sticky Action Footer */}
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 safe-area-pb shrink-0">
-              <button
-                type="button"
-                onClick={() => setReturnModalLoan(null)}
-                className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 text-slate-700 hover:bg-slate-200 border border-slate-200 sm:border-transparent rounded-xl font-medium cursor-pointer text-xs flex items-center justify-center"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                disabled={returnLoading}
-                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
-              >
-                {returnLoading ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Icon name="CheckCircle" size={16} />
-                )}
-                <span>{returnLoading ? 'Menyimpan...' : 'Konfirmasi Pengembalian'}</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )}
+          </div>
+        );
+      })()}
 
       {/* MODAL: TAMBAH BARANG TAMBAHAN DI HARI-H (SKEMA 1: ADDENDUM MEJA LAB) */}
       {addItemsModalLoan && (() => {
