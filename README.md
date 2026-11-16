@@ -66,11 +66,13 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
   * Target sentuh jempol minimum 44px (`min-h-[44px] min-w-[44px]`) pada seluruh tombol navigasi dan aksi mobile.
   * Bilah navigasi bawah (*Bottom Navigation Bar*) responsif dengan penyesuaian area aman perangkat (*safe-area-inset-bottom*).
   * Bilah keranjang mengambang (*Floating Cart Bar*) dinamis yang diposisikan secara presisi di atas navigasi bawah.
+  * Optimalisasi tata letak kartu peminjaman mobile: Penataan lencana status dinamis (seperti *"Siap Diserahkan di Lab"* dan *"Menunggu Persetujuan"*) serta tombol aksi (*"Catat Pengembalian"*, *"Lihat Invoice"*) secara modular agar bebas tumpang tindih visual (*zero overlap*) dan nyaman dioperasikan satu tangan.
   * Pencegahan auto-zoom Safari iOS melalui ukuran font adaptif (minimal 16px di mobile).
   * 100% menggunakan ikon vektor SVG resmi tanpa menggunakan emoji sebagai ikon antarmuka (*strict compliance*).
+  * Identitas visual bersih & terpadu: Logo vektor PinjamIn dengan subtitle resmi **Laboratorium FIT** pada header, layar pemuatan, dan footer.
 
 ### 🛡️ Panel Administrator & Laboran
-* **Modal Aksi & Konfirmasi Tailwind Kustom:** Seluruh dialog konfirmasi operasional (serah terima barang, tolak pengajuan, batalkan peminjaman, hapus inventaris/kategori, dan delegasi peran) 100% menggunakan modal Tailwind kustom menggantikan dialog native browser (`window.confirm` dan `window.prompt`). Dilengkapi dengan textarea alasan yang nyaman diketik di ponsel, varian warna bahaya semantik (*danger, warning, primary*), pintasan keyboard `Escape`, dan animasi backdrop blur.
+* **Modal Aksi & Konfirmasi Tailwind Kustom:** Seluruh dialog konfirmasi operasional (serah terima barang, tolak pengajuan dengan alasan wajib, batalkan peminjaman, hapus inventaris/kategori, inisialisasi data, delegasi peran admin, hingga pengajuan permohonan pembaruan profil pengguna) 100% menggunakan modal Tailwind kustom menggantikan dialog native browser (`window.confirm` dan `window.prompt`). Dilengkapi dengan textarea masukan dinamis, varian warna semantik (*danger, warning, primary, success*), aksesibilitas pintasan keyboard `Escape`, penutupan latar belakang (*backdrop dismiss*), dan transisi halus.
 * **Verifikasi Pengguna Terpusat:** Meninjau dan menyetujui akun baru sebelum diizinkan meminjam barang, serta memproses permintaan perubahan data identitas.
 * **Delegasi Akses Admin (Superadmin Only):** Akun Superadmin dapat mempromosikan pengguna terdaftar menjadi Admin Lab atau mencabut akses admin langsung dari dasbor web tanpa perlu menyentuh kode sumber.
 * **Manajemen Peminjaman & Serah Terima:**
