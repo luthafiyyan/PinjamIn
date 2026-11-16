@@ -186,7 +186,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
                 LABORATORIUM FAKULTAS ILMU TERAPAN
               </h4>
               <p className="text-[9px] sm:text-[10px] text-slate-700 mt-1 leading-snug print:text-[7pt] print:mt-0.5">
-                Gedung Selaru Fakultas Ilmu Terapan, Jl. Telekomunikasi No. 1 Terusan Buah Batu, Bandung
+                Gedung Selaru Lantai 1 Fakultas Ilmu Terapan, Jl. Telekomunikasi No. 1 Terusan Buahbatu, Bandung
               </p>
             </div>
 

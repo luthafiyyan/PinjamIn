@@ -295,7 +295,7 @@ export const LoginScreen: React.FC = () => {
                   <h4>FORM BUKTI PEMINJAMAN ALAT</h4>
                   <h5>ADMINISTRASI LABORATORIUM</h5>
                   <h6>LABORATORIUM FAKULTAS ILMU TERAPAN</h6>
-                  <p>Gedung Selaru FIT, Telkom University Bandung</p>
+                  <p>Gedung Selaru Lantai 1 Fakultas Ilmu Terapan, Jl. Telekomunikasi No. 1 Terusan Buahbatu, Bandung</p>
                 </div>
 
                 {/* Metadata Peminjaman Dua Kolom */}
