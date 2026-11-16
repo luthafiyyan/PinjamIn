@@ -162,24 +162,20 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
       {/* Printable Invoice Container (Model Blanko Formal Lab FIT) */}
       <div className="bg-white rounded-2xl border border-slate-300 shadow-xl p-6 sm:p-10 print-a5-container print:bg-white print:border-none print:shadow-none print:p-0 text-slate-900">
         
-        {/* 1. KOP SURAT RESMI (HANYA LOGO LAB FIT DI KIRI & TEKS TERPUSAT SECARA SIMETRIS) */}
+        {/* 1. KOP SURAT RESMI (LOGO TELKOM UNIVERSITY DI KIRI, TEKS TERPUSAT, LOGO LAB FIT DI KANAN) */}
         <div className="border-b-[2.5px] border-black pb-3 mb-4 print:pb-2 print:mb-3">
           <div className="flex items-center justify-between gap-3">
-            {/* Logo Laboratorium FIT Saja (Kiri) */}
-            <div className="w-28 sm:w-32 shrink-0">
+            {/* Logo Telkom University (Kiri) */}
+            <div className="w-20 sm:w-24 shrink-0 flex items-center justify-start">
               <img
-                src="https://web.labfit.id/wp-content/uploads/2025/06/Logo-Lab-FIT-2024_Lengkap-Utama-2048x306.png"
-                alt="Logo Laboratorium FIT"
-                className="w-full h-auto object-contain print-logo"
-                onError={(e) => {
-                  // Fallback text if offline
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
+                src="/logo-telkom-university.png"
+                alt="Logo Telkom University"
+                className="h-14 sm:h-16 w-auto object-contain print-logo-telkom"
               />
             </div>
 
             {/* Teks Judul & Lembaga Terpusat di Tengah Dokumen */}
-            <div className="flex-1 text-center">
+            <div className="flex-1 text-center px-1">
               <h2 className="text-xs sm:text-sm font-extrabold uppercase tracking-tight text-black leading-tight print:text-[10pt]">
                 FORM BUKTI PEMINJAMAN ALAT
               </h2>
@@ -194,8 +190,14 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
               </p>
             </div>
 
-            {/* Spacer Penyeimbang Kanan agar Teks Benar-Benar di Tengah Dokumen */}
-            <div className="w-28 sm:w-32 shrink-0 invisible pointer-events-none" aria-hidden="true" />
+            {/* Logo Laboratorium FIT (Kanan) */}
+            <div className="w-24 sm:w-28 shrink-0 flex items-center justify-end">
+              <img
+                src="/logo-lab-fit.png"
+                alt="Logo Laboratorium FIT"
+                className="h-10 sm:h-12 w-auto object-contain print-logo-lab"
+              />
+            </div>
           </div>
         </div>
 

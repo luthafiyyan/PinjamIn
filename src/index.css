@@ -182,6 +182,20 @@
       max-width: 38mm !important;
     }
 
+    .print-logo-telkom {
+      height: 13mm !important;
+      width: auto !important;
+      max-width: 25mm !important;
+      object-fit: contain !important;
+    }
+
+    .print-logo-lab {
+      height: 9.5mm !important;
+      width: auto !important;
+      max-width: 32mm !important;
+      object-fit: contain !important;
+    }
+
     .print-status {
       background: transparent !important;
       border: none !important;
