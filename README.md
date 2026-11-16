@@ -62,8 +62,15 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
 * **Multi-Item Cart (Keranjang Booking):** Pilih beberapa alat sekaligus dalam satu kali pengajuan peminjaman.
 * **Validasi Kebijakan Cerdas:** Form peminjaman secara otomatis memeriksa batas maksimal durasi hari dan kuota barang sesuai peran pengguna, serta mewajibkan dosen penanggung jawab untuk mahasiswa.
 * **Riwayat Peminjaman Dinamis:** Tab riwayat dengan lencana status berwarna, estimasi waktu jatuh tempo, indikator peringatan keterlambatan (*overdue*), dan riwayat pengembalian barang.
+* **Standar Desain Mobile-First & UI/UX Pro Max:**
+  * Target sentuh jempol minimum 44px (`min-h-[44px] min-w-[44px]`) pada seluruh tombol navigasi dan aksi mobile.
+  * Bilah navigasi bawah (*Bottom Navigation Bar*) responsif dengan penyesuaian area aman perangkat (*safe-area-inset-bottom*).
+  * Bilah keranjang mengambang (*Floating Cart Bar*) dinamis yang diposisikan secara presisi di atas navigasi bawah.
+  * Pencegahan auto-zoom Safari iOS melalui ukuran font adaptif (minimal 16px di mobile).
+  * 100% menggunakan ikon vektor SVG resmi tanpa menggunakan emoji sebagai ikon antarmuka (*strict compliance*).
 
 ### 🛡️ Panel Administrator & Laboran
+* **Modal Aksi & Konfirmasi Tailwind Kustom:** Seluruh dialog konfirmasi operasional (serah terima barang, tolak pengajuan, batalkan peminjaman, hapus inventaris/kategori, dan delegasi peran) 100% menggunakan modal Tailwind kustom menggantikan dialog native browser (`window.confirm` dan `window.prompt`). Dilengkapi dengan textarea alasan yang nyaman diketik di ponsel, varian warna bahaya semantik (*danger, warning, primary*), pintasan keyboard `Escape`, dan animasi backdrop blur.
 * **Verifikasi Pengguna Terpusat:** Meninjau dan menyetujui akun baru sebelum diizinkan meminjam barang, serta memproses permintaan perubahan data identitas.
 * **Delegasi Akses Admin (Superadmin Only):** Akun Superadmin dapat mempromosikan pengguna terdaftar menjadi Admin Lab atau mencabut akses admin langsung dari dasbor web tanpa perlu menyentuh kode sumber.
 * **Manajemen Peminjaman & Serah Terima:**
@@ -142,6 +149,7 @@ flowchart TD
 | **Database & Auth** | **Firebase Cloud Firestore & Auth** | Database NoSQL real-time, autentikasi Google, dan keamanan tingkat baris |
 | **Security Rules** | **Firestore Security Rules** | Kontrol hak akses berbasis role (RBAC) di sisi database |
 | **Unit Testing** | **Vitest** | Runner pengujian unit berkecepatan tinggi untuk utilitas tanggal dan logika |
+| **Standar UI/UX** | **UI/UX Pro Max Skill & Superdesign** | Standar target sentuh jempol 44px, bottom-sheet adaptif, pencegahan CLS (<0.1), dan 100% SVG icons |
 | **Aksesibilitas & UI** | **WCAG 2.1 AA & Antislop** | Rasio kontras AA, ring fokus keyboard (`:focus-visible`), toleransi *prefers-reduced-motion*, dan bebas AI slop |
 | **Deployment** | **Vercel / Cloud Hosting** | Dukungan SPA routing dengan konfigurasi rewrite (`vercel.json`) |
 
@@ -157,6 +165,7 @@ PinjamIn/
 │   │   ├── admin/                # Komponen khusus panel administrator
 │   │   │   └── AdminDashboard.tsx# Dasbor lengkap laboran (verifikasi, inventaris, serah terima)
 │   │   ├── CompleteProfileModal.tsx # Modal pengisian profil awal pengguna baru
+│   │   ├── ConfirmModal.tsx      # Modal konfirmasi & prompt Tailwind kustom (pengganti native alert/confirm)
 │   │   ├── Icon.tsx              # Komponen wrapper render icon SVG
 │   │   ├── InvoiceView.tsx       # Tampilan & cetak invoice digital resmi
 │   │   ├── ItemCatalog.tsx       # Katalog interaktif pencarian & keranjang barang
@@ -322,5 +331,5 @@ Proyek ini dikembangkan untuk kebutuhan internal laboratorium dan didistribusika
 ---
 
 <p align="center">
-  Developed by <strong>Luthafiyyan</strong> untuk <strong>Laboratorium FIT</strong>
+  © 2026 <strong>Pinjamin Laboratorium FIT | HFYN</strong> • Developed by <strong>Luthafiyyan</strong>
 </p>
