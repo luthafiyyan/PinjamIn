@@ -172,7 +172,7 @@ flowchart TD
 
 ```text
 PinjamIn/
-├── public/                       # Aset publik statis (favicon.svg, logo)
+├── public/                       # Aset publik statis (favicon.svg, logo, manifest.json, robots.txt)
 ├── src/
 │   ├── components/               # Komponen antarmuka pengguna (UI)
 │   │   ├── admin/                # Komponen khusus panel administrator
@@ -313,6 +313,7 @@ PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Securit
    * **Strict-Transport-Security (HSTS):** `max-age=31536000; includeSubDomains; preload` mewajibkan browser untuk selalu menggunakan koneksi HTTPS yang aman dan terenkripsi.
    * **Permissions-Policy:** Menonaktifkan izin akses perangkat keras sensitif (`camera=(), microphone=(), geolocation=()`).
    * **X-Content-Type-Options: nosniff** & **Referrer-Policy: strict-origin-when-cross-origin**.
+   * **SEO & Crawler Privacy Hygiene (`robots.txt`):** Mengatur direktif perayapan mesin pencari (*crawler*) untuk mengizinkan pengindeksan katalog publik dan menyembunyikan rute internal privat (`/#admin`, `/#riwayat`, `/#profil`) dari hasil pencarian umum.
 
 5. **Verifikasi Audit Keamanan Cloudflare (*Cloudflare Security Audit Skill* - 17 Nov 2026):**
    * Metodologi audit berstandar industri mengikuti framework resmi [Cloudflare Security Audit](https://github.com/cloudflare/security-audit-skill) dengan 100% kepatuhan skema laporan (`report-schema.json` valid).
