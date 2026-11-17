@@ -148,6 +148,34 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 pb-24 md:pb-8 print:max-w-[148mm] print:p-0 print:m-0 print:bg-white print-document-wrapper">
+      {/* Explicit A5 Print Style Tag untuk memaksa dialog browser otomatis memilih ukuran kertas A5 */}
+      <style>{`
+        @page {
+          size: A5 portrait;
+          margin: 5mm 6mm;
+        }
+        @media print {
+          @page {
+            size: A5 portrait;
+            margin: 5mm 6mm;
+          }
+          html, body {
+            width: 148mm !important;
+            max-width: 148mm !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .print-a5-container {
+            max-width: 136mm !important;
+            margin: 0 auto !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+        }
+      `}</style>
+
       {/* Top Action Bar (Hidden when printing) */}
       <div className="flex items-center justify-between gap-4 mb-6 no-print">
         <button
