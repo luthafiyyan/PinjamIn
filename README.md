@@ -314,13 +314,17 @@ PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Securit
    * **Permissions-Policy:** Menonaktifkan izin akses perangkat keras sensitif (`camera=(), microphone=(), geolocation=()`).
    * **X-Content-Type-Options: nosniff** & **Referrer-Policy: strict-origin-when-cross-origin**.
 
-5. **Audit Keamanan Defensif & Hardening Cloud (Skor Risiko: 3.2 / 10 - Terkendali):**
-   * Laporan audit resmi tersimpan lengkap di [`SECURITY_AUDIT.md`](./SECURITY_AUDIT.md).
-   * **Pengetatan Firestore Security Rules:** Whitelist keys pada pembuatan profil (`keys().hasOnly(...)`), validasi tipe data dan batas panjang string (`nomorHp <= 20`, `unitAsal <= 100`, `angkatan <= 10`, `keperluan <= 500`), serta evaluasi prioritas Custom Claims token JWT.
-   * **Penguncian Cloud Storage (`storage.rules`):** Perlindungan *default deny* terpusat pada bucket Cloud Storage guna mencegah eksploitasi unggahan file ilegal.
-   * **Pembatasan API Key di Google Cloud Console:** Penerapan *HTTP Referrer restrictions* (domain website resmi) dan *API restrictions* (hanya Firestore, Identity Toolkit, Token Service, dan Installations) untuk mencegah pencurian kuota API lain.
-   * **Firebase App Check Ready:** Scaffold proteksi integritas aplikasi berbasis reCAPTCHA v3 pada `src/lib/firebase.ts`.
-   * **Pengujian Dinamis di Emulator (`tests/security-rules.test.ts`):** 6 skenario pengujian mencakup unauthenticated access, anti-IDOR, pencegahan eskalasi hak akses mandiri, validasi payload raksasa, isolasi query data pribadi, dan penguncian Cloud Storage.
+5. **Verifikasi Audit Keamanan Cloudflare (*Cloudflare Security Audit Skill* - 17 Nov 2026):**
+   * Metodologi audit berstandar industri mengikuti framework resmi [Cloudflare Security Audit](https://github.com/cloudflare/security-audit-skill) dengan 100% kepatuhan skema laporan (`report-schema.json` valid).
+   * Laporan detail tersimpan lengkap pada [`SECURITY_AUDIT.md`](./SECURITY_AUDIT.md).
+   * **Hasil Re-Audit (Status: Production-Ready & Highly Defended):**
+     * **Celah Kuota Peminjaman (RESOLVED):** Evaluasi kuota peran peminjam (`mahasiswa <= 2`, `dosen/tendik <= 5`) ditegakkan langsung di server database via [firestore.rules](file:///c:/Users/Laboran/Documents/Github%20Ku/PinjamIn-main/firestore.rules#L120-L123), mengeliminasi celah manipulasi batas kuota di sisi klien.
+     * **Pencegahan Double-Lending Meja Lab (RESOLVED):** Transaksi serah terima fisik barang pada [AdminDashboard.tsx](file:///c:/Users/Laboran/Documents/Github%20Ku/PinjamIn-main/src/components/admin/AdminDashboard.tsx#L439) secara atomik memeriksa kondisi `itemData.status === 'dipinjam'`, mencegah tumpang tindih fisik aset inventaris lab.
+     * **Validasi Skema & Whitelist Keys (HARDENED):** Pendaftaran profil baru dan pembaruan data pengguna dipagari dengan whitelist keys (`keys().hasOnly(...)`) dan batasan panjang karakter (`nomorHp <= 20`, `unitAsal <= 100`, `angkatan <= 10`, `keperluan <= 500`) untuk mencegah serangan payload bloat.
+     * **Pembatasan Google Cloud Web API Key (HARDENED):** Kunci API web telah terkunci dengan pembatasan *HTTP Referrers* (domain resmi aplikasi) dan *API restrictions* (hanya Cloud Firestore, Identity Toolkit, Token Service, dan Installations), memutus akses ke 9 API Google Maps aktif sebelumnya.
+     * **Proteksi Cloud Storage (*Default Deny*):** Penambahan [storage.rules](file:///c:/Users/Laboran/Documents/Github%20Ku/PinjamIn-main/storage.rules) mengunci total bucket Google Cloud Storage dari akses tidak sah.
+     * **Firebase App Check Scaffolding:** Penyiapan fondasi App Check berbasis reCAPTCHA v3 di [src/lib/firebase.ts](file:///c:/Users/Laboran/Documents/Github%20Ku/PinjamIn-main/src/lib/firebase.ts) untuk verifikasi keaslian aplikasi klien saat publish penuh.
+     * **Pengujian Dinamis di Emulator:** Berkas [tests/security-rules.test.ts](file:///c:/Users/Laboran/Documents/Github%20Ku/PinjamIn-main/tests/security-rules.test.ts) mencakup 6 skenario ancaman (unauthenticated access, anti-IDOR, pencegahan eskalasi hak akses, validasi payload raksasa, isolasi query data pribadi, dan storage lock).
 
 Deploy aturan keamanan Firestore dan Storage ke lingkungan Firebase Anda:
 ```bash
