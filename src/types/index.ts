@@ -108,6 +108,8 @@ export interface Loan {
   } | null;
   tglPinjam: string; // Format YYYY-MM-DD
   tglRencanaKembali: string; // Format YYYY-MM-DD
+  jamPinjam?: string; // Format HH:mm (opsional jika peminjaman hanya 1 hari)
+  jamKembali?: string; // Format HH:mm (opsional jika peminjaman hanya 1 hari)
   tglKembaliAktual: string | null;
   status: LoanStatus;
   items: LoanItem[];
@@ -137,6 +139,8 @@ export interface ItemBooking {
   }[];
   tglPinjam: string;
   tglRencanaKembali: string;
+  jamPinjam?: string;
+  jamKembali?: string;
   status: LoanStatus;
   noInvoice: string;
   createdAt?: any;

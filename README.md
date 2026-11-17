@@ -59,10 +59,14 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
 * **Katalog Aset Real-time:** 
   * Pencarian instan dan filter berdasarkan kategori (Kamera, Tripod, Audio, Jaringan, Komputer, VR/AR, dll.).
   * Filter ketersediaan barang (*Tersedia, Dipinjam, Perawatan, Rusak*) dan kondisi fisik (*Baik, Perlu Cek*).
+  * **Quick Filter "Hanya Tersedia":** Tombol toggle instan 1-klik untuk menyaring hanya barang yang siap dipinjam saat ini.
   * Modal detail alat komprehensif: spesifikasi teknis, merek & tipe, nomor seri, lokasi penyimpanan, dan kelengkapan bawaan (misal: baterai cadangan, kabel data, tas).
 * **Multi-Item Cart (Keranjang Booking):** Pilih beberapa alat sekaligus dalam satu kali pengajuan peminjaman.
+* **Peminjaman Fleksibel Satu Hari (*Same-Day Loans*):** Dukungan peminjaman non-lintas hari dengan penentuan estimasi Jam Mulai Pinjam dan Jam Rencana Kembali (misal: 08:30 s/d 16:00 WIB). Memungkinkan penjadwalan multi-sesi yang akurat di hari yang sama tanpa bentrok jam, serta tercetak otomatis pada bukti formulir invoice.
 * **Validasi Kebijakan Cerdas:** Form peminjaman secara otomatis memeriksa batas maksimal durasi hari dan kuota barang sesuai peran pengguna, serta mewajibkan dosen penanggung jawab untuk mahasiswa.
-* **Riwayat Peminjaman Dinamis:** Tab riwayat dengan lencana status berwarna, estimasi waktu jatuh tempo, indikator peringatan keterlambatan (*overdue*), dan riwayat pengembalian barang.
+* **Global Toast Notification:** Umpan balik mikro (*toast banner*) terpusat dengan transisi halus saat menambah/menghapus alat dari keranjang, mengirim pengajuan peminjaman, maupun memperbarui data profil.
+* **Integrasi WhatsApp Laboran:** Tombol kontak langsung ke petugas laboratorium dengan pesan terisi otomatis (*pre-filled message*) berisi nama, identitas, dan nomor invoice untuk mempermudah koordinasi serah terima di lab.
+* **Riwayat Peminjaman Dinamis:** Tab riwayat dengan lencana status berwarna, estimasi waktu jatuh tempo, indikator peringatan keterlambatan (*overdue*), tampilan rentang jam untuk peminjaman satu hari, dan riwayat pengembalian barang.
 * **Standar Desain Mobile-First & UI/UX Pro Max:**
   * Target sentuh jempol minimum 44px (`min-h-[44px] min-w-[44px]`) pada seluruh tombol navigasi dan aksi mobile.
   * Bilah navigasi bawah (*Bottom Navigation Bar*) responsif dengan penyesuaian area aman perangkat (*safe-area-inset-bottom*).
@@ -154,7 +158,9 @@ flowchart TD
 | **Icons & Media** | **React Bootstrap Icons** | Set ikon modern dan konsisten |
 | **Database & Auth** | **Firebase Cloud Firestore & Auth** | Database NoSQL real-time, autentikasi Google, dan keamanan tingkat baris |
 | **Security Rules** | **Firestore Security Rules** | Kontrol hak akses berbasis role (RBAC) di sisi database |
-| **Unit Testing** | **Vitest** | Runner pengujian unit berkecepatan tinggi (10 test cases) untuk kalkulasi tanggal, overlap kalender booking, kuota peran, dan integritas pengembalian sebagian |
+| **Unit Testing** | **Vitest** | Runner pengujian unit berkecepatan tinggi (11 test cases) untuk kalkulasi tanggal, alokasi jam same-day non-overlap, overlap kalender booking, kuota peran, dan integritas pengembalian sebagian |
+| **Optimasi & Resiliensi** | **Rollup Code-Splitting & React Error Boundary** | Pemisahan vendor chunk (<500 kB per bundle, penurunan ukuran awal 84%), deteksi jaringan offline, serta penanganan error runtime ramah pengguna |
+| **Progressive Web App** | **Web App Manifest & Theme Color** | PWA-ready dengan dukungan instalasi langsung ke Home Screen smartphone/desktop dan warna bilah peramban terpadu |
 | **Audit Keamanan** | **[Cloudflare Security Audit](https://github.com/cloudflare/security-audit-skill)** | Metodologi verifikasi keamanan dependensi, proteksi XSS/CSRF, sanitasi aturan Firestore, dan HTTP headers |
 | **Standar UI/UX** | **[UI/UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) & [Superdesign](https://github.com/superdesigndev/superdesign-skill)** | Standar target sentuh jempol 44px, bottom-sheet adaptif, pencegahan CLS (<0.1), dan 100% SVG icons |
 | **Aksesibilitas & UI** | **WCAG 2.1 AA & Antislop** | Rasio kontras AA, ring fokus keyboard (`:focus-visible`), toleransi *prefers-reduced-motion*, dan bebas AI slop |

@@ -158,13 +158,28 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
           <span>Kembali</span>
         </button>
 
-        <button
-          onClick={handlePrint}
-          className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-md transition-all cursor-pointer min-h-[44px]"
-        >
-          <Icon name="Printer" size={16} />
-          <span>Cetak Formulir Resmi (A5)</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href={`https://wa.me/6285172088181?text=${encodeURIComponent(
+              `Halo Petugas Laboratorium FIT, saya ${loan.peminjam.nama} (${loan.peminjam.nomorIdentitas}) ingin konfirmasi terkait peminjaman dengan nomor invoice ${loan.noInvoice}.`
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all cursor-pointer min-h-[44px]"
+          >
+            <Icon name="Telephone" size={15} />
+            <span className="hidden sm:inline">Hubungi WhatsApp Lab</span>
+            <span className="sm:hidden">WhatsApp Lab</span>
+          </a>
+
+          <button
+            onClick={handlePrint}
+            className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-md transition-all cursor-pointer min-h-[44px]"
+          >
+            <Icon name="Printer" size={16} />
+            <span>Cetak Formulir Resmi (A5)</span>
+          </button>
+        </div>
       </div>
 
       {/* Printable Invoice Container (Model Blanko Formal Lab FIT) */}
@@ -243,13 +258,25 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
               <tr>
                 <td className="w-28 font-bold text-black py-0.5 whitespace-nowrap print:w-24">TGL PINJAM</td>
                 <td className="w-3 text-center py-0.5">:</td>
-                <td className="font-semibold text-black py-0.5 tabular-nums">{loan.tglPinjam}</td>
+                <td className="font-semibold text-black py-0.5 tabular-nums">
+                  {loan.tglPinjam}
+                  {loan.jamPinjam && (
+                    <span className="font-normal text-slate-700 ml-1 print:text-black">
+                      (Pukul {loan.jamPinjam} WIB)
+                    </span>
+                  )}
+                </td>
               </tr>
               <tr>
                 <td className="font-bold text-black py-0.5 whitespace-nowrap">BATAS KEMBALI</td>
                 <td className="text-center py-0.5">:</td>
                 <td className="font-bold text-black py-0.5 tabular-nums">
                   {loan.tglRencanaKembali}
+                  {loan.jamKembali && (
+                    <span className="font-normal text-slate-700 ml-1 print:text-black">
+                      (Pukul {loan.jamKembali} WIB)
+                    </span>
+                  )}
                   {loan.tglKembaliAktual && (
                     <span className="text-emerald-700 font-semibold ml-1.5 print:text-black">
                       (Kembali: {loan.tglKembaliAktual})
@@ -403,14 +430,25 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
 
       </div>
 
-      {/* Tombol Cetak Ponsel yang Menempel di Bawah (Hidden on Desktop & Print) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 safe-area-pb shadow-[0_-2px_10px_rgba(0,0,0,0.08)] no-print">
+      {/* Tombol Aksi Ponsel yang Menempel di Bawah (Hidden on Desktop & Print) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 safe-area-pb shadow-[0_-2px_10px_rgba(0,0,0,0.08)] no-print flex gap-2">
+        <a
+          href={`https://wa.me/6285172088181?text=${encodeURIComponent(
+            `Halo Petugas Laboratorium FIT, saya ${loan.peminjam.nama} (${loan.peminjam.nomorIdentitas}) ingin konfirmasi terkait peminjaman dengan nomor invoice ${loan.noInvoice}.`
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 min-h-[48px] py-3 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+        >
+          <Icon name="Telephone" size={16} />
+          <span>WhatsApp Lab</span>
+        </a>
         <button
           onClick={handlePrint}
-          className="w-full min-h-[48px] py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer"
+          className="flex-1 min-h-[48px] py-3 px-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <Icon name="Printer" size={18} />
-          <span>Cetak Formulir Resmi (A5)</span>
+          <Icon name="Printer" size={16} />
+          <span>Cetak A5</span>
         </button>
       </div>
     </div>

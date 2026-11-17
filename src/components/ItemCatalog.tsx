@@ -9,6 +9,7 @@ import { Icon, getCategoryIconName } from './Icon';
 import { db } from '../lib/firebase';
 import { Item, Category, ItemStatus, ItemBooking } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { formatDateIndo } from '../lib/dateUtils';
 
 interface ItemCatalogProps {
@@ -27,12 +28,14 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
   onSelectDetailItem,
 }) => {
   const { isVerified } = useAuth();
+  const { showToast } = useToast();
   const [items, setItems] = useState<Item[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [internalDetailItem, setInternalDetailItem] = useState<Item | null>(null);
   const [detailImgError, setDetailImgError] = useState(false);
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
@@ -61,6 +64,16 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
       onSelectDetailItem(null);
     } else {
       setInternalDetailItem(null);
+    }
+  };
+
+  const handleToggleCartWithToast = (item: Item) => {
+    const isCurrentlyInCart = cart.some((c) => c.id === item.id);
+    onToggleCart(item);
+    if (isCurrentlyInCart) {
+      showToast(`${item.nama} dihapus dari pilihan.`, 'info', 2500);
+    } else {
+      showToast(`${item.nama} ditambahkan ke pilihan!`, 'success', 2500);
     }
   };
 
@@ -208,7 +221,9 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
     const matchesStatus =
       selectedStatus === 'all' || item.status === selectedStatus;
 
-    return matchesSearch && matchesCategory && matchesStatus;
+    const matchesAvailableOnly = !onlyAvailable || item.status === 'tersedia';
+
+    return matchesSearch && matchesCategory && matchesStatus && matchesAvailableOnly;
   });
 
   const availableCount = items.filter((i) => i.status === 'tersedia').length;
@@ -282,6 +297,20 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
               <option value="rusak">Rusak</option>
             </select>
           </div>
+
+          {/* Quick Toggle: Hanya Tersedia */}
+          <button
+            type="button"
+            onClick={() => setOnlyAvailable((prev) => !prev)}
+            className={`w-full sm:w-auto min-h-[44px] h-[44px] px-3.5 py-2 rounded-xl border text-base sm:text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              onlyAvailable
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-200'
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full ${onlyAvailable ? 'bg-white' : 'bg-emerald-500'}`} />
+            <span>Hanya Tersedia</span>
+          </button>
         </div>
 
         {/* 12 Category Filter Chips with Right Gradient Fade & Scroll-Snap */}
@@ -338,16 +367,17 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
             Tidak ada alat ditemukan
           </h3>
           <p className="text-xs text-slate-500 mb-4">
-            {searchQuery || selectedCategory !== 'all' || selectedStatus !== 'all'
+            {searchQuery || selectedCategory !== 'all' || selectedStatus !== 'all' || onlyAvailable
               ? 'Coba ganti kata kunci pencarian merek, model, atau reset filter kategori.'
               : 'Belum ada data barang di inventaris laboratorium.'}
           </p>
-          {(searchQuery || selectedCategory !== 'all' || selectedStatus !== 'all') && (
+          {(searchQuery || selectedCategory !== 'all' || selectedStatus !== 'all' || onlyAvailable) && (
             <button
               onClick={() => {
                 setSearchQuery('');
                 setSelectedCategory('all');
                 setSelectedStatus('all');
+                setOnlyAvailable(false);
               }}
               className="px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl text-xs font-semibold cursor-pointer transition-colors"
             >
@@ -452,7 +482,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onToggleCart(item);
+                        handleToggleCartWithToast(item);
                       }}
                       className={`w-full min-h-[44px] py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 ease-out cursor-pointer ${
                         isSelected
@@ -681,7 +711,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    onToggleCart(activeDetail);
+                    handleToggleCartWithToast(activeDetail);
                     handleCloseDetail();
                   }}
                   className={`w-full sm:w-auto min-h-[48px] sm:min-h-[44px] px-5 py-3 sm:py-2.5 rounded-xl text-sm sm:text-xs font-semibold shadow transition-all cursor-pointer flex items-center justify-center gap-2 ${

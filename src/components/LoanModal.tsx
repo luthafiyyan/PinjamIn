@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from './Icon';
+import { useToast } from '../context/ToastContext';
 import { 
   runTransaction, 
   doc, 
@@ -53,6 +54,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
   onSuccess,
 }) => {
   const { profile, currentUser, isAdmin } = useAuth();
+  const { showToast } = useToast();
   const isUserAdmin = checkIsAdmin(currentUser) || isAdmin || profile?.role === 'admin' || profile?.role === 'superadmin';
 
   // Settings
@@ -63,7 +65,9 @@ export const LoanModal: React.FC<LoanModalProps> = ({
   // Form states
   const todayStr = new Date().toISOString().split('T')[0];
   const [tglPinjam, setTglPinjam] = useState(todayStr);
-  const [tglRencanaKembali, setTglRencanaKembali] = useState('');
+  const [tglRencanaKembali, setTglRencanaKembali] = useState(todayStr);
+  const [jamPinjam, setJamPinjam] = useState('08:30');
+  const [jamKembali, setJamKembali] = useState('16:00');
   const [jenisKeperluan, setJenisKeperluan] = useState<JenisKeperluan>('tugas_kuliah');
   const [keperluan, setKeperluan] = useState('');
   const [penanggungJawabNama, setPenanggungJawabNama] = useState('');
@@ -175,11 +179,15 @@ export const LoanModal: React.FC<LoanModalProps> = ({
         });
 
         if (isMounted) {
+          const isSameDay = tglPinjam === tglRencanaKembali;
           const foundConflicts = checkItemBookingConflicts(
             cart.map((c) => c.id),
             tglPinjam,
             tglRencanaKembali,
-            activeBookings
+            activeBookings,
+            undefined,
+            isSameDay ? jamPinjam : null,
+            isSameDay ? jamKembali : null
           );
           setConflicts(foundConflicts);
         }
@@ -195,7 +203,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, cart, tglPinjam, tglRencanaKembali]);
+  }, [isOpen, cart, tglPinjam, tglRencanaKembali, jamPinjam, jamKembali]);
 
   if (!isOpen) return null;
 
@@ -210,13 +218,17 @@ export const LoanModal: React.FC<LoanModalProps> = ({
     return opts;
   };
 
-  // Calculate duration
+  // Calculate duration & same-day check
+  const isSameDay = tglPinjam === tglRencanaKembali;
   const getDurationDays = () => {
     if (!tglPinjam || !tglRencanaKembali) return 0;
     const start = new Date(tglPinjam);
     const end = new Date(tglRencanaKembali);
     const diffTime = end.getTime() - start.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return -1;
+    // Jika tanggal sama, dihitung sebagai 1 hari peminjaman
+    return diffDays === 0 ? 1 : diffDays;
   };
 
   const durationDays = getDurationDays();
@@ -240,9 +252,20 @@ export const LoanModal: React.FC<LoanModalProps> = ({
       return;
     }
 
-    if (durationDays <= 0) {
-      setErrorMsg('Tanggal rencana kembali harus setelah tanggal pinjam.');
+    if (durationDays < 0 || tglRencanaKembali < tglPinjam) {
+      setErrorMsg('Tanggal rencana kembali tidak boleh sebelum tanggal pinjam.');
       return;
+    }
+
+    if (isSameDay) {
+      if (!jamPinjam || !jamKembali) {
+        setErrorMsg('Jam mulai pinjam dan jam rencana kembali wajib diisi untuk peminjaman satu hari.');
+        return;
+      }
+      if (jamKembali <= jamPinjam) {
+        setErrorMsg('Jam rencana kembali harus setelah jam mulai pinjam (contoh: 08:30 s/d 16:00 WIB).');
+        return;
+      }
     }
 
     if (isDurationExceeded) {
@@ -374,6 +397,8 @@ export const LoanModal: React.FC<LoanModalProps> = ({
             : null,
           tglPinjam,
           tglRencanaKembali,
+          jamPinjam: isSameDay ? jamPinjam.trim() : null,
+          jamKembali: isSameDay ? jamKembali.trim() : null,
           tglKembaliAktual: null,
           status: initialStatus,
           items: cart.map((it) => ({
@@ -447,6 +472,8 @@ export const LoanModal: React.FC<LoanModalProps> = ({
           })),
           tglPinjam,
           tglRencanaKembali,
+          jamPinjam: isSameDay ? jamPinjam.trim() : null,
+          jamKembali: isSameDay ? jamKembali.trim() : null,
           status: initialStatus,
           createdAt: serverTimestamp(),
         });
@@ -460,6 +487,12 @@ export const LoanModal: React.FC<LoanModalProps> = ({
       onClearCart();
       onClose();
       onSuccess(result.loanId);
+      showToast(
+        isUserAdmin
+          ? `Peminjaman untuk ${borrowerData.nama} berhasil dicatat!`
+          : 'Pengajuan peminjaman berhasil dikirim! Menunggu persetujuan admin.',
+        'success'
+      );
     } catch (err: any) {
       console.error('Error saat transaksi peminjaman:', err);
       setErrorMsg(err.message || 'Terjadi kesalahan saat memproses transaksi peminjaman.');
@@ -846,6 +879,50 @@ export const LoanModal: React.FC<LoanModalProps> = ({
               />
             </div>
           </div>
+
+          {/* Same-day Loan Hours Section */}
+          {isSameDay && (
+            <div className="p-4 bg-indigo-50/70 border border-indigo-200/90 rounded-2xl space-y-3 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-indigo-900">
+                  <Icon name="ClockHistory" size={16} className="text-indigo-600 shrink-0" />
+                  <span>Waktu Penggunaan (Peminjaman 1 Hari Selesai)</span>
+                </div>
+                <span className="text-[11px] font-medium text-indigo-700 bg-white/90 px-2.5 py-0.5 rounded-full border border-indigo-200/80 shadow-xs">
+                  Layanan Lab: 08.00 - 16.30 WIB
+                </span>
+              </div>
+              <p className="text-xs text-indigo-800/80 leading-relaxed">
+                Tentukan jam pengambilan dan pengembalian alat pada hari yang sama agar jadwal di laboratorium teralokasi dengan akurat.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Jam Mulai Pinjam (Ambil di Lab)
+                  </label>
+                  <input
+                    type="time"
+                    value={jamPinjam}
+                    onChange={(e) => setJamPinjam(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-indigo-200 text-base sm:text-sm font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 tabular-nums"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Jam Rencana Kembali (Serahkan ke Lab)
+                  </label>
+                  <input
+                    type="time"
+                    value={jamKembali}
+                    onChange={(e) => setJamKembali(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-indigo-200 text-base sm:text-sm font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 tabular-nums"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Penanggung Jawab Section */}
           {(settings.wajibPenanggungJawab || isUserAdmin) && (

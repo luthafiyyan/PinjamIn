@@ -17,6 +17,23 @@ export function isDateRangeOverlapping(
   return startA <= endB && endA >= startB;
 }
 
+/**
+ * Memeriksa apakah dua rentang jam pada hari yang sama bersinggungan.
+ * Format waktu: 'HH:mm' (misal: '08:30', '16:00').
+ * Jika salah satu tidak menyertakan jam, diasumsikan booking seharian penuh (overlap = true).
+ */
+export function isTimeRangeOverlapping(
+  startHourA?: string | null,
+  endHourA?: string | null,
+  startHourB?: string | null,
+  endHourB?: string | null
+): boolean {
+  if (!startHourA || !endHourA || !startHourB || !endHourB) {
+    return true;
+  }
+  return startHourA < endHourB && endHourA > startHourB;
+}
+
 export interface BookingConflict {
   itemId: string;
   itemName: string;
@@ -44,7 +61,9 @@ export function checkItemBookingConflicts(
   startDate: string,
   endDate: string,
   existingLoans: (Loan | ItemBooking)[],
-  excludeLoanId?: string
+  excludeLoanId?: string,
+  startHour?: string | null,
+  endHour?: string | null
 ): BookingConflict[] {
   const conflicts: BookingConflict[] = [];
 
@@ -55,6 +74,19 @@ export function checkItemBookingConflicts(
 
     // Periksa apakah rentang tanggal bersinggungan
     if (isDateRangeOverlapping(startDate, endDate, loan.tglPinjam, loan.tglRencanaKembali)) {
+      // Jika kedua peminjaman berada pada hari yang sama persis dan memiliki spesifikasi jam, periksa apakah jamnya bersinggungan
+      const isBothSameDay =
+        startDate === endDate &&
+        loan.tglPinjam === loan.tglRencanaKembali &&
+        startDate === loan.tglPinjam;
+
+      if (isBothSameDay && startHour && endHour && loan.jamPinjam && loan.jamKembali) {
+        if (!isTimeRangeOverlapping(startHour, endHour, loan.jamPinjam, loan.jamKembali)) {
+          // Jam tidak bersinggungan, tidak memicu konflik
+          continue;
+        }
+      }
+
       // Periksa item mana saja yang masih aktif dipinjam / dibooking (abaikan item yang sudah kembali)
       const activeItemIdsInLoan = Array.isArray(loan.itemIds) && loan.itemIds.length > 0
         ? loan.itemIds

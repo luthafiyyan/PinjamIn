@@ -2685,8 +2685,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                           </span>
                         ))}
                       </div>
-                      <p className="text-[11px] text-slate-500 mt-2">
-                        Rencana pinjam: {formatDateIndo(loan.tglPinjam)} sampai {formatDateIndo(loan.tglRencanaKembali)}
+                      <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1.5 flex-wrap">
+                        <span>Rencana pinjam: {formatDateIndo(loan.tglPinjam)} sampai {formatDateIndo(loan.tglRencanaKembali)}</span>
+                        {loan.jamPinjam && loan.jamKembali && (
+                          <span className="font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                            (Pukul {loan.jamPinjam} - {loan.jamKembali} WIB)
+                          </span>
+                        )}
                       </p>
                     </div>
                     <div className="w-full sm:w-auto mt-3 sm:mt-0 pt-3 sm:pt-0 border-t border-sky-200/60 sm:border-t-0 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2 sm:shrink-0">
@@ -2766,9 +2771,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                           </span>
                         ))}
                       </div>
-                      <div className="p-2 bg-indigo-100/60 rounded-xl border border-indigo-200/60 text-[11px] text-indigo-900 font-medium flex items-center gap-1.5">
+                      <div className="p-2 bg-indigo-100/60 rounded-xl border border-indigo-200/60 text-[11px] text-indigo-900 font-medium flex items-center gap-1.5 flex-wrap">
                         <Icon name="Calendar3" size={13} className="text-indigo-700 shrink-0" />
                         <span>Jadwal Pinjam: {formatDateIndo(loan.tglPinjam)} sampai {formatDateIndo(loan.tglRencanaKembali)}</span>
+                        {loan.jamPinjam && loan.jamKembali && (
+                          <span className="font-bold text-indigo-800 bg-white/80 px-2 py-0.5 rounded">
+                            (Pukul {loan.jamPinjam} - {loan.jamKembali} WIB)
+                          </span>
+                        )}
                       </div>
                       {loan.catatanAdmin && (
                         <p className="text-[11px] text-amber-900 italic bg-amber-50 border border-amber-200/80 px-2 py-1 rounded-md">
@@ -2896,12 +2906,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                         <div className="bg-slate-50 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none border border-slate-200/60 sm:border-0">
                           <span className="text-slate-400 block text-[10px] font-medium">Tgl Pinjam</span>
                           <span className="font-semibold text-slate-700">{loan.tglPinjam}</span>
+                          {loan.jamPinjam && (
+                            <span className="text-[10px] text-indigo-600 block font-semibold">{loan.jamPinjam} WIB</span>
+                          )}
                         </div>
                         <div className={`p-2 sm:p-0 rounded-xl sm:rounded-none border ${isLate ? 'bg-rose-50/80 border-rose-200 sm:bg-transparent sm:border-0' : 'bg-slate-50 sm:bg-transparent border-slate-200/60 sm:border-0'}`}>
                           <span className="text-slate-400 block text-[10px] font-medium">Batas Kembali</span>
                           <span className={`font-bold ${isLate ? 'text-rose-600' : 'text-slate-800'}`}>
                             {loan.tglRencanaKembali}
                           </span>
+                          {loan.jamKembali && (
+                            <span className={`text-[10px] block font-semibold ${isLate ? 'text-rose-600' : 'text-indigo-600'}`}>{loan.jamKembali} WIB</span>
+                          )}
                         </div>
                         <div className="col-span-2 sm:col-span-1 bg-slate-50 sm:bg-transparent p-2 sm:p-0 rounded-xl sm:rounded-none border border-slate-200/60 sm:border-0 flex items-center justify-between sm:block">
                           <span className="text-slate-400 block text-[10px] font-medium">WhatsApp</span>

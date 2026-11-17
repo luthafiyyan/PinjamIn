@@ -491,7 +491,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                     {getStatusBadge(loan)}
                   </div>
 
-                  <div className="flex items-center gap-3 text-[11px] text-slate-500 font-normal">
+                  <div className="flex items-center gap-2 sm:gap-3 text-[11px] text-slate-500 font-normal flex-wrap">
                     <span>
                       Pinjam: <strong className="font-semibold text-slate-700 tabular-nums">{loan.tglPinjam}</strong>
                     </span>
@@ -502,6 +502,15 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                         {loan.tglRencanaKembali}
                       </strong>
                     </span>
+                    {loan.jamPinjam && loan.jamKembali && (
+                      <>
+                        <span className="text-slate-300">•</span>
+                        <span className="inline-flex items-center gap-1 font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/70 tabular-nums">
+                          <Icon name="ClockHistory" size={12} className="text-indigo-600" />
+                          {loan.jamPinjam} - {loan.jamKembali} WIB
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -600,16 +609,33 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                     )}
                   </div>
 
-                  {loan.status === 'disetujui' || loan.status === 'dipinjam' || loan.status === 'dikembalikan' ? (
-                    <button
-                      onClick={() => onViewInvoice(loan.id)}
-                      className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-indigo-600 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
-                    >
-                      <Icon name="Receipt" size={15} />
-                      <span>Lihat Invoice</span>
-                      <Icon name="ArrowRight" size={13} />
-                    </button>
-                  ) : null}
+                    <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+                      {(loan.status === 'disetujui' || loan.status === 'dipinjam') && (
+                        <a
+                          href={`https://wa.me/6285172088181?text=${encodeURIComponent(
+                            `Halo Petugas Laboratorium FIT, saya ${loan.peminjam.nama} ingin konfirmasi terkait peminjaman ${loan.noInvoice}.`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-colors cursor-pointer shrink-0"
+                          title="Hubungi Petugas Lab via WhatsApp"
+                        >
+                          <Icon name="Telephone" size={14} className="text-emerald-600" />
+                          <span>WhatsApp Lab</span>
+                        </a>
+                      )}
+
+                      {loan.status === 'disetujui' || loan.status === 'dipinjam' || loan.status === 'dikembalikan' ? (
+                        <button
+                          onClick={() => onViewInvoice(loan.id)}
+                          className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-indigo-600 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
+                        >
+                          <Icon name="Receipt" size={15} />
+                          <span>Lihat Invoice</span>
+                          <Icon name="ArrowRight" size={13} />
+                        </button>
+                      ) : null}
+                    </div>
                 </div>
               </div>
             );

@@ -208,6 +208,68 @@ describe('Sistem Booking Kalender & Validasi Tanggal (QA Tests)', () => {
       expect(conflictsTripod).toHaveLength(1);
       expect(conflictsTripod[0].itemId).toBe('item-tripod-01');
     });
+
+    it('Peminjaman satu hari dengan rentang jam berbeda pada tanggal yang sama tidak memicu konflik', () => {
+      const sameDayLoan: Loan = {
+        id: 'loan-sameday-1',
+        userId: 'user-sd',
+        peminjam: {
+          nama: 'User Pagi',
+          email: 'pagi@fit.edu',
+          noHp: '0812345671',
+          tipePeminjam: 'mahasiswa',
+          nomorIdentitas: '6701220004',
+          unitAsal: 'D3 RPLA',
+        },
+        jenisKeperluan: 'tugas_kuliah',
+        keperluan: 'Praktikum Pagi',
+        penanggungJawab: null,
+        tglPinjam: '2026-11-20',
+        tglRencanaKembali: '2026-11-20',
+        jamPinjam: '08:00',
+        jamKembali: '11:00',
+        tglKembaliAktual: null,
+        status: 'disetujui',
+        items: [
+          {
+            itemId: 'item-mic-01',
+            kodeAset: 'MIC-001',
+            nama: 'Mic Wireless Rode',
+            kondisiPinjam: 'baik',
+            statusItem: 'dipinjam',
+          },
+        ],
+        itemIds: ['item-mic-01'],
+        noInvoice: 'PIN-20261120-001',
+        dikembalikanOleh: null,
+        catatanPengembalian: null,
+      };
+
+      // Booking sesi siang (13:00 - 16:00) pada hari yang sama tidak boleh bentrok dengan sesi pagi (08:00 - 11:00)
+      const conflictsAfternoon = checkItemBookingConflicts(
+        ['item-mic-01'],
+        '2026-11-20',
+        '2026-11-20',
+        [sameDayLoan],
+        undefined,
+        '13:00',
+        '16:00'
+      );
+      expect(conflictsAfternoon).toHaveLength(0);
+
+      // Booking sesi pagi yang overlap (10:00 - 13:00) harus memicu konflik
+      const conflictsOverlap = checkItemBookingConflicts(
+        ['item-mic-01'],
+        '2026-11-20',
+        '2026-11-20',
+        [sameDayLoan],
+        undefined,
+        '10:00',
+        '13:00'
+      );
+      expect(conflictsOverlap).toHaveLength(1);
+      expect(conflictsOverlap[0].itemId).toBe('item-mic-01');
+    });
   });
 
   describe('formatDateIndo', () => {

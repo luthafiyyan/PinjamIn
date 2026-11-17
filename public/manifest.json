@@ -1,0 +1,19 @@
+{
+  "short_name": "PinjamIn",
+  "name": "PinjamIn - Laboratorium FIT",
+  "description": "Sistem Manajemen & Peminjaman Alat Laboratorium Fakultas Ilmu Terapan",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "lang": "id"
+}

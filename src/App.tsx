@@ -1,5 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Navbar } from './components/Navbar';
 import { LoginScreen } from './components/LoginScreen';
 import { CompleteProfileModal } from './components/CompleteProfileModal';
@@ -38,6 +40,22 @@ function MainApp() {
   const [cart, setCart] = useState<Item[]>([]);
   const [isLoanModalOpen, setIsLoanModalOpen] = useState(false);
   const [activeDetailItem, setActiveDetailItem] = useState<Item | null>(null);
+
+  // Network offline detection
+  const [isOffline, setIsOffline] = useState(() => (typeof navigator !== 'undefined' ? !navigator.onLine : false));
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Menyimpan UID user yang sudah selesai ditentukan rute awalnya setelah login
   const resolvedUserUidRef = React.useRef<string | null>(null);
@@ -260,6 +278,14 @@ function MainApp() {
         onLogout={handleLogout}
       />
 
+      {/* Offline Alert Banner */}
+      {isOffline && (
+        <div className="bg-amber-600 text-white px-4 py-2 text-xs font-semibold flex items-center justify-center gap-2 shadow-sm sticky top-[56px] md:top-16 z-30 animate-in fade-in duration-200">
+          <Icon name="ExclamationTriangle" size={16} className="shrink-0" />
+          <span>Koneksi internet terputus. Pastikan perangkat Anda terhubung ke jaringan.</span>
+        </div>
+      )}
+
       {/* Unauthorized Notice Banner */}
       {unauthorizedMsg && (
         <div className="bg-rose-600 text-white px-4 sm:px-6 lg:px-8 xl:px-12 py-2.5 text-xs font-semibold flex items-center justify-between shadow-md">
@@ -379,8 +405,12 @@ function MainApp() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <MainApp />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <ToastProvider>
+          <MainApp />
+        </ToastProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { doc, updateDoc, deleteField } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { Icon } from './Icon';
 import { ConfirmModal } from './ConfirmModal';
 
@@ -12,6 +13,7 @@ interface MyProfileProps {
 
 export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout }) => {
   const { currentUser, profile, isAdmin, logout } = useAuth();
+  const { showToast } = useToast();
 
   // State untuk Data yang bisa diedit (Bagian A)
   const [noHp, setNoHp] = useState(profile?.noHp || profile?.nomorHp || '');
@@ -277,6 +279,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
       await updateDoc(userDocRef, updatePayload);
 
       setSuccessMsg('Profil berhasil diperbarui');
+      showToast('Data profil berhasil disimpan!', 'success');
       // Auto-hide success message after 4 seconds
       setTimeout(() => {
         setSuccessMsg(null);
