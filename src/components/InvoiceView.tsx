@@ -186,28 +186,13 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
           <span>Kembali</span>
         </button>
 
-        <div className="flex items-center gap-2">
-          <a
-            href={`https://wa.me/6285172088181?text=${encodeURIComponent(
-              `Halo Petugas Laboratorium FIT, saya ${loan.peminjam.nama} (${loan.peminjam.nomorIdentitas}) ingin konfirmasi terkait peminjaman dengan nomor invoice ${loan.noInvoice}.`
-            )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all cursor-pointer min-h-[44px]"
-          >
-            <Icon name="Telephone" size={15} />
-            <span className="hidden sm:inline">Hubungi WhatsApp Lab</span>
-            <span className="sm:hidden">WhatsApp Lab</span>
-          </a>
-
-          <button
-            onClick={handlePrint}
-            className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-md transition-all cursor-pointer min-h-[44px]"
-          >
-            <Icon name="Printer" size={16} />
-            <span>Cetak Formulir Resmi (A5)</span>
-          </button>
-        </div>
+        <button
+          onClick={handlePrint}
+          className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-md transition-all cursor-pointer min-h-[44px]"
+        >
+          <Icon name="Printer" size={16} />
+          <span>Cetak Formulir Resmi (A5)</span>
+        </button>
       </div>
 
       {/* Printable Invoice Container (Model Blanko Formal Lab FIT) */}
@@ -449,34 +434,18 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
               </p>
             </div>
           </div>
-
-          {/* Footer Dokumen */}
-          <div className="mt-4 pt-1.5 border-t border-slate-300 flex justify-between items-center text-[9px] text-slate-500 print:text-[6.5pt] print:mt-2">
-            <span>© 2026 Pinjamin Laboratorium FIT | HFYN</span>
-          </div>
         </div>
 
       </div>
 
-      {/* Tombol Aksi Ponsel yang Menempel di Bawah (Hidden on Desktop & Print) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 safe-area-pb shadow-[0_-2px_10px_rgba(0,0,0,0.08)] no-print flex gap-2">
-        <a
-          href={`https://wa.me/6285172088181?text=${encodeURIComponent(
-            `Halo Petugas Laboratorium FIT, saya ${loan.peminjam.nama} (${loan.peminjam.nomorIdentitas}) ingin konfirmasi terkait peminjaman dengan nomor invoice ${loan.noInvoice}.`
-          )}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 min-h-[48px] py-3 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
-        >
-          <Icon name="Telephone" size={16} />
-          <span>WhatsApp Lab</span>
-        </a>
+      {/* Tombol Cetak Ponsel yang Menempel di Bawah (Hidden on Desktop & Print) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 safe-area-pb shadow-[0_-2px_10px_rgba(0,0,0,0.08)] no-print">
         <button
           onClick={handlePrint}
-          className="flex-1 min-h-[48px] py-3 px-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+          className="w-full min-h-[48px] py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer"
         >
-          <Icon name="Printer" size={16} />
-          <span>Cetak A5</span>
+          <Icon name="Printer" size={18} />
+          <span>Cetak Formulir Resmi (A5)</span>
         </button>
       </div>
     </div>
