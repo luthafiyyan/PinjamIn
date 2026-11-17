@@ -6,7 +6,8 @@ import { UserProfile } from '../types';
  * Ditentukan langsung dari status 'role' pada dokumen profil Firestore pengguna,
  * atau akun administrator utama sistem.
  */
-export const ADMIN_EMAIL = 'hafiyyanluthfii@gmail.com';
+// Email administrator utama sistem (dapat dikonfigurasi via environment variable VITE_INITIAL_SUPERADMIN_EMAIL)
+export const ADMIN_EMAIL = (import.meta.env.VITE_INITIAL_SUPERADMIN_EMAIL || 'hafiyyanluthfii@gmail.com').toLowerCase();
 
 export function isAdmin(
   user: User | UserProfile | { email?: string | null; emailVerified?: boolean; role?: string } | null | undefined

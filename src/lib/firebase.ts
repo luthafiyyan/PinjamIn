@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 export const app = initializeApp(firebaseConfig);
@@ -10,6 +11,26 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
   prompt: 'select_account',
 });
+
+// Inisialisasi Firebase App Check secara defensif
+// Hanya aktif di browser dan jika recaptchaSiteKey tersedia
+if (typeof window !== 'undefined') {
+  const siteKey = (firebaseConfig as { recaptchaSiteKey?: string }).recaptchaSiteKey;
+  if (siteKey && siteKey.trim() !== '') {
+    try {
+      if (import.meta.env.DEV) {
+        // @ts-expect-error FIREBASE_APPCHECK_DEBUG_TOKEN exists on self in dev mode
+        self.FIREBASE_APPCHECK_DEBUG_TOKEN = import.meta.env.VITE_APPCHECK_DEBUG_TOKEN || true;
+      }
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(siteKey),
+        isTokenAutoRefreshEnabled: true,
+      });
+    } catch (e) {
+      console.warn('Firebase App Check initialization failed:', e);
+    }
+  }
+}
 
 export enum OperationType {
   CREATE = 'create',

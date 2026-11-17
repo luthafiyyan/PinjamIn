@@ -272,7 +272,8 @@ Pastikan lingkungan pengembangan Anda telah terpasang:
 | `npm run build` | Melakukan kompilasi aset produksi ke folder `dist/` |
 | `npm run preview` | Meninjau hasil build produksi secara lokal |
 | `npm run lint` | Menjalankan pemeriksaan tipe data TypeScript (`tsc --noEmit`) |
-| `npm test` | Menjalankan unit test dengan Vitest |
+| `npm test` | Menjalankan unit test dengan Vitest (11 test cases) |
+| `npm run test:security` | Menjalankan pengujian dinamis Security Rules Firestore & Storage (Emulator) |
 
 ---
 
@@ -313,14 +314,17 @@ PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Securit
    * **Permissions-Policy:** Menonaktifkan izin akses perangkat keras sensitif (`camera=(), microphone=(), geolocation=()`).
    * **X-Content-Type-Options: nosniff** & **Referrer-Policy: strict-origin-when-cross-origin**.
 
-5. **Audit Keamanan Terverifikasi (*Cloudflare Security Audit Standard*):**
-   * Kode sumber, dependensi, dan arsitektur telah diaudit secara komprehensif mengikuti metodologi profesional dari [Cloudflare Security Audit Skill](https://github.com/cloudflare/security-audit-skill).
-   * Pohon dependensi npm terbebas dari kerentanan keamanan (*0 vulnerabilities* terverifikasi via `npm audit` dan override dependensi).
-   * Lolos validasi 100% skema audit formal (*Cloudflare report-schema.json*).
+5. **Audit Keamanan Defensif & Hardening Cloud (Skor Risiko: 3.2 / 10 - Terkendali):**
+   * Laporan audit resmi tersimpan lengkap di [`SECURITY_AUDIT.md`](./SECURITY_AUDIT.md).
+   * **Pengetatan Firestore Security Rules:** Whitelist keys pada pembuatan profil (`keys().hasOnly(...)`), validasi tipe data dan batas panjang string (`nomorHp <= 20`, `unitAsal <= 100`, `angkatan <= 10`, `keperluan <= 500`), serta evaluasi prioritas Custom Claims token JWT.
+   * **Penguncian Cloud Storage (`storage.rules`):** Perlindungan *default deny* terpusat pada bucket Cloud Storage guna mencegah eksploitasi unggahan file ilegal.
+   * **Pembatasan API Key di Google Cloud Console:** Penerapan *HTTP Referrer restrictions* (domain website resmi) dan *API restrictions* (hanya Firestore, Identity Toolkit, Token Service, dan Installations) untuk mencegah pencurian kuota API lain.
+   * **Firebase App Check Ready:** Scaffold proteksi integritas aplikasi berbasis reCAPTCHA v3 pada `src/lib/firebase.ts`.
+   * **Pengujian Dinamis di Emulator (`tests/security-rules.test.ts`):** 6 skenario pengujian mencakup unauthenticated access, anti-IDOR, pencegahan eskalasi hak akses mandiri, validasi payload raksasa, isolasi query data pribadi, dan penguncian Cloud Storage.
 
-Deploy aturan Firestore ke lingkungan Firebase Anda:
+Deploy aturan keamanan Firestore dan Storage ke lingkungan Firebase Anda:
 ```bash
-firebase deploy --only firestore:rules
+firebase deploy --only firestore:rules,storage
 ```
 
 ---
