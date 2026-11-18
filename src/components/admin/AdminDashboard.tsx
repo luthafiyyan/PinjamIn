@@ -585,7 +585,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
               throw new Error(`Barang ${currentLoanItems[i].nama} tidak ditemukan.`);
             }
             const data = snap.data();
-            if (data.status === 'rusak' || data.status === 'perawatan') {
+            if (data.status === 'rusak' || data.status === 'perawatan' || data.status === 'dipinjam') {
               throw new Error(`Barang [${currentLoanItems[i].nama}] sedang dalam status ${data.status}.`);
             }
           }

@@ -366,7 +366,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
             throw new Error(`Barang "${itName}" tidak ditemukan dalam database.`);
           }
           const itemData = snap.data();
-          if (itemData.status === 'rusak' || itemData.status === 'perawatan') {
+          if (itemData.status === 'rusak' || itemData.status === 'perawatan' || (initialStatus === 'dipinjam' && itemData.status === 'dipinjam')) {
             throw new Error(`Barang [${itemData.nama || itName}] sedang dalam status ${itemData.status} dan tidak dapat dipinjam.`);
           }
         }

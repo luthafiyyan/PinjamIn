@@ -327,6 +327,11 @@ PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Securit
      * **Firebase App Check Scaffolding:** Penyiapan fondasi App Check berbasis reCAPTCHA v3 di [src/lib/firebase.ts](file:///c:/Users/Laboran/Documents/Github%20Ku/PinjamIn-main/src/lib/firebase.ts) untuk verifikasi keaslian aplikasi klien saat publish penuh.
      * **Pengujian Dinamis di Emulator:** Berkas [tests/security-rules.test.ts](file:///c:/Users/Laboran/Documents/Github%20Ku/PinjamIn-main/tests/security-rules.test.ts) mencakup 6 skenario ancaman (unauthenticated access, anti-IDOR, pencegahan eskalasi hak akses, validasi payload raksasa, isolasi query data pribadi, dan storage lock).
 
+6. **Audit & Triage Kerentanan Agen (*Agentic Bug Hunter Methodology* - 18 Nov 2026):**
+   * Menggunakan framework evaluasi ketat *7-Question Gate* (`awarexone/Agentic-Bug-Hunter`) untuk mengeliminasi positif palsu dan memitigasi anomali logika bisnis nyata (*race conditions & state machine flaws*).
+   * **Mitigasi Serah Terima Langsung Hari-H (Addendum):** Validasi atomik `status !== 'dipinjam'` diterapkan pada cabang serah terima langsung modal penambahan barang di meja lab ([`AdminDashboard.tsx`](./src/components/admin/AdminDashboard.tsx)), menutup celah *concurrent overwrite*.
+   * **Mitigasi Peminjaman Langsung di Tempat (Walk-In):** Validasi ketat `status !== 'dipinjam'` pada opsi pencatatan langsung serah terima ([`LoanModal.tsx`](./src/components/LoanModal.tsx)), menjamin aset yang sedang dipinjam aktif tidak dapat ditimpa oleh peminjaman walk-in baru.
+
 Deploy aturan keamanan Firestore dan Storage ke lingkungan Firebase Anda:
 ```bash
 firebase deploy --only firestore:rules,storage
