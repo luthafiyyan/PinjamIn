@@ -114,7 +114,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
       case 'tugas_kuliah':
         return 'Tugas Kuliah / Praktikum';
       case 'penelitian':
-        return 'Penelitian / Tugas Akhir';
+        return 'Penelitian / Tugas Akhir / Riset / Magang';
       case 'kegiatan_organisasi':
         return 'Kegiatan Organisasi Mahasiswa';
       case 'kegiatan_unit':

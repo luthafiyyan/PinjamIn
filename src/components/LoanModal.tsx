@@ -211,7 +211,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
   const getJenisKeperluanOptions = () => {
     const opts: { value: JenisKeperluan; label: string }[] = [];
     opts.push({ value: 'tugas_kuliah', label: 'Tugas Kuliah / Praktikum' });
-    opts.push({ value: 'penelitian', label: 'Penelitian / Tugas Akhir / Riset' });
+    opts.push({ value: 'penelitian', label: 'Penelitian / Tugas Akhir / Riset / Magang' });
     opts.push({ value: 'kegiatan_organisasi', label: 'Kegiatan Organisasi Mahasiswa / Himpunan' });
     opts.push({ value: 'kegiatan_unit', label: 'Kegiatan Unit Kerja / Layanan Lab' });
     opts.push({ value: 'lainnya', label: 'Keperluan Lainnya' });
