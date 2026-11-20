@@ -59,7 +59,13 @@ import {
   Layers,
   JournalBookmark,
   ChevronDown,
+  ChevronUp,
   Envelope,
+  BoxSeam,
+  FileText,
+  FileEarmarkText,
+  ChatDots,
+  PersonBadge,
   Icon as BootstrapIconType,
 } from 'react-bootstrap-icons';
 
@@ -133,7 +139,13 @@ export const ICON_MAP: Record<string, BootstrapIconType> = {
   Layers,
   JournalBookmark,
   ChevronDown,
+  ChevronUp,
   Envelope,
+  BoxSeam,
+  FileText,
+  FileEarmarkText,
+  ChatDots,
+  PersonBadge,
 
   // Alias Umum & Kompatibilitas
   X: XLg,
@@ -158,6 +170,11 @@ export const ICON_MAP: Record<string, BootstrapIconType> = {
   ImageIcon: Image,
   Sparkles: Stars,
   Info: InfoCircle,
+  WhatsApp: ChatDots,
+  whatsapp: ChatDots,
+  Box: BoxSeam,
+  box: BoxSeam,
+  File: FileText,
 
   // Alias Semantik Bahasa Indonesia
   kamera: Camera,
@@ -224,7 +241,11 @@ export const Icon: React.FC<IconProps> = ({
   title,
   ...props
 }) => {
-  const IconComponent = ICON_MAP[name] || ThreeDots;
+  const IconComponent = ICON_MAP[name];
+
+  if (!IconComponent) {
+    return null;
+  }
 
   return (
     <IconComponent
