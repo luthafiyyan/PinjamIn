@@ -421,7 +421,9 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
               <p className="font-bold text-black uppercase underline tracking-wide print:text-[8.5pt]">
                 {loan.diserahkanOleh || loan.dikembalikanOleh ? `( ${loan.diserahkanOleh || loan.dikembalikanOleh} )` : '( ............................................ )'}
               </p>
-              <p className="text-[10px] text-slate-600 mt-0.5 print:text-[7pt]">Laboratorium Fakultas Ilmu Terapan</p>
+              <p className="text-[10px] text-slate-600 mt-0.5 print:text-[7pt]">
+                {loan.diserahkanJabatan || 'Laboratorium Fakultas Ilmu Terapan'}
+              </p>
             </div>
 
             {/* Pihak 2: Peminjam (Kanan) */}

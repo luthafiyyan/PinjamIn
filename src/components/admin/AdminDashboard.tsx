@@ -139,6 +139,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
   const [overrideDateLimitConfirmed, setOverrideDateLimitConfirmed] = useState(false);
   const [isSubmittingDateChange, setIsSubmittingDateChange] = useState(false);
 
+  // Action / Modal states for Handover (Serah Terima Barang ke Peminjam)
+  const [handoverModalLoan, setHandoverModalLoan] = useState<Loan | null>(null);
+  const [handoverPetugasNama, setHandoverPetugasNama] = useState('');
+  const [handoverPetugasJabatan, setHandoverPetugasJabatan] = useState('');
+  const [handoverError, setHandoverError] = useState<string | null>(null);
+
   // Item Modal state (Add / Edit)
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
@@ -386,89 +392,93 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
     }
   };
 
-  // Action: Serahkan Barang ke Peminjam (Hari-H saat peminjam datang ke meja lab)
+  // Action: Buka Modal Serah Terima Barang (Hari-H saat peminjam datang ke meja lab)
   const handleHandoverLoan = (loan: Loan) => {
-    openConfirmModal({
-      title: 'Serahkan Barang ke Peminjam',
-      message: (
-        <div className="space-y-2">
-          <p>
-            Serahkan seluruh peralatan peminjaman invoice <strong className="font-mono text-indigo-700">{loan.noInvoice}</strong> kepada <strong>{loan.peminjam.nama}</strong>?
-          </p>
-          <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700">
-            <span className="font-semibold block mb-0.5 text-slate-800">Daftar Peralatan ({loan.items.length} item):</span>
-            <ul className="list-disc list-inside space-y-0.5 text-[11px] text-slate-600">
-              {loan.items.map((it) => (
-                <li key={it.itemId}>
-                  <span className="font-mono font-semibold text-slate-800">{it.kodeAset}</span> - {it.nama}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <p className="text-xs text-slate-500">
-            Status peminjaman akan otomatis diubah menjadi aktif (<strong>Dipinjam</strong>) dan status fisik alat diperbarui.
-          </p>
-        </div>
-      ),
-      variant: 'primary',
-      icon: 'BoxSeam',
-      confirmText: 'Serahkan Barang',
-      onConfirm: async () => {
-        closeConfirmModal();
-        try {
-          setLoanActionId(loan.id);
-          await runTransaction(db, async (transaction) => {
-            const loanRef = doc(db, 'loans', loan.id);
-            const loanSnap = await transaction.get(loanRef);
-            if (!loanSnap.exists() || loanSnap.data().status !== 'disetujui') {
-              throw new Error('Peminjaman ini belum disetujui atau sudah diserahkan sebelumnya.');
-            }
+    setHandoverModalLoan(loan);
+    setHandoverPetugasNama(profile?.nama || currentUser?.displayName || '');
+    setHandoverPetugasJabatan('');
+    setHandoverError(null);
+  };
 
-            const freshLoanData = loanSnap.data() as Loan;
-            const currentLoanItems = freshLoanData.items || loan.items;
+  const handleCloseHandoverModal = () => {
+    if (loanActionId) return;
+    setHandoverModalLoan(null);
+    setHandoverPetugasNama('');
+    setHandoverPetugasJabatan('');
+    setHandoverError(null);
+  };
 
-            const itemRefs = currentLoanItems.map((item) => doc(db, 'items', item.itemId));
-            const itemSnaps = await Promise.all(itemRefs.map((itemRef) => transaction.get(itemRef)));
+  const handleSubmitHandover = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!handoverModalLoan) return;
 
-            for (let i = 0; i < itemSnaps.length; i++) {
-              const itemSnap = itemSnaps[i];
-              if (!itemSnap.exists()) {
-                throw new Error(`Barang ${currentLoanItems[i].nama} tidak ditemukan.`);
-              }
-              const itemData = itemSnap.data();
-              if (itemData.status === 'rusak' || itemData.status === 'perawatan' || itemData.status === 'dipinjam') {
-                throw new Error(`Barang [${currentLoanItems[i].nama}] sedang dalam status ${itemData.status}, tidak dapat diserahkan.`);
-              }
-            }
+    const trimmedNama = handoverPetugasNama.trim();
+    const trimmedJabatan = handoverPetugasJabatan.trim();
 
-            // Update status pinjaman menjadi 'dipinjam' (aktif dibawa)
-            transaction.update(loanRef, {
-              status: 'dipinjam',
-              diserahkanAt: serverTimestamp(),
-              diserahkanOleh: profile?.nama || currentUser?.displayName || 'Petugas Laboratorium',
-            });
+    if (!trimmedNama) {
+      setHandoverError('Nama petugas yang menyerahkan wajib diisi.');
+      return;
+    }
+    if (!trimmedJabatan) {
+      setHandoverError('Jabatan / unit petugas wajib diisi (contoh: Laboran Prodi RPLA / Kaur Laboratorium FIT).');
+      return;
+    }
 
-            // Sinkronisasi status jadwal kalender publik (tanpa PII)
-            const bookingRef = doc(db, 'bookings', loan.id);
-            transaction.set(bookingRef, { status: 'dipinjam' }, { merge: true });
-
-            // Update status fisik barang menjadi 'dipinjam'
-            itemRefs.forEach((itemRef) => {
-              transaction.update(itemRef, {
-                status: 'dipinjam',
-                currentLoanId: loan.id,
-              });
-            });
-          });
-          showToast(`Barang untuk invoice ${loan.noInvoice} telah diserahkan ke peminjam.`);
-        } catch (err: any) {
-          console.error('Error saat menyerahkan barang:', err);
-          showToast(err.message || 'Gagal menyerahkan barang.', 'error');
-        } finally {
-          setLoanActionId(null);
+    try {
+      setLoanActionId(handoverModalLoan.id);
+      await runTransaction(db, async (transaction) => {
+        const loanRef = doc(db, 'loans', handoverModalLoan.id);
+        const loanSnap = await transaction.get(loanRef);
+        if (!loanSnap.exists() || loanSnap.data().status !== 'disetujui') {
+          throw new Error('Peminjaman ini belum disetujui atau sudah diserahkan sebelumnya.');
         }
-      },
-    });
+
+        const freshLoanData = loanSnap.data() as Loan;
+        const currentLoanItems = freshLoanData.items || handoverModalLoan.items;
+
+        const itemRefs = currentLoanItems.map((item) => doc(db, 'items', item.itemId));
+        const itemSnaps = await Promise.all(itemRefs.map((itemRef) => transaction.get(itemRef)));
+
+        for (let i = 0; i < itemSnaps.length; i++) {
+          const itemSnap = itemSnaps[i];
+          if (!itemSnap.exists()) {
+            throw new Error(`Barang ${currentLoanItems[i].nama} tidak ditemukan.`);
+          }
+          const itemData = itemSnap.data();
+          if (itemData.status === 'rusak' || itemData.status === 'perawatan' || itemData.status === 'dipinjam') {
+            throw new Error(`Barang [${currentLoanItems[i].nama}] sedang dalam status ${itemData.status}, tidak dapat diserahkan.`);
+          }
+        }
+
+        // Update status pinjaman menjadi 'dipinjam' (aktif dibawa) beserta identitas petugas & jabatan
+        transaction.update(loanRef, {
+          status: 'dipinjam',
+          diserahkanAt: serverTimestamp(),
+          diserahkanOleh: trimmedNama,
+          diserahkanJabatan: trimmedJabatan,
+        });
+
+        // Sinkronisasi status jadwal kalender publik (tanpa PII)
+        const bookingRef = doc(db, 'bookings', handoverModalLoan.id);
+        transaction.set(bookingRef, { status: 'dipinjam' }, { merge: true });
+
+        // Update status fisik barang menjadi 'dipinjam'
+        itemRefs.forEach((itemRef) => {
+          transaction.update(itemRef, {
+            status: 'dipinjam',
+            currentLoanId: handoverModalLoan.id,
+          });
+        });
+      });
+
+      showToast(`Barang invoice ${handoverModalLoan.noInvoice} berhasil diserahkan oleh ${trimmedNama} (${trimmedJabatan}).`);
+      handleCloseHandoverModal();
+    } catch (err: any) {
+      console.error('Error saat menyerahkan barang:', err);
+      showToast(err.message || 'Gagal menyerahkan barang.', 'error');
+    } finally {
+      setLoanActionId(null);
+    }
   };
 
   // Action: Buka Modal Tambah Barang Hari-H (Skema 1: Addendum)
@@ -4925,6 +4935,132 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           </div>
         );
       })()}
+
+      {/* MODAL: SERAH TERIMA BARANG (WAJIB MENGISI NAMA & JABATAN PETUGAS SECARA MANUAL DARI SISTEM) */}
+      {handoverModalLoan && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden sm:my-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
+            {/* Header */}
+            <div className="bg-indigo-700 text-white p-5 flex items-center justify-between shrink-0">
+              <div>
+                <h3 className="font-semibold text-base flex items-center gap-2">
+                  <Icon name="BoxSeam" size={18} />
+                  Serahkan Barang ke Peminjam
+                </h3>
+                <p className="text-xs text-indigo-200">
+                  Invoice: <span className="font-mono font-bold text-white">{handoverModalLoan.noInvoice}</span> · {handoverModalLoan.peminjam.nama}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseHandoverModal}
+                disabled={loanActionId !== null}
+                className="text-white/80 hover:text-white p-2 rounded-full cursor-pointer hover:bg-white/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50"
+                aria-label="Tutup modal serah terima"
+                title="Tutup"
+              >
+                <Icon name="XLg" size={16} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmitHandover} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
+                {/* Ringkasan Barang */}
+                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                  <span className="font-semibold block text-slate-800">
+                    Daftar Peralatan yang Diserahkan ({handoverModalLoan.items.length} item):
+                  </span>
+                  <ul className="list-disc list-inside space-y-0.5 text-[11px] text-slate-600">
+                    {handoverModalLoan.items.map((it) => (
+                      <li key={it.itemId}>
+                        <span className="font-mono font-semibold text-slate-800">{it.kodeAset}</span> - {it.nama}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-[11px] text-slate-500 pt-1 border-t border-slate-200/60">
+                    Status peminjaman akan otomatis diubah menjadi aktif (<strong>Dipinjam</strong>) dan status fisik alat diperbarui.
+                  </p>
+                </div>
+
+                {/* Pesan Kesalahan */}
+                {handoverError && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-2">
+                    <Icon name="ExclamationTriangle" size={16} className="text-rose-600 shrink-0 mt-0.5" />
+                    <span>{handoverError}</span>
+                  </div>
+                )}
+
+                {/* Input Nama Petugas */}
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">
+                    Nama Petugas yang Menyerahkan <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={handoverPetugasNama}
+                    onChange={(e) => {
+                      setHandoverPetugasNama(e.target.value);
+                      if (handoverError) setHandoverError(null);
+                    }}
+                    required
+                    placeholder="Contoh: Hafiyyan Luthfi"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-xs transition-colors shadow-xs"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Nama staf / laboran yang bertugas memeriksa dan menyerahkan alat di meja lab.
+                  </p>
+                </div>
+
+                {/* Input Jabatan Petugas */}
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">
+                    Jabatan / Unit Petugas <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={handoverPetugasJabatan}
+                    onChange={(e) => {
+                      setHandoverPetugasJabatan(e.target.value);
+                      if (handoverError) setHandoverError(null);
+                    }}
+                    required
+                    placeholder="Contoh: Laboran Prodi RPLA / Kaur Laboratorium FIT"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-xs transition-colors shadow-xs"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Ketik manual jabatan/peran Anda (misal: Laboran Prodi RPLA, Kaur Laboratorium FIT, atau Staf Lab).
+                  </p>
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col-reverse sm:flex-row items-center justify-end gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleCloseHandoverModal}
+                  disabled={loanActionId !== null}
+                  className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-white text-slate-700 font-semibold transition-colors cursor-pointer disabled:opacity-50 text-xs"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={loanActionId !== null || !handoverPetugasNama.trim() || !handoverPetugasJabatan.trim()}
+                  className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
+                >
+                  {loanActionId === handoverModalLoan.id ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Icon name="BoxSeam" size={15} />
+                  )}
+                  <span>{loanActionId === handoverModalLoan.id ? 'Menyerahkan...' : 'Konfirmasi & Serahkan Barang'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* MODAL: TAMBAH / EDIT BARANG (FORM TERSTRUKTUR: INFORMASI UTAMA, SPESIFIKASI, KELENGKAPAN - BOTTOM SHEET & ACCORDION DI MOBILE) */}
       {itemModalOpen && (

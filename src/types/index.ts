@@ -124,6 +124,7 @@ export interface Loan {
   approvedAt?: any;
   diserahkanAt?: any;
   diserahkanOleh?: string | null;
+  diserahkanJabatan?: string | null;
   catatanAdmin?: string;
   createdAt?: any;
 }
