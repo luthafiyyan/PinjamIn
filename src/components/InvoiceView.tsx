@@ -243,7 +243,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
           <table className="w-full text-left">
             <tbody>
               <tr>
-                <td className="w-28 font-bold text-black py-0.5 whitespace-nowrap print:w-24">NO. INVOICE</td>
+                <td className="w-28 font-bold text-black py-0.5 whitespace-nowrap print:w-24">NO. PEMINJAMAN</td>
                 <td className="w-3 text-center py-0.5">:</td>
                 <td className="font-bold text-black py-0.5 font-mono tracking-wider tabular-nums">{loan.noInvoice}</td>
               </tr>

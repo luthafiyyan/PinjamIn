@@ -674,7 +674,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                               <span className="font-semibold text-slate-800">
                                 {formatDateIndo(b.tglPinjam)} s/d {formatDateIndo(b.tglRencanaKembali)}
                               </span>
-                              <span className="text-[10px] text-slate-500 block">No. Invoice: {b.noInvoice}</span>
+                              <span className="text-[10px] text-slate-500 block">No. Peminjaman: {b.noInvoice}</span>
                             </div>
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                               b.status === 'dipinjam'

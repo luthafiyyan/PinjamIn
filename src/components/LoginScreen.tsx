@@ -302,7 +302,7 @@ export const LoginScreen: React.FC = () => {
                 <div className="inv-meta">
                   <div>
                     <div className="inv-meta-row">
-                      <span className="inv-meta-label">NO. INVOICE</span>
+                      <span className="inv-meta-label">NO. PEMINJAMAN</span>
                       <span className="inv-meta-colon">:</span>
                       <span className="inv-meta-val" style={{ fontFamily: 'monospace', fontWeight: 700 }}>PIN-20261015-001</span>
                     </div>

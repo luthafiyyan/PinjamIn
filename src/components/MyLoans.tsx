@@ -630,8 +630,8 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                           onClick={() => onViewInvoice(loan.id)}
                           className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-indigo-600 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
                         >
-                          <Icon name="Receipt" size={15} />
-                          <span>Lihat Invoice</span>
+                          <Icon name="FileText" size={15} />
+                          <span>Lihat Form Peminjaman</span>
                           <Icon name="ArrowRight" size={13} />
                         </button>
                       ) : null}
