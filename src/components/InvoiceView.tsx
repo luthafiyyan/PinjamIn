@@ -401,7 +401,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
           <span className="font-bold block mb-0.5">Ketentuan & Tanggung Jawab Peminjam:</span>
           <ol className="list-decimal pl-3 space-y-0.5">
             <li>Peminjam wajib menjaga keutuhan, kebersihan, dan keselamatan seluruh perlengkapan yang dipinjam.</li>
-            <li>Keterlambatan pengembalian tanpa konfirmasi dikenakan sanksi tata tertib peminjaman Lab FIT.</li>
+            <li>Keterlambatan pengembalian tanpa konfirmasi dikenakan sanksi tata tertib peminjaman Unit Laboratorium FIT.</li>
             <li>Kerusakan atau kehilangan perlengkapan menjadi tanggung jawab peminjam untuk mengganti unit yang setara.</li>
           </ol>
         </div>
