@@ -507,8 +507,8 @@ export const LoanModal: React.FC<LoanModalProps> = ({
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-4 sm:p-6 flex items-center justify-between shrink-0">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-amber-300 text-xs font-semibold mb-1">
-              <Icon name="Stars" size={16} className="text-amber-400" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-indigo-200 text-xs font-semibold mb-1">
+              <Icon name={isUserAdmin ? 'PersonCheck' : 'Bag'} size={14} className="text-indigo-300" />
               {isUserAdmin ? 'Peminjaman via Petugas / Admin' : 'Keranjang Peminjaman'}
             </div>
             <h2 className="text-[18px] sm:text-[20px] font-semibold tracking-normal">Formulir Peminjaman Alat</h2>

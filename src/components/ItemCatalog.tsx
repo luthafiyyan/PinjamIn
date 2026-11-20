@@ -234,8 +234,8 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
       <div className="mb-4 sm:mb-8 bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-950 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xl shadow-indigo-950/10 relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-radial from-amber-500/10 to-transparent pointer-events-none" />
         <div className="relative z-10 max-w-2xl">
-          <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-amber-300 text-xs font-semibold mb-3 border border-white/10">
-            <Icon name="Stars" size={16} className="text-amber-400" />
+          <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-indigo-200 text-xs font-semibold mb-3 border border-white/10">
+            <Icon name="Building" size={14} className="text-indigo-300" />
             Laboratorium Fakultas Ilmu Terapan
           </div>
           <h1 className="text-[20px] sm:text-[28px] font-bold tracking-normal mb-1 sm:mb-2 text-white leading-tight">

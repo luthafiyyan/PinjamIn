@@ -3283,10 +3283,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleSeedData}
-                  className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
+                  className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
                   title="Sinkronkan 12 kategori standar otomatis"
                 >
-                  <Icon name="Stars" size={14} className="text-amber-600" />
+                  <Icon name="ArrowClockwise" size={14} className="text-indigo-600" />
                   <span>Sinkronkan 12 Kategori</span>
                 </button>
                 <button
