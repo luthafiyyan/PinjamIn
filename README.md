@@ -25,7 +25,7 @@
 
 **PinjamIn** adalah platform berbasis web modern yang dirancang khusus untuk memfasilitasi dan mendigitalisasi seluruh siklus peminjaman alat dan aset di lingkungan **Laboratorium Fakultas Ilmu Terapan (FIT)**. 
 
-Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas atau spreadsheet yang rentan kesalahan dan sulit dilacak. Dengan **PinjamIn**, seluruh civitas akademika (Mahasiswa, Dosen, dan Tenaga Kependidikan) dapat mencari ketersediaan alat secara *real-time*, mengajukan booking, mendapatkan invoice digital resmi, serta memantau status peminjaman dengan transparansi penuh. Di sisi pengelola, staf laboran memiliki dasbor komprehensif untuk memverifikasi pengguna, mengontrol serah terima dan inspeksi fisik pengembalian barang, mengelola inventaris aset, dan menganalisis tren peminjaman.
+Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas atau spreadsheet yang rentan kesalahan dan sulit dilacak. Dengan **PinjamIn**, seluruh civitas akademika (Mahasiswa, Dosen, dan Tenaga Kependidikan) dapat mencari ketersediaan alat secara *real-time*, mengajukan booking, mendapatkan form bukti peminjaman digital resmi, serta memantau status peminjaman dengan transparansi penuh. Di sisi pengelola, staf laboran memiliki dasbor komprehensif untuk memverifikasi pengguna, mengontrol serah terima dan inspeksi fisik pengembalian barang, mengelola inventaris aset, dan menganalisis tren peminjaman.
 
 ---
 
@@ -35,7 +35,7 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
 - [✨ Fitur Utama](#-fitur-utama)
   - [🎒 Pengalaman Peminjam (User Experience)](#-pengalaman-peminjam-user-experience)
   - [🛡️ Panel Administrator & Laboran](#️-panel-administrator--laboran)
-  - [📄 Invoice Digital & Bukti Peminjaman](#-invoice-digital--bukti-peminjaman)
+  - [📄 Form Bukti Peminjaman Resmi](#-form-bukti-peminjaman-resmi-ukuran-a5)
 - [🔄 Alur Peminjaman (Workflow)](#-alur-peminjaman-workflow)
 - [🛠️ Tech Stack & Arsitektur](#️-tech-stack--arsitektur)
 - [📂 Struktur Direktori](#-struktur-direktori)
@@ -62,16 +62,16 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
   * **Quick Filter "Hanya Tersedia":** Tombol toggle instan 1-klik untuk menyaring hanya barang yang siap dipinjam saat ini.
   * Modal detail alat komprehensif: spesifikasi teknis, merek & tipe, nomor seri, lokasi penyimpanan, dan kelengkapan bawaan (misal: baterai cadangan, kabel data, tas).
 * **Multi-Item Cart (Keranjang Booking):** Pilih beberapa alat sekaligus dalam satu kali pengajuan peminjaman.
-* **Peminjaman Fleksibel Satu Hari (*Same-Day Loans*):** Dukungan peminjaman non-lintas hari dengan penentuan estimasi Jam Mulai Pinjam dan Jam Rencana Kembali (misal: 08:30 s/d 16:00 WIB). Memungkinkan penjadwalan multi-sesi yang akurat di hari yang sama tanpa bentrok jam, serta tercetak otomatis pada bukti formulir invoice.
+* **Peminjaman Fleksibel Satu Hari (*Same-Day Loans*):** Dukungan peminjaman non-lintas hari dengan penentuan estimasi Jam Mulai Pinjam dan Jam Rencana Kembali (misal: 08:30 s/d 16:00 WIB). Memungkinkan penjadwalan multi-sesi yang akurat di hari yang sama tanpa bentrok jam, serta tercetak otomatis pada formulir bukti peminjaman.
 * **Validasi Kebijakan Cerdas:** Form peminjaman secara otomatis memeriksa batas maksimal durasi hari dan kuota barang sesuai peran pengguna, serta mewajibkan dosen penanggung jawab untuk mahasiswa.
 * **Global Toast Notification:** Umpan balik mikro (*toast banner*) terpusat dengan transisi halus saat menambah/menghapus alat dari keranjang, mengirim pengajuan peminjaman, maupun memperbarui data profil.
-* **Integrasi WhatsApp Laboran:** Tombol kontak langsung ke petugas laboratorium dengan pesan terisi otomatis (*pre-filled message*) berisi nama, identitas, dan nomor invoice untuk mempermudah koordinasi serah terima di lab.
+* **Integrasi WhatsApp Laboran:** Tombol kontak langsung ke petugas laboratorium dengan pesan terisi otomatis (*pre-filled message*) berisi nama, identitas, dan nomor peminjaman untuk mempermudah koordinasi serah terima di lab.
 * **Riwayat Peminjaman Dinamis:** Tab riwayat dengan lencana status berwarna, estimasi waktu jatuh tempo, indikator peringatan keterlambatan (*overdue*), tampilan rentang jam untuk peminjaman satu hari, dan riwayat pengembalian barang.
 * **Standar Desain Mobile-First & UI/UX Pro Max:**
   * Target sentuh jempol minimum 44px (`min-h-[44px] min-w-[44px]`) pada seluruh tombol navigasi dan aksi mobile.
   * Bilah navigasi bawah (*Bottom Navigation Bar*) responsif dengan penyesuaian area aman perangkat (*safe-area-inset-bottom*).
   * Bilah keranjang mengambang (*Floating Cart Bar*) dinamis yang diposisikan secara presisi di atas navigasi bawah.
-  * Optimalisasi tata letak kartu peminjaman mobile: Penataan lencana status dinamis (seperti *"Siap Diserahkan di Lab"* dan *"Menunggu Persetujuan"*) serta tombol aksi (*"Catat Pengembalian"*, *"Lihat Invoice"*) secara modular agar bebas tumpang tindih visual (*zero overlap*) dan nyaman dioperasikan satu tangan.
+  * Optimalisasi tata letak kartu peminjaman mobile: Penataan lencana status dinamis (seperti *"Siap Diserahkan di Lab"* dan *"Menunggu Persetujuan"*) serta tombol aksi (*"Catat Pengembalian"*, *"Lihat Form Peminjaman"*) secara modular agar bebas tumpang tindih visual (*zero overlap*) dan nyaman dioperasikan satu tangan.
   * Pencegahan auto-zoom Safari iOS melalui ukuran font adaptif (minimal 16px di mobile).
   * 100% menggunakan ikon vektor SVG resmi tanpa menggunakan emoji sebagai ikon antarmuka (*strict compliance*).
   * **Identitas Visual Bersih & Terpadu:** Logo vektor resmi PinjamIn dengan subtitle **Laboratorium FIT** pada header publik, navbar setelah login, layar pemuatan (*loading screen*), dan footer tanpa badge teks ganda yang berlebih.
@@ -82,8 +82,8 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
 * **Delegasi Akses Admin (Superadmin Only):** Akun Superadmin dapat mempromosikan pengguna terdaftar menjadi Admin Lab atau mencabut akses admin langsung dari dasbor web tanpa perlu menyentuh kode sumber.
 * **Manajemen Peminjaman & Serah Terima:**
   * **Persetujuan / Penolakan & Penyesuaian Jadwal:** Meninjau pengajuan, menyetujui, menolak dengan alasan yang transparan, atau menyesuaikan jadwal tanggal kembali sebelum pengajuan disetujui.
-  * **Penambahan Barang di Hari-H (Skema Addendum Meja Lab):** Fasilitas fleksibel saat peminjam tiba di laboratorium pada hari-H dan membutuhkan alat tambahan yang berstatus *Tersedia*. Admin dapat memilih barang tambahan langsung dari modal interaktif, sekaligus menyesuaikan tanggal kembali jika diperlukan, mengevaluasi kuota peran dengan dukungan persetujuan khusus (*Admin Override*), serta memilih opsi simpan ke invoice atau simpan & langsung serahkan seluruh barang secara instan dalam 1 nomor invoice yang sama.
-  * **Penyesuaian Jadwal Pengembalian (*Extend Loan Schedule*):** Fitur fleksibel untuk memperpanjang batas tanggal kembali sebelum barang diserahkan ke peminjam. Dilengkapi dengan validasi bentrok reservasi secara otomatis (*real-time conflict detection*), perhitungan durasi hari terhadap kuota role, persetujuan khusus admin (*Admin Override*), dan sinkronisasi instan ke invoice serta kalender ketersediaan alat.
+  * **Penambahan Barang di Hari-H (Skema Addendum Meja Lab):** Fasilitas fleksibel saat peminjam tiba di laboratorium pada hari-H dan membutuhkan alat tambahan yang berstatus *Tersedia*. Admin dapat memilih barang tambahan langsung dari modal interaktif, sekaligus menyesuaikan tanggal kembali jika diperlukan, mengevaluasi kuota peran dengan dukungan persetujuan khusus (*Admin Override*), serta memilih opsi simpan ke form peminjaman atau simpan & langsung serahkan seluruh barang secara instan dalam 1 nomor peminjaman yang sama.
+  * **Penyesuaian Jadwal Pengembalian (*Extend Loan Schedule*):** Fitur fleksibel untuk memperpanjang batas tanggal kembali sebelum barang diserahkan ke peminjam. Dilengkapi dengan validasi bentrok reservasi secara otomatis (*real-time conflict detection*), perhitungan durasi hari terhadap kuota role, persetujuan khusus admin (*Admin Override*), dan sinkronisasi instan ke form bukti peminjaman serta kalender ketersediaan alat.
   * **Serah Terima (*Handover*) & Akuntabilitas Petugas:** Mengonfirmasi penyerahan fisik barang kepada peminjam dengan validasi ketersediaan kondisi alat terbaru secara atomik, serta mewajibkan pengisian nama dan jabatan spesifik staf yang menyerahkan (contoh: *Laboran Prodi RPLA*, *Kaur Laboratorium FIT*, dll.) untuk jejak audit digital (*digital audit trail*).
   * **Pembatalan Peminjaman Cepat (*Instant Cancel*):** Tombol pembatalan pada kartu peminjaman aktif jika peminjam tidak jadi menggunakan alat di hari-H. Seluruh alat fisik otomatis dipulihkan ke status *Tersedia* dan slot kalender dibebaskan seketika tanpa perlu mengisi formulir checklist inspeksi pengembalian.
   * **Inspeksi Pengembalian Bertahap / Parsial & Penuh (*Partial & Full Return*):** Formulir inspeksi kondisi fisik barang (*Baik / Perlu Cek / Rusak*) dan checklist kelengkapan aksesoris dengan dukungan pengembalian bertahap jika peminjam meminjam lebih dari satu alat. Admin dapat memilih apakah peminjam mengembalikan seluruh barang sekaligus (*Full Return*) atau hanya sebagian alat tertentu (*Partial Return*). Barang yang telah kembali langsung berstatus *Tersedia* dan slot kalendernya dibebaskan seketika untuk peminjam lain (*zero phantom booking*), sementara transaksi peminjaman tetap aktif memantau sisa alat yang masih dibawa peminjam hingga seluruh barang tuntas dikembalikan.
@@ -94,17 +94,17 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
 * **Statistik & Analisis Riwayat:** Ringkasan metrik peminjaman aktif, barang dalam perbaikan, dan grafik tren peminjaman berdasarkan filter waktu (30 hari, 3 bulan, 1 tahun, atau semua waktu).
 * **Desain Desktop Full-Width Responsif:** Dasbor administrasi, katalog, dan bilah navigasi memanfaatkan layar monitor desktop *widescreen* secara optimal (*fluid full-width layout*) agar tabel data dan metrik tidak sempit.
 
-### 📄 Form Bukti Peminjaman Resmi (Invoice A5)
+### 📄 Form Bukti Peminjaman Resmi (Ukuran A5)
 * **Format Blanko Formal Laboratorium FIT:** Mengikuti standar resmi Administrasi Laboratorium Fakultas Ilmu Terapan dengan kop surat simetris, menampilkan Logo Telkom University di sebelah kiri dan Logo Laboratorium FIT di sebelah kanan.
 * **Alamat Definitif Laboratorium FIT:** Kop surat mencantumkan alamat resmi: *Gedung Selaru Lantai 1 Fakultas Ilmu Terapan, Jl. Telekomunikasi No. 1 Terusan Buahbatu, Bandung*.
 * **Titimangsa Formal Bahasa Indonesia:** Penulisan tanggal surat resmi otomatis (`Bandung, [DD] [Nama Bulan] [YYYY]`, contoh: *Bandung, 29 Oktober 2026*).
-* **Metadata Peminjaman 2 Kolom Sejajar:** Data terstruktur mencakup Nomor Invoice unik, Nama Peminjam, Nomor Identitas (NIM/NIP), Kontak HP/WA, Tanggal Pinjam, Batas Pengembalian (otomatis tersinkronisasi saat jadwal diperpanjang), Keperluan (*Capitalized Case*), dan Status persetujuan.
+* **Metadata Peminjaman 2 Kolom Sejajar:** Data terstruktur mencakup Nomor Peminjaman unik, Nama Peminjam, Nomor Identitas (NIM/NIP), Kontak HP/WA, Tanggal Pinjam, Batas Pengembalian (otomatis tersinkronisasi saat jadwal diperpanjang), Keperluan (*Capitalized Case*), dan Status persetujuan.
 * **Tabel Barang Solid Klasik:** Daftar inventaris rapi dengan kolom No, Nama Barang & Spesifikasi Teknis, Kode Aset, Jumlah Unit, serta Keterangan Kelengkapan dan Kondisi Pinjam. Seluruh item otomatis tersinkronisasi secara real-time termasuk jika terdapat penambahan barang di hari-H (addendum meja lab) maupun status pengembalian bertahap.
 * **Tanda Tangan Dua Pihak & Identitas Petugas Rinci:** Blok pengesahan resmi berdampingan antara Petugas Laboratorium FIT (kiri) dan Peminjam (kanan), lengkap dengan nama terang bergaris bawah dan jabatan/unit spesifik petugas penyerah.
 * **Ruang Tanda Tangan & Spasi Proporsional:** Dilengkapi ruang tanda tangan lega (`mb-20 print:mb-16`) yang proporsional untuk goresan tanda tangan pena fisik dan cap stempel resmi basah lab tanpa menabrak teks, serta jeda margin proporsional antar-blok konten.
 * **4 Klausul Tata Tertib & Tanggung Jawab Resmi:** Kotak ketentuan terstruktur mencakup 4 klausul operasional: pemeriksaan kelengkapan & fungsi alat pra-pinjam bersama petugas, larangan pemindahtanganan aset tanpa izin, sanksi keterlambatan sesuai tata tertib Unit Laboratorium FIT, dan kewajiban ganti rugi unit baru/spesifikasi setara atas persetujuan Unit Laboratorium FIT jika terjadi kerusakan atau kehilangan.
 * **Siap Cetak Kertas A5:** Tampilan dan styling cetak (`@media print`) dioptimalkan khusus untuk ukuran kertas A5 tanpa terpotong atau berantakan saat dicetak atau disimpan ke PDF.
-* **Proteksi Akses Dokumen:** Peminjam hanya dapat membuka bukti peminjaman miliknya sendiri, sementara administrator dapat mengakses seluruh arsip invoice.
+* **Proteksi Akses Dokumen:** Peminjam hanya dapat membuka bukti peminjaman miliknya sendiri, sementara administrator dapat mengakses seluruh arsip form peminjaman.
 
 ---
 
@@ -134,7 +134,7 @@ flowchart TD
     M -- Minta Perpanjangan Hari --> Ext["Ubah Jadwal Pengembalian (Extend Schedule)"]
     Add --> M
     Ext --> M
-    M -- Serah Terima Barang Fisik --> N["Status: Dipinjam + Terbit Invoice Digital"]
+    M -- Serah Terima Barang Fisik --> N["Status: Dipinjam + Terbit Form Bukti Peminjaman"]
     L -- Batal Sebelum Diambil --> K
     
     N --> O["Peminjam Mengembalikan Barang ke Lab"]
@@ -182,7 +182,7 @@ PinjamIn/
 │   │   ├── CompleteProfileModal.tsx # Modal pengisian profil awal pengguna baru
 │   │   ├── ConfirmModal.tsx      # Modal konfirmasi & prompt Tailwind kustom (pengganti native alert/confirm)
 │   │   ├── Icon.tsx              # Komponen wrapper render icon SVG
-│   │   ├── InvoiceView.tsx       # Tampilan & cetak invoice digital resmi
+│   │   ├── InvoiceView.tsx       # Tampilan & cetak form bukti peminjaman resmi (A5)
 │   │   ├── ItemCatalog.tsx       # Katalog interaktif pencarian & keranjang barang
 │   │   ├── LoanModal.tsx         # Modal formulir pengajuan peminjaman
 │   │   ├── LoginScreen.tsx       # Halaman landing & autentikasi Google
@@ -294,7 +294,7 @@ PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Securit
    * **Peminjam (`role: "peminjam"` • Mahasiswa, Dosen, Tendik):**
      * Hanya dapat membaca dan memperbarui profil miliknya sendiri (nomor HP, unit kerja, angkatan, permohonan koreksi identitas).
      * Hanya dapat membaca katalog barang dan riwayat peminjaman miliknya sendiri.
-     * Hanya dapat membuka lembar bukti invoice digital resmi miliknya sendiri.
+     * Hanya dapat membuka lembar form bukti peminjaman resmi miliknya sendiri.
      * Tidak dapat memodifikasi status peminjaman, nomor sequence counter, atau data inventaris fisik.
 
 2. **Pembersihan Sesi Aman (*Zero-Trace Logout*):**
@@ -337,7 +337,7 @@ PinjamIn menerapkan keamanan data berlapis menggunakan **Cloud Firestore Securit
 7. **Verifikasi Keamanan Standar Bug Bounty (*Claude-BugHunter Methodology* - 20 Nov 2026):**
    * Audit *source-first* komprehensif mengacu pada standar taksonomi **Bugcrowd VRT v3.x** dan **HackerOne Taxonomy**: **0 Kerentanan Kritis (P1)** dan **0 Kerentanan Tinggi (P2)**.
    * **Integritas State Machine & Mutasi Atomik:** Seluruh transisi status peminjaman (`menunggu_persetujuan` -> `disetujui` -> `dipinjam` -> `dikembalikan`), addendum meja lab, dan pembatalan diproteksi secara atomik via `runTransaction`, mengeliminasi celah *race condition* dan *double-lending*.
-   * **Proteksi IDOR & BOLA Mutlak:** Dokumen privat peminjaman, pengguna, dan arsip invoice diisolasi ketat di level Firestore Security Rules dan lapisan komponen UI (`resource.data.userId == request.auth.uid || isAdmin()`).
+   * **Proteksi IDOR & BOLA Mutlak:** Dokumen privat peminjaman, pengguna, dan arsip form peminjaman diisolasi ketat di level Firestore Security Rules dan lapisan komponen UI (`resource.data.userId == request.auth.uid || isAdmin()`).
    * **Pembersihan Residu Sesi & Higienitas UI:** Protokol *Zero-Trace Logout* membersihkan seluruh token Firebase, memori state React, dan penyimpanan lokal (`localStorage` & `sessionStorage`). Kamus ikon tersanitasi penuh dengan fallback aman (*0 broken dots*).
 
 Deploy aturan keamanan Firestore dan Storage ke lingkungan Firebase Anda:
