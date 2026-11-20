@@ -397,7 +397,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
         </div>
 
         {/* 4. CATATAN KETENTUAN LABORATORIUM */}
-        <div className="text-[10px] text-slate-800 leading-tight border border-black p-2 bg-slate-50/60 mb-4 print:text-[7pt] print:p-1.5 print:mb-2 print:bg-transparent">
+        <div className="text-[10px] text-slate-800 leading-tight border border-black p-2 bg-slate-50/60 mb-6 print:text-[7pt] print:p-1.5 print:mb-4 print:bg-transparent">
           <span className="font-bold block mb-0.5">Ketentuan & Tanggung Jawab Peminjam:</span>
           <ol className="list-decimal pl-3 space-y-0.5">
             <li>Peminjam wajib memeriksa kelengkapan dan fungsi alat bersama petugas sebelum peminjaman, serta menjaga kondisi dan kebersihannya selama digunakan.</li>
@@ -410,7 +410,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
         {/* 5. TANDA TANGAN (UNIT LABORATORIUM FIT DI KIRI & PEMINJAM DI KANAN) */}
         <div className="pt-1 print:pt-0">
           {/* Tanggal Terbit di Kanan Atas Tanda Tangan */}
-          <div className="text-right text-xs text-black mb-1 font-medium print:text-[8pt] print:mb-0.5">
+          <div className="text-right text-xs text-black mb-3 font-medium print:text-[8pt] print:mb-2">
             Bandung, {formatDateIndoFull(loan.tglPinjam)}
           </div>
 
