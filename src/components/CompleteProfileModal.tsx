@@ -29,6 +29,8 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({ onLo
   const getIdentitasLabel = () => {
     switch (tipePeminjam) {
       case 'mahasiswa':
+      case 'aslab':
+      case 'asprak':
         return 'Nomor Induk Mahasiswa (NIM)';
       case 'dosen':
         return 'NIP / NIDN Dosen';
@@ -42,6 +44,8 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({ onLo
   const getIdentitasPlaceholder = () => {
     switch (tipePeminjam) {
       case 'mahasiswa':
+      case 'aslab':
+      case 'asprak':
         return 'Contoh: 6701213045';
       case 'dosen':
         return 'Contoh: 0412088501';
@@ -56,6 +60,10 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({ onLo
     switch (tipePeminjam) {
       case 'mahasiswa':
         return 'Program Studi (Prodi)';
+      case 'aslab':
+        return 'Program Studi / Laboratorium FIT';
+      case 'asprak':
+        return 'Program Studi / Mata Kuliah Praktikum';
       case 'dosen':
         return 'Program Studi / Kelompok Keahlian (KK)';
       case 'tendik':
@@ -69,6 +77,10 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({ onLo
     switch (tipePeminjam) {
       case 'mahasiswa':
         return 'Contoh: D3 Rekayasa Perangkat Lunak Aplikasi';
+      case 'aslab':
+        return 'Contoh: D3 RPLA / Lab Rekayasa Perangkat Lunak';
+      case 'asprak':
+        return 'Contoh: D3 RPLA / Praktikum Algoritma & Pemrograman';
       case 'dosen':
         return 'Contoh: KK Multimedia & Internet of Things';
       case 'tendik':
@@ -96,7 +108,8 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({ onLo
       setErrorMsg('Nomor WhatsApp / HP aktif wajib diisi');
       return;
     }
-    if (tipePeminjam === 'mahasiswa' && !angkatan.trim()) {
+    const isStudentCategory = tipePeminjam === 'mahasiswa' || tipePeminjam === 'aslab' || tipePeminjam === 'asprak';
+    if (isStudentCategory && !angkatan.trim()) {
       setErrorMsg('Tahun angkatan wajib diisi');
       return;
     }
@@ -109,7 +122,7 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({ onLo
         tipePeminjam,
         nomorIdentitas: nomorIdentitas.trim(),
         unitAsal: unitAsal.trim(),
-        angkatan: tipePeminjam === 'mahasiswa' ? angkatan.trim() : '',
+        angkatan: isStudentCategory ? angkatan.trim() : '',
         noHp: noHp.trim(),
       });
     } catch (err: any) {
@@ -162,11 +175,11 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({ onLo
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Status Civitas Akademika FIT
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 <button
                   type="button"
                   onClick={() => setTipePeminjam('mahasiswa')}
-                  className={`flex flex-col items-center justify-center min-h-[52px] p-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                  className={`flex flex-col items-center justify-center min-h-[52px] p-2.5 rounded-2xl border text-center transition-all cursor-pointer ${
                     tipePeminjam === 'mahasiswa'
                       ? 'border-indigo-600 bg-indigo-50/70 text-indigo-950 font-semibold shadow-sm'
                       : 'border-slate-200 hover:bg-slate-50 text-slate-600'
@@ -178,8 +191,34 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({ onLo
 
                 <button
                   type="button"
+                  onClick={() => setTipePeminjam('aslab')}
+                  className={`flex flex-col items-center justify-center min-h-[52px] p-2.5 rounded-2xl border text-center transition-all cursor-pointer ${
+                    tipePeminjam === 'aslab'
+                      ? 'border-indigo-600 bg-indigo-50/70 text-indigo-950 font-semibold shadow-sm'
+                      : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                  }`}
+                >
+                  <Icon name="PersonBadge" size={20} className={`mb-1 ${tipePeminjam === 'aslab' ? 'text-indigo-600' : 'text-slate-400'}`} />
+                  <span className="text-xs">Aslab</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTipePeminjam('asprak')}
+                  className={`flex flex-col items-center justify-center min-h-[52px] p-2.5 rounded-2xl border text-center transition-all cursor-pointer ${
+                    tipePeminjam === 'asprak'
+                      ? 'border-indigo-600 bg-indigo-50/70 text-indigo-950 font-semibold shadow-sm'
+                      : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                  }`}
+                >
+                  <Icon name="PersonCheck" size={20} className={`mb-1 ${tipePeminjam === 'asprak' ? 'text-indigo-600' : 'text-slate-400'}`} />
+                  <span className="text-xs">Asprak</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setTipePeminjam('dosen')}
-                  className={`flex flex-col items-center justify-center min-h-[52px] p-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                  className={`flex flex-col items-center justify-center min-h-[52px] p-2.5 rounded-2xl border text-center transition-all cursor-pointer ${
                     tipePeminjam === 'dosen'
                       ? 'border-indigo-600 bg-indigo-50/70 text-indigo-950 font-semibold shadow-sm'
                       : 'border-slate-200 hover:bg-slate-50 text-slate-600'
@@ -192,7 +231,7 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({ onLo
                 <button
                   type="button"
                   onClick={() => setTipePeminjam('tendik')}
-                  className={`flex flex-col items-center justify-center min-h-[52px] p-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                  className={`flex flex-col items-center justify-center min-h-[52px] p-2.5 rounded-2xl border text-center transition-all cursor-pointer col-span-2 sm:col-span-1 ${
                     tipePeminjam === 'tendik'
                       ? 'border-indigo-600 bg-indigo-50/70 text-indigo-950 font-semibold shadow-sm'
                       : 'border-slate-200 hover:bg-slate-50 text-slate-600'
@@ -249,8 +288,8 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({ onLo
               />
             </div>
 
-            {/* Angkatan (Khusus Mahasiswa) */}
-            {tipePeminjam === 'mahasiswa' && (
+            {/* Angkatan (Mahasiswa & Asisten) */}
+            {(tipePeminjam === 'mahasiswa' || tipePeminjam === 'aslab' || tipePeminjam === 'asprak') && (
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
                   Tahun Angkatan

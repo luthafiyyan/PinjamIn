@@ -45,7 +45,7 @@ export const PendingVerificationScreen: React.FC<PendingVerificationScreenProps>
           </div>
           <div className="flex justify-between py-1 border-b border-slate-200/60">
             <span className="text-slate-500">
-              {profile?.tipePeminjam === 'mahasiswa' ? 'NIM' : profile?.tipePeminjam === 'dosen' ? 'NIP/NIDN' : 'NIP/NIK'}:
+              {(profile?.tipePeminjam === 'mahasiswa' || profile?.tipePeminjam === 'aslab' || profile?.tipePeminjam === 'asprak') ? 'NIM' : profile?.tipePeminjam === 'dosen' ? 'NIP/NIDN' : 'NIP/NIK'}:
             </span>
             <span className="font-semibold text-slate-800 tabular-nums">{profile?.nomorIdentitas}</span>
           </div>

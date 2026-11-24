@@ -188,6 +188,10 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
     switch (profile.tipePeminjam) {
       case 'mahasiswa':
         return 'Program Studi (Prodi)';
+      case 'aslab':
+        return 'Program Studi / Laboratorium FIT';
+      case 'asprak':
+        return 'Program Studi / Mata Kuliah Praktikum';
       case 'dosen':
         return 'Kelompok Keahlian (KK) / Program Studi';
       case 'tendik':
@@ -201,6 +205,8 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
   const getIdentitasLabel = () => {
     switch (profile.tipePeminjam) {
       case 'mahasiswa':
+      case 'aslab':
+      case 'asprak':
         return 'Nomor Induk Mahasiswa (NIM)';
       case 'dosen':
         return 'NIP / NIDN Dosen';
@@ -215,6 +221,10 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
     switch (profile.tipePeminjam) {
       case 'mahasiswa':
         return <span className="bg-blue-100 text-blue-800 text-xs px-2.5 py-0.5 rounded-full font-bold">Mahasiswa</span>;
+      case 'aslab':
+        return <span className="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-bold">Aslab</span>;
+      case 'asprak':
+        return <span className="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-0.5 rounded-full font-bold">Asprak</span>;
       case 'dosen':
         return <span className="bg-purple-100 text-purple-800 text-xs px-2.5 py-0.5 rounded-full font-bold">Dosen</span>;
       case 'tendik':
@@ -254,8 +264,9 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
       return;
     }
 
-    // Validasi Angkatan untuk mahasiswa
-    if (profile.tipePeminjam === 'mahasiswa') {
+    // Validasi Angkatan untuk mahasiswa dan asisten
+    const isStudentCategory = profile.tipePeminjam === 'mahasiswa' || profile.tipePeminjam === 'aslab' || profile.tipePeminjam === 'asprak';
+    if (isStudentCategory) {
       const yearNum = Number(angkatan.trim());
       if (!/^\d{4}$/.test(angkatan.trim()) || yearNum < 2000 || yearNum > currentYear) {
         setErrorMsg(`Tahun angkatan harus berupa angka 4 digit antara 2000 dan ${currentYear}.`);
@@ -272,7 +283,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
         unitAsal: unitAsal.trim(),
       };
 
-      if (profile.tipePeminjam === 'mahasiswa') {
+      if (isStudentCategory) {
         updatePayload.angkatan = angkatan.trim();
       }
 
@@ -557,8 +568,8 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
               </div>
             </div>
 
-            {/* Angkatan (Hanya untuk Mahasiswa) */}
-            {profile.tipePeminjam === 'mahasiswa' && (
+            {/* Angkatan (Mahasiswa & Asisten) */}
+            {(profile.tipePeminjam === 'mahasiswa' || profile.tipePeminjam === 'aslab' || profile.tipePeminjam === 'asprak') && (
               <div>
                 <label className="block text-slate-700 font-medium mb-1.5 text-sm">
                   Tahun Angkatan <span className="text-rose-500">*</span>

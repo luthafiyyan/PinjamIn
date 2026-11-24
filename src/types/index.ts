@@ -1,6 +1,6 @@
 export type UserRole = 'peminjam' | 'admin' | 'superadmin';
 
-export type TipePeminjam = 'mahasiswa' | 'dosen' | 'tendik';
+export type TipePeminjam = 'mahasiswa' | 'aslab' | 'asprak' | 'dosen' | 'tendik';
 
 export type ItemCondition = 'baik' | 'perlu_cek' | 'rusak';
 
@@ -164,6 +164,8 @@ export interface RuleSetting {
 
 export interface PeminjamanSettings {
   mahasiswa: RuleSetting;
+  aslab?: RuleSetting;
+  asprak?: RuleSetting;
   dosen: RuleSetting;
   tendik: RuleSetting;
 }

@@ -50,6 +50,10 @@ export const Navbar: React.FC<NavbarProps> = ({
     switch (tipe) {
       case 'mahasiswa':
         return <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-medium">Mahasiswa</span>;
+      case 'aslab':
+        return <span className="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full font-medium">Aslab</span>;
+      case 'asprak':
+        return <span className="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-medium">Asprak</span>;
       case 'dosen':
         return <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-medium">Dosen</span>;
       case 'tendik':

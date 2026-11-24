@@ -41,6 +41,8 @@ interface LoanModalProps {
 
 const DEFAULT_SETTINGS: PeminjamanSettings = {
   mahasiswa: { maxDurasiHari: 3, maxBarang: 2, wajibPenanggungJawab: true },
+  aslab: { maxDurasiHari: 3, maxBarang: 3, wajibPenanggungJawab: false },
+  asprak: { maxDurasiHari: 3, maxBarang: 3, wajibPenanggungJawab: false },
   dosen: { maxDurasiHari: 7, maxBarang: 5, wajibPenanggungJawab: false },
   tendik: { maxDurasiHari: 7, maxBarang: 5, wajibPenanggungJawab: false },
 };
@@ -59,7 +61,9 @@ export const LoanModal: React.FC<LoanModalProps> = ({
 
   // Settings
   const [settings, setSettings] = useState<RuleSetting>(
-    profile?.tipePeminjam ? DEFAULT_SETTINGS[profile.tipePeminjam] : DEFAULT_SETTINGS.mahasiswa
+    profile?.tipePeminjam && DEFAULT_SETTINGS[profile.tipePeminjam]
+      ? DEFAULT_SETTINGS[profile.tipePeminjam]!
+      : DEFAULT_SETTINGS.mahasiswa
   );
 
   // Form states
@@ -97,8 +101,9 @@ export const LoanModal: React.FC<LoanModalProps> = ({
         const snap = await getDoc(doc(db, 'settings', 'peminjaman'));
         if (snap.exists() && profile?.tipePeminjam) {
           const data = snap.data() as PeminjamanSettings;
-          if (data[profile.tipePeminjam]) {
-            setSettings(data[profile.tipePeminjam]);
+          const userSetting = data[profile.tipePeminjam];
+          if (userSetting) {
+            setSettings(userSetting);
           }
         }
       } catch (err) {
@@ -108,9 +113,9 @@ export const LoanModal: React.FC<LoanModalProps> = ({
     if (isOpen) {
       loadSettings();
       // Set initial jenis keperluan
-      if (profile?.tipePeminjam === 'mahasiswa') {
+      if (profile?.tipePeminjam === 'mahasiswa' || profile?.tipePeminjam === 'asprak') {
         setJenisKeperluan('tugas_kuliah');
-      } else if (profile?.tipePeminjam === 'tendik') {
+      } else if (profile?.tipePeminjam === 'aslab' || profile?.tipePeminjam === 'tendik') {
         setJenisKeperluan('kegiatan_unit');
       } else {
         setJenisKeperluan('penelitian');
@@ -623,6 +628,8 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                     className="w-full px-3.5 py-2.5 text-base sm:text-xs rounded-xl border border-amber-300 bg-white text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                   >
                     <option value="mahasiswa">Mahasiswa</option>
+                    <option value="aslab">Aslab</option>
+                    <option value="asprak">Asprak</option>
                     <option value="dosen">Dosen</option>
                     <option value="tendik">Tenaga Kependidikan / Tendik</option>
                   </select>

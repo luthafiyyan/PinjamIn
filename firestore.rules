@@ -126,7 +126,7 @@ service cloud.firestore {
         request.resource.data.itemIds is list &&
         request.resource.data.itemIds.size() > 0 &&
         (
-          (getUserTipe() == 'mahasiswa' && request.resource.data.itemIds.size() <= 2) ||
+          (getUserTipe() in ['mahasiswa', 'aslab', 'asprak'] && request.resource.data.itemIds.size() <= 3) ||
           (getUserTipe() in ['dosen', 'tendik'] && request.resource.data.itemIds.size() <= 5) ||
           (request.resource.data.itemIds.size() <= 2)
         ) &&
@@ -156,7 +156,7 @@ service cloud.firestore {
         request.resource.data.itemIds is list &&
         request.resource.data.itemIds.size() > 0 &&
         (
-          (getUserTipe() == 'mahasiswa' && request.resource.data.itemIds.size() <= 2) ||
+          (getUserTipe() in ['mahasiswa', 'aslab', 'asprak'] && request.resource.data.itemIds.size() <= 3) ||
           (getUserTipe() in ['dosen', 'tendik'] && request.resource.data.itemIds.size() <= 5) ||
           (request.resource.data.itemIds.size() <= 2)
         ) &&

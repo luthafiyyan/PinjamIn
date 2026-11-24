@@ -99,6 +99,8 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
   const getIdentitasLabel = (tipe: string) => {
     switch (tipe) {
       case 'mahasiswa':
+      case 'aslab':
+      case 'asprak':
         return 'NIM';
       case 'dosen':
         return 'NIP / NIDN';

@@ -92,6 +92,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
   const [loans, setLoans] = useState<Loan[]>([]);
   const [settings, setSettings] = useState<PeminjamanSettings>({
     mahasiswa: { maxDurasiHari: 3, maxBarang: 2, wajibPenanggungJawab: true },
+    aslab: { maxDurasiHari: 3, maxBarang: 3, wajibPenanggungJawab: false },
+    asprak: { maxDurasiHari: 3, maxBarang: 3, wajibPenanggungJawab: false },
     dosen: { maxDurasiHari: 7, maxBarang: 5, wajibPenanggungJawab: false },
     tendik: { maxDurasiHari: 7, maxBarang: 5, wajibPenanggungJawab: false },
   });
@@ -1802,6 +1804,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
       // 3. Settings Default
       const defaultSettings: PeminjamanSettings = {
         mahasiswa: { maxDurasiHari: 3, maxBarang: 2, wajibPenanggungJawab: true },
+        aslab: { maxDurasiHari: 3, maxBarang: 3, wajibPenanggungJawab: false },
+        asprak: { maxDurasiHari: 3, maxBarang: 3, wajibPenanggungJawab: false },
         dosen: { maxDurasiHari: 7, maxBarang: 5, wajibPenanggungJawab: false },
         tendik: { maxDurasiHari: 7, maxBarang: 5, wajibPenanggungJawab: false },
       };
@@ -2394,7 +2398,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                             </div>
                             <div>
                               <span className="text-slate-400 font-medium">
-                                {u.tipePeminjam === 'mahasiswa'
+                                {u.tipePeminjam === 'mahasiswa' || u.tipePeminjam === 'aslab' || u.tipePeminjam === 'asprak'
                                   ? 'NIM: '
                                   : u.tipePeminjam === 'dosen'
                                   ? 'NIP/NIDN: '
@@ -2428,7 +2432,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                             </div>
                             <div>
                               <span className="text-indigo-600/80 font-medium">
-                                {u.tipePeminjam === 'mahasiswa'
+                                {u.tipePeminjam === 'mahasiswa' || u.tipePeminjam === 'aslab' || u.tipePeminjam === 'asprak'
                                   ? 'NIM Baru: '
                                   : u.tipePeminjam === 'dosen'
                                   ? 'NIP/NIDN Baru: '
@@ -3430,6 +3434,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
               >
                 <option value="all">Semua Tipe Peminjam</option>
                 <option value="mahasiswa">Mahasiswa</option>
+                <option value="aslab">Aslab</option>
+                <option value="asprak">Asprak</option>
                 <option value="dosen">Dosen</option>
                 <option value="tendik">Tendik</option>
               </select>
