@@ -569,7 +569,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           freshLoanData.tglPinjam,
           targetReturnDate,
           activeLoansForConflict,
-          addItemsModalLoan.id
+          addItemsModalLoan.id,
+          freshLoanData.jamPinjam,
+          freshLoanData.jamKembali
         );
         if (conflicts.length > 0) {
           throw new Error(`Barang [${conflicts[0].itemName}] memiliki jadwal bentrok dengan peminjaman #${conflicts[0].noInvoice}.`);
@@ -739,7 +741,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
           freshLoanData.tglPinjam,
           newReturnDate,
           activeLoansForConflict,
-          editDateModalLoan.id
+          editDateModalLoan.id,
+          freshLoanData.jamPinjam,
+          freshLoanData.jamKembali
         );
         if (conflicts.length > 0) {
           throw new Error(
@@ -4574,7 +4578,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
                           addItemsModalLoan.tglPinjam,
                           addItemsReturnDate || addItemsModalLoan.tglRencanaKembali,
                           activeLoansForConflict,
-                          addItemsModalLoan.id
+                          addItemsModalLoan.id,
+                          addItemsModalLoan.jamPinjam,
+                          addItemsModalLoan.jamKembali
                         );
                         const hasConflict = conflicts.length > 0;
 
@@ -4739,7 +4745,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onViewInvoice })
               editDateModalLoan.tglPinjam,
               newReturnDate,
               activeLoansForConflict,
-              editDateModalLoan.id
+              editDateModalLoan.id,
+              editDateModalLoan.jamPinjam,
+              editDateModalLoan.jamKembali
             )
           : [];
         const hasConflicts = conflicts.length > 0;

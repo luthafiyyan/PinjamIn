@@ -116,12 +116,10 @@ export const LoanModal: React.FC<LoanModalProps> = ({
         setJenisKeperluan('penelitian');
       }
 
-      // Default tgl kembali: today + 1 day
-      const tmrw = new Date();
-      tmrw.setDate(tmrw.getDate() + 1);
-      setTglRencanaKembali(tmrw.toISOString().split('T')[0]);
+      // Default tgl kembali: today (dapat disesuaikan jika multi-hari)
+      setTglRencanaKembali(todayStr);
     }
-  }, [isOpen, profile]);
+  }, [isOpen, profile, todayStr]);
 
   // Load registered users if current user is admin
   useEffect(() => {
@@ -179,15 +177,14 @@ export const LoanModal: React.FC<LoanModalProps> = ({
         });
 
         if (isMounted) {
-          const isSameDay = tglPinjam === tglRencanaKembali;
           const foundConflicts = checkItemBookingConflicts(
             cart.map((c) => c.id),
             tglPinjam,
             tglRencanaKembali,
             activeBookings,
             undefined,
-            isSameDay ? jamPinjam : null,
-            isSameDay ? jamKembali : null
+            jamPinjam,
+            jamKembali
           );
           setConflicts(foundConflicts);
         }
@@ -257,15 +254,14 @@ export const LoanModal: React.FC<LoanModalProps> = ({
       return;
     }
 
-    if (isSameDay) {
-      if (!jamPinjam || !jamKembali) {
-        setErrorMsg('Jam mulai pinjam dan jam rencana kembali wajib diisi untuk peminjaman satu hari.');
-        return;
-      }
-      if (jamKembali <= jamPinjam) {
-        setErrorMsg('Jam rencana kembali harus setelah jam mulai pinjam (contoh: 08:30 s/d 16:00 WIB).');
-        return;
-      }
+    if (!jamPinjam || !jamKembali) {
+      setErrorMsg('Jam mulai pinjam dan jam rencana kembali wajib diisi.');
+      return;
+    }
+
+    if (isSameDay && jamKembali <= jamPinjam) {
+      setErrorMsg('Untuk peminjaman pada hari yang sama, jam rencana kembali harus setelah jam mulai pinjam (contoh: 08:30 s/d 16:00 WIB).');
+      return;
     }
 
     if (isDurationExceeded) {
@@ -397,8 +393,8 @@ export const LoanModal: React.FC<LoanModalProps> = ({
             : null,
           tglPinjam,
           tglRencanaKembali,
-          jamPinjam: isSameDay ? jamPinjam.trim() : null,
-          jamKembali: isSameDay ? jamKembali.trim() : null,
+          jamPinjam: jamPinjam.trim(),
+          jamKembali: jamKembali.trim(),
           tglKembaliAktual: null,
           status: initialStatus,
           items: cart.map((it) => ({
@@ -472,8 +468,8 @@ export const LoanModal: React.FC<LoanModalProps> = ({
           })),
           tglPinjam,
           tglRencanaKembali,
-          jamPinjam: isSameDay ? jamPinjam.trim() : null,
-          jamKembali: isSameDay ? jamKembali.trim() : null,
+          jamPinjam: jamPinjam.trim(),
+          jamKembali: jamKembali.trim(),
           status: initialStatus,
           createdAt: serverTimestamp(),
         });
@@ -703,7 +699,13 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                   <div key={idx} className="bg-white/90 p-2 rounded-lg border border-rose-200">
                     <span className="font-semibold text-slate-900">{c.itemName}</span>
                     <span className="text-rose-700 block text-[11px] font-medium mt-0.5">
-                      Sudah dipesan: {formatDateIndo(c.tglPinjam)} s/d {formatDateIndo(c.tglRencanaKembali)} ({c.noInvoice})
+                      Sudah dipesan: {formatDateIndo(c.tglPinjam)}{' '}
+                      {c.jamPinjam && c.jamKembali && (
+                        <span className="font-bold text-rose-800">
+                          (Pukul {c.jamPinjam} - {c.jamKembali} WIB){' '}
+                        </span>
+                      )}
+                      s/d {formatDateIndo(c.tglRencanaKembali)} ({c.noInvoice})
                     </span>
                   </div>
                 ))}
@@ -803,7 +805,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
             )}
           </div>
 
-          {/* Keperluan & Jadwal */}
+          {/* Keperluan */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -824,49 +826,6 @@ export const LoanModal: React.FC<LoanModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                Tanggal Pinjam
-              </label>
-              <input
-                type="date"
-                value={tglPinjam}
-                onChange={(e) => setTglPinjam(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 tabular-nums bg-white"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5 flex items-center justify-between">
-                <span>Tanggal Rencana Kembali</span>
-                {durationDays > 0 && (
-                  <span className={`text-xs font-semibold tabular-nums ${isDurationExceeded ? 'text-rose-600' : 'text-indigo-600'}`}>
-                    Durasi: {durationDays} hari
-                  </span>
-                )}
-              </label>
-              <input
-                type="date"
-                min={tglPinjam}
-                value={tglRencanaKembali}
-                onChange={(e) => setTglRencanaKembali(e.target.value)}
-                className={`w-full px-3.5 py-2.5 rounded-xl border text-base sm:text-sm tabular-nums focus:outline-none focus:ring-2 bg-white ${
-                  isDurationExceeded
-                    ? 'border-rose-400 ring-rose-500/20 focus:border-rose-600'
-                    : 'border-slate-300 ring-indigo-500/20 focus:border-indigo-600'
-                }`}
-                required
-              />
-              {isDurationExceeded && (
-                <p className="text-xs text-rose-600 mt-1">
-                  Durasi melebihi batas maksimal {settings.maxDurasiHari} hari.
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 Deskripsi Keperluan
               </label>
               <textarea
@@ -880,49 +839,118 @@ export const LoanModal: React.FC<LoanModalProps> = ({
             </div>
           </div>
 
-          {/* Same-day Loan Hours Section */}
-          {isSameDay && (
-            <div className="p-4 bg-indigo-50/70 border border-indigo-200/90 rounded-2xl space-y-3 animate-in fade-in duration-200">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2 text-xs font-bold text-indigo-900">
-                  <Icon name="ClockHistory" size={16} className="text-indigo-600 shrink-0" />
-                  <span>Waktu Penggunaan (Peminjaman 1 Hari Selesai)</span>
-                </div>
-                <span className="text-[11px] font-medium text-indigo-700 bg-white/90 px-2.5 py-0.5 rounded-full border border-indigo-200/80 shadow-xs">
-                  Layanan Lab: 08.00 - 16.30 WIB
-                </span>
+          {/* Jadwal Waktu Peminjaman & Pengembalian (Tanggal & Jam) */}
+          <div className="p-4 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-3.5">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+                <Icon name="ClockHistory" size={16} className="text-indigo-600 shrink-0" />
+                <span>Jadwal Waktu Peminjaman & Pengembalian</span>
               </div>
-              <p className="text-xs text-indigo-800/80 leading-relaxed">
-                Tentukan jam pengambilan dan pengembalian alat pada hari yang sama agar jadwal di laboratorium teralokasi dengan akurat.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Jam Mulai Pinjam (Ambil di Lab)
-                  </label>
-                  <input
-                    type="time"
-                    value={jamPinjam}
-                    onChange={(e) => setJamPinjam(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-indigo-200 text-base sm:text-sm font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 tabular-nums"
-                    required
-                  />
+              <span className="text-[11px] font-medium text-indigo-700 bg-indigo-50/80 px-2.5 py-0.5 rounded-full border border-indigo-200/80 shadow-xs">
+                Layanan Lab: 08.00 - 16.30 WIB
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Waktu Mulai Pinjam */}
+              <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                    <span>Waktu Mulai Pinjam</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium">Ambil di Lab</span>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Jam Rencana Kembali (Serahkan ke Lab)
-                  </label>
-                  <input
-                    type="time"
-                    value={jamKembali}
-                    onChange={(e) => setJamKembali(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-indigo-200 text-base sm:text-sm font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 tabular-nums"
-                    required
-                  />
+                <div className="grid grid-cols-5 gap-2">
+                  <div className="col-span-3">
+                    <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                      Tanggal Pinjam
+                    </label>
+                    <input
+                      type="date"
+                      value={tglPinjam}
+                      onChange={(e) => {
+                        const newTgl = e.target.value;
+                        setTglPinjam(newTgl);
+                        if (tglRencanaKembali < newTgl) {
+                          setTglRencanaKembali(newTgl);
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 tabular-nums"
+                      required
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                      Jam Pinjam
+                    </label>
+                    <input
+                      type="time"
+                      value={jamPinjam}
+                      onChange={(e) => setJamPinjam(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 tabular-nums"
+                      required
+                    />
+                  </div>
                 </div>
+              </div>
+
+              {/* Waktu Selesai (Batas Kembali) */}
+              <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span>
+                    <span>Waktu Selesai (Kembali)</span>
+                  </span>
+                  {durationDays > 0 && (
+                    <span className={`text-[10px] font-bold tabular-nums px-2 py-0.5 rounded-full ${
+                      isDurationExceeded
+                        ? 'text-rose-700 bg-rose-100 border border-rose-200'
+                        : 'text-indigo-700 bg-indigo-100/70 border border-indigo-200'
+                    }`}>
+                      Durasi: {durationDays} hari
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  <div className="col-span-3">
+                    <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                      Tanggal Kembali
+                    </label>
+                    <input
+                      type="date"
+                      min={tglPinjam}
+                      value={tglRencanaKembali}
+                      onChange={(e) => setTglRencanaKembali(e.target.value)}
+                      className={`w-full px-3 py-2 rounded-xl border text-sm font-semibold text-slate-800 bg-white tabular-nums focus:outline-none focus:ring-2 ${
+                        isDurationExceeded
+                          ? 'border-rose-400 ring-rose-500/20 focus:border-rose-600'
+                          : 'border-slate-300 ring-indigo-500/20 focus:border-indigo-600'
+                      }`}
+                      required
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                      Jam Selesai
+                    </label>
+                    <input
+                      type="time"
+                      value={jamKembali}
+                      onChange={(e) => setJamKembali(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 tabular-nums"
+                      required
+                    />
+                  </div>
+                </div>
+                {isDurationExceeded && (
+                  <p className="text-xs text-rose-600 mt-1">
+                    Durasi melebihi batas maksimal {settings.maxDurasiHari} hari.
+                  </p>
+                )}
               </div>
             </div>
-          )}
+          </div>
 
           {/* Penanggung Jawab Section */}
           {(settings.wajibPenanggungJawab || isUserAdmin) && (

@@ -42,6 +42,8 @@ export interface BookingConflict {
   tglPinjam: string;
   tglRencanaKembali: string;
   status: LoanStatus;
+  jamPinjam?: string | null;
+  jamKembali?: string | null;
 }
 
 /**
@@ -74,17 +76,18 @@ export function checkItemBookingConflicts(
 
     // Periksa apakah rentang tanggal bersinggungan
     if (isDateRangeOverlapping(startDate, endDate, loan.tglPinjam, loan.tglRencanaKembali)) {
-      // Jika kedua peminjaman berada pada hari yang sama persis dan memiliki spesifikasi jam, periksa apakah jamnya bersinggungan
-      const isBothSameDay =
-        startDate === endDate &&
-        loan.tglPinjam === loan.tglRencanaKembali &&
-        startDate === loan.tglPinjam;
+      // Evaluasi batas waktu datetime (YYYY-MM-DDTHH:mm) jika jam ditentukan
+      const startDateTimeA = `${startDate}T${startHour || '00:00'}`;
+      const endDateTimeA = `${endDate}T${endHour || '23:59'}`;
+      const startDateTimeB = `${loan.tglPinjam}T${loan.jamPinjam || '00:00'}`;
+      const endDateTimeB = `${loan.tglRencanaKembali}T${loan.jamKembali || '23:59'}`;
 
-      if (isBothSameDay && startHour && endHour && loan.jamPinjam && loan.jamKembali) {
-        if (!isTimeRangeOverlapping(startHour, endHour, loan.jamPinjam, loan.jamKembali)) {
-          // Jam tidak bersinggungan, tidak memicu konflik
-          continue;
-        }
+      // Bersinggungan jika dan hanya jika startA < endB dan endA > startB
+      if (startDateTimeA < endDateTimeB && endDateTimeA > startDateTimeB) {
+        // Waktu bersinggungan, lanjutkan pengecekan item
+      } else {
+        // Jam tidak bersinggungan (misal: Si A pagi 08:00-12:00, Si B sore 13:00-16:00), tidak memicu konflik
+        continue;
       }
 
       // Periksa item mana saja yang masih aktif dipinjam / dibooking (abaikan item yang sudah kembali)
@@ -109,6 +112,8 @@ export function checkItemBookingConflicts(
             tglPinjam: loan.tglPinjam,
             tglRencanaKembali: loan.tglRencanaKembali,
             status: loan.status,
+            jamPinjam: loan.jamPinjam || null,
+            jamKembali: loan.jamKembali || null,
           });
         }
       }

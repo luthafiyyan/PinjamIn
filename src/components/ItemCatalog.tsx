@@ -671,9 +671,16 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                         {itemBookings.map((b) => (
                           <div key={b.id} className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
                             <div>
-                              <span className="font-semibold text-slate-800">
-                                {formatDateIndo(b.tglPinjam)} s/d {formatDateIndo(b.tglRencanaKembali)}
-                              </span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-semibold text-slate-800">
+                                  {formatDateIndo(b.tglPinjam)} s/d {formatDateIndo(b.tglRencanaKembali)}
+                                </span>
+                                {b.jamPinjam && b.jamKembali && (
+                                  <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1.5 py-0.5 rounded">
+                                    {b.jamPinjam} - {b.jamKembali} WIB
+                                  </span>
+                                )}
+                              </div>
                               <span className="text-[10px] text-slate-500 block">No. Peminjaman: {b.noInvoice}</span>
                             </div>
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${

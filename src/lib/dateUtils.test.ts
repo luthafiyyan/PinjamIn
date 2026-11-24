@@ -269,6 +269,32 @@ describe('Sistem Booking Kalender & Validasi Tanggal (QA Tests)', () => {
       );
       expect(conflictsOverlap).toHaveLength(1);
       expect(conflictsOverlap[0].itemId).toBe('item-mic-01');
+      expect(conflictsOverlap[0].jamPinjam).toBe('08:00');
+      expect(conflictsOverlap[0].jamKembali).toBe('11:00');
+
+      // Pergantian langsung jam 11:00 (11:00 - 15:00) tidak memicu bentrok
+      const conflictsHandoff = checkItemBookingConflicts(
+        ['item-mic-01'],
+        '2026-11-20',
+        '2026-11-20',
+        [sameDayLoan],
+        undefined,
+        '11:00',
+        '15:00'
+      );
+      expect(conflictsHandoff).toHaveLength(0);
+
+      // Si A selesai jam 11:00, Si B pinjam multi-hari mulai sore (13:00 s/d 22 Nov 16:00) tidak memicu bentrok
+      const conflictsMultiDayAfternoon = checkItemBookingConflicts(
+        ['item-mic-01'],
+        '2026-11-20',
+        '2026-11-22',
+        [sameDayLoan],
+        undefined,
+        '13:00',
+        '16:00'
+      );
+      expect(conflictsMultiDayAfternoon).toHaveLength(0);
     });
   });
 
