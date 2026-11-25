@@ -92,7 +92,17 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
     if (loan) {
       const cleanNama = (loan.peminjam?.nama || 'Peminjam').replace(/[\\/:*?"<>|]/g, '').trim();
       const cleanTgl = (loan.tglPinjam || '').replace(/[\\/:*?"<>|]/g, '-').trim();
-      document.title = `FORM BUKTI PEMINJAMAN ALAT_${cleanNama}_${cleanTgl}`;
+      const filename = `FORM BUKTI PEMINJAMAN ALAT_${cleanNama}_${cleanTgl}`;
+      document.title = filename;
+
+      // Salin otomatis nama file ke clipboard sebagai cadangan jika menggunakan Microsoft Print to PDF
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(filename);
+        }
+      } catch (err) {
+        // Abaikan jika clipboard diblokir
+      }
     }
     window.print();
   };
@@ -211,22 +221,29 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
       `}</style>
 
       {/* Top Action Bar (Hidden when printing) */}
-      <div className="flex items-center justify-between gap-4 mb-6 no-print">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 no-print">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-white border border-slate-200 transition-all cursor-pointer shadow-sm min-h-[44px]"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-white border border-slate-200 transition-all cursor-pointer shadow-sm min-h-[44px] self-start"
         >
           <Icon name="ArrowLeft" size={16} />
           <span>Kembali</span>
         </button>
 
-        <button
-          onClick={handlePrint}
-          className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-md transition-all cursor-pointer min-h-[44px]"
-        >
-          <Icon name="Printer" size={16} />
-          <span>Cetak Formulir Resmi (A5)</span>
-        </button>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="hidden lg:flex items-center gap-1.5 text-[11px] text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl">
+            <Icon name="InfoCircle" size={14} className="text-indigo-600 shrink-0" />
+            <span>Pilih Tujuan: <b>Simpan sebagai PDF</b> agar nama file otomatis terisi.</span>
+          </div>
+
+          <button
+            onClick={handlePrint}
+            className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-md transition-all cursor-pointer min-h-[44px]"
+          >
+            <Icon name="Printer" size={16} />
+            <span>Cetak Formulir Resmi (A5)</span>
+          </button>
+        </div>
       </div>
 
       {/* Printable Invoice Container (Model Blanko Formal Lab FIT) */}
