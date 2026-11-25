@@ -188,7 +188,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
 
   // Min rows for blanko aesthetic
   const minRows = Math.max(4, loan.items.length);
-  const emptyRowsCount = Math.max(0, 5 - loan.items.length);
+  const emptyRowsCount = Math.max(0, 4 - loan.items.length);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 pb-24 md:pb-8 print:max-w-[148mm] print:p-0 print:m-0 print:bg-white print-document-wrapper">
@@ -448,7 +448,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
         </div>
 
         {/* 4. CATATAN KETENTUAN LABORATORIUM */}
-        <div className="text-[10px] text-slate-800 leading-tight border border-black p-2 bg-slate-50/60 mb-6 print:text-[7pt] print:p-1.5 print:mb-4 print:bg-transparent">
+        <div className="text-[10px] text-slate-800 leading-tight border border-black p-2 bg-slate-50/60 mb-4 print:text-[7pt] print:p-1.5 print:mb-2.5 print:bg-transparent">
           <span className="font-bold block mb-0.5">Ketentuan & Tanggung Jawab Peminjam:</span>
           <ol className="list-decimal pl-3 space-y-0.5">
             <li>Peminjam wajib memeriksa kelengkapan dan fungsi alat bersama petugas sebelum peminjaman, serta menjaga kondisi dan kebersihannya selama digunakan.</li>
@@ -461,14 +461,16 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
         {/* 5. TANDA TANGAN (UNIT LABORATORIUM FIT DI KIRI & PEMINJAM DI KANAN) */}
         <div className="pt-1 print:pt-0">
           {/* Tanggal Terbit di Kanan Atas Tanda Tangan */}
-          <div className="text-right text-xs text-black mb-3 font-medium print:text-[8pt] print:mb-2">
+          <div className="text-right text-xs text-black mb-2 font-medium print:text-[8pt] print:mb-1.5">
             Bandung, {formatDateIndoFull(loan.tglPinjam)}
           </div>
 
           <div className="grid grid-cols-2 gap-8 text-xs text-center print:text-[8pt] print:gap-4">
             {/* Pihak 1: Unit Laboratorium FIT (Kiri) */}
-            <div>
-              <p className="font-bold text-black mb-20 print:mb-16">Unit Laboratorium FIT,</p>
+            <div className="flex flex-col items-center">
+              <p className="font-bold text-black">Unit Laboratorium FIT,</p>
+              {/* Ruang lega untuk QR Code TTE / Tanda Tangan Digital / Stempel Fisik */}
+              <div className="h-28 sm:h-32 print:h-28 w-full flex items-center justify-center my-1" />
               <p className="font-bold text-black uppercase underline tracking-wide print:text-[8.5pt]">
                 {loan.diserahkanOleh || loan.dikembalikanOleh ? `( ${loan.diserahkanOleh || loan.dikembalikanOleh} )` : '( ............................................ )'}
               </p>
@@ -478,8 +480,10 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
             </div>
 
             {/* Pihak 2: Peminjam (Kanan) */}
-            <div>
-              <p className="font-bold text-black mb-20 print:mb-16">Peminjam,</p>
+            <div className="flex flex-col items-center">
+              <p className="font-bold text-black">Peminjam,</p>
+              {/* Ruang lega untuk Tanda Tangan Peminjam */}
+              <div className="h-28 sm:h-32 print:h-28 w-full flex items-center justify-center my-1" />
               <p className="font-bold text-black uppercase underline tracking-wide print:text-[8.5pt]">
                 ( {loan.peminjam.nama} )
               </p>
