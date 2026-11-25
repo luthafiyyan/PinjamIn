@@ -468,7 +468,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
           <div className="grid grid-cols-2 gap-8 text-xs text-center print:text-[8pt] print:gap-4">
             {/* Pihak 1: Unit Laboratorium FIT (Kiri) */}
             <div>
-              <p className="font-bold text-black mb-16 print:mb-14">Unit Laboratorium FIT,</p>
+              <p className="font-bold text-black mb-[52px] print:mb-[46px]">Unit Laboratorium FIT,</p>
               <p className="font-bold text-black uppercase underline tracking-wide print:text-[8.5pt]">
                 {loan.diserahkanOleh || loan.dikembalikanOleh ? `( ${loan.diserahkanOleh || loan.dikembalikanOleh} )` : '( ............................................ )'}
               </p>
@@ -479,7 +479,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
 
             {/* Pihak 2: Peminjam (Kanan) */}
             <div>
-              <p className="font-bold text-black mb-16 print:mb-14">Peminjam,</p>
+              <p className="font-bold text-black mb-[52px] print:mb-[46px]">Peminjam,</p>
               <p className="font-bold text-black uppercase underline tracking-wide print:text-[8.5pt]">
                 ( {loan.peminjam.nama} )
               </p>
