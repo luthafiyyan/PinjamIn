@@ -311,7 +311,7 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({ onLo
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5 flex items-center justify-between">
                 <span>Nomor WhatsApp / HP Aktif</span>
-                <span className="text-xs text-slate-400 font-normal">Untuk koordinasi pengembalian</span>
+                <span className="text-xs text-slate-500 font-normal">Untuk koordinasi pengembalian</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">

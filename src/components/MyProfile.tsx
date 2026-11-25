@@ -112,7 +112,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
               <p className="text-sm text-slate-600 truncate font-medium">
                 {currentUser.email}
               </p>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Laboratorium Fakultas Ilmu Terapan
               </p>
             </div>
@@ -129,7 +129,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
             <Icon name="BoxArrowRight" size={18} />
             <span>Keluar</span>
           </button>
-          <p className="text-xs text-slate-400 text-center mt-3 font-medium">
+          <p className="text-xs text-slate-500 text-center mt-3 font-medium">
             PinjamIn · Laboratorium FIT
           </p>
         </div>
@@ -536,7 +536,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
                   required
                 />
               </div>
-              <p className="text-[11px] text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Wajib diawali <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-600">08</code> atau{' '}
                 <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-600">+62</code> (10–14 digit). Digunakan untuk notifikasi dan tautan chat WhatsApp laboran.
               </p>
@@ -692,20 +692,9 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
                 <span className="text-xs text-slate-500 font-normal block">
                   Nama Lengkap
                 </span>
-                <span className="font-semibold text-slate-800 text-sm">{profile.nama}</span>
-              </div>
-              <Icon name="Lock" size={14} className="text-slate-400" title="Terkunci" />
-            </div>
-
-            {/* Tipe Peminjam */}
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-              <div>
-                <span className="text-xs text-slate-500 font-normal block">
-                  Status Civitas Akademika
-                </span>
                 <div className="mt-1">{getTipeBadge()}</div>
               </div>
-              <Icon name="Lock" size={14} className="text-slate-400" title="Terkunci" />
+              <Icon name="Lock" size={14} className="text-slate-500" title="Terkunci" />
             </div>
 
             {/* Nomor Identitas */}
@@ -716,7 +705,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
                 </span>
                 <span className="font-mono font-semibold text-slate-800 text-sm tabular-nums">{profile.nomorIdentitas}</span>
               </div>
-              <Icon name="Lock" size={14} className="text-slate-400" title="Terkunci" />
+              <Icon name="Lock" size={14} className="text-slate-500" title="Terkunci" />
             </div>
 
             {/* Email */}
@@ -748,7 +737,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
                   </span>
                 )}
               </div>
-              <Icon name="Lock" size={14} className="text-slate-400" title="Terkunci" />
+              <Icon name="Lock" size={14} className="text-slate-500" title="Terkunci" />
             </div>
           </div>
 
@@ -781,7 +770,7 @@ export const MyProfile: React.FC<MyProfileProps> = ({ onBackToCatalog, onLogout 
           <Icon name="BoxArrowRight" size={18} />
           <span>Keluar</span>
         </button>
-        <p className="text-xs text-slate-400 text-center mt-3 font-medium">
+        <p className="text-xs text-slate-500 text-center mt-3 font-medium">
           PinjamIn · Laboratorium FIT
         </p>
       </div>

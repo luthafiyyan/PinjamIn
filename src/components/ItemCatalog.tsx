@@ -192,13 +192,13 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
   const getKondisiBadge = (kondisi: 'baik' | 'perlu_cek') => {
     if (kondisi === 'baik') {
       return (
-        <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
+        <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
           Kondisi: Baik
         </span>
       );
     }
     return (
-      <span className="text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60">
+      <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60">
         Kondisi: Perlu Cek
       </span>
     );
@@ -417,7 +417,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                   ) : (
                     <div className="w-full h-full bg-slate-100 rounded-lg flex flex-col items-center justify-center text-slate-400 group-hover:text-indigo-500 transition-colors">
                       <Icon name={getCategoryIconName(item.kategoriNama)} size={28} className="mb-1" />
-                      <span className="text-[11px] font-semibold text-slate-500 line-clamp-1 px-2 text-center">
+                      <span className="text-xs font-semibold text-slate-500 line-clamp-1 px-2 text-center">
                         {item.kategoriNama || 'Peralatan Lab'}
                       </span>
                     </div>
@@ -445,7 +445,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                         {[item.merek, item.model].filter(Boolean).join(' • ')}
                       </p>
                     ) : (
-                      <p className="text-xs text-slate-400 mb-0.5 truncate font-normal">
+                      <p className="text-xs text-slate-500 mb-0.5 truncate font-normal">
                         Lab FIT Asset
                       </p>
                     )}
@@ -459,7 +459,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                     </h3>
 
                     {/* Category */}
-                    <p className="text-[11px] text-slate-500 mb-2 flex items-center gap-1 font-normal truncate">
+                    <p className="text-xs text-slate-500 mb-2 flex items-center gap-1 font-normal truncate">
                       <Icon name="Tag" size={13} className="text-slate-400 shrink-0" />
                       <span className="truncate">{item.kategoriNama || 'Peralatan Lab'}</span>
                     </p>
@@ -508,7 +508,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                         e.stopPropagation();
                         handleOpenDetail(item);
                       }}
-                      className="w-full min-h-[44px] py-2 px-2 rounded-xl text-[11px] sm:text-xs font-medium flex items-center justify-center bg-slate-100 text-slate-500 border border-slate-200/60"
+                      className="w-full min-h-[44px] py-2 px-2 rounded-xl text-xs font-medium flex items-center justify-center bg-slate-100 text-slate-500 border border-slate-200/60"
                     >
                       {item.status === 'perawatan' ? 'Dalam Perawatan' : 'Barang Rusak'}
                     </div>
@@ -634,7 +634,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                       </div>
                     ))}
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-1.5 italic">
+                  <p className="text-xs text-slate-500 mt-1.5 italic">
                     * Seluruh kelengkapan di atas wajib dikembalikan secara utuh bersama unit utama.
                   </p>
                 </div>
@@ -676,14 +676,14 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                                   {formatDateIndo(b.tglPinjam)} s/d {formatDateIndo(b.tglRencanaKembali)}
                                 </span>
                                 {b.jamPinjam && b.jamKembali && (
-                                  <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1.5 py-0.5 rounded">
+                                  <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1.5 py-0.5 rounded">
                                     {b.jamPinjam} - {b.jamKembali} WIB
                                   </span>
                                 )}
                               </div>
-                              <span className="text-[10px] text-slate-500 block">No. Peminjaman: {b.noInvoice}</span>
+                              <span className="text-xs text-slate-500 block">No. Peminjaman: {b.noInvoice}</span>
                             </div>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                               b.status === 'dipinjam'
                                 ? 'bg-amber-100 text-amber-800 border border-amber-200'
                                 : b.status === 'disetujui'
@@ -694,7 +694,7 @@ export const ItemCatalog: React.FC<ItemCatalogProps> = ({
                             </span>
                           </div>
                         ))}
-                        <p className="text-[11px] text-slate-500 italic">
+                        <p className="text-xs text-slate-500 italic">
                           * Anda tetap dapat meminjam alat ini untuk tanggal di luar jadwal terdaftar di atas.
                         </p>
                       </div>

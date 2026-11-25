@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Icon } from './Icon';
 import { useToast } from '../context/ToastContext';
 import { 
@@ -93,6 +93,73 @@ export const LoanModal: React.FC<LoanModalProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [conflicts, setConflicts] = useState<BookingConflict[]>([]);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
+
+  const DRAFT_KEY = 'pinjamin-loan-draft';
+  const draftRestoredRef = useRef(false);
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Restore draft from sessionStorage when modal opens
+  useEffect(() => {
+    if (!isOpen || draftRestoredRef.current) return;
+    draftRestoredRef.current = true;
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (draft.tglPinjam) setTglPinjam(draft.tglPinjam);
+      if (draft.tglRencanaKembali) setTglRencanaKembali(draft.tglRencanaKembali);
+      if (draft.jamPinjam) setJamPinjam(draft.jamPinjam);
+      if (draft.jamKembali) setJamKembali(draft.jamKembali);
+      if (draft.jenisKeperluan) setJenisKeperluan(draft.jenisKeperluan);
+      if (draft.keperluan) setKeperluan(draft.keperluan);
+      if (draft.penanggungJawabNama) setPenanggungJawabNama(draft.penanggungJawabNama);
+      if (draft.penanggungJawabNip) setPenanggungJawabNip(draft.penanggungJawabNip);
+      if (draft.adminBorrowerNama) setAdminBorrowerNama(draft.adminBorrowerNama);
+      if (draft.adminBorrowerTipe) setAdminBorrowerTipe(draft.adminBorrowerTipe);
+      if (draft.adminBorrowerIdentitas) setAdminBorrowerIdentitas(draft.adminBorrowerIdentitas);
+      if (draft.adminBorrowerUnit) setAdminBorrowerUnit(draft.adminBorrowerUnit);
+      if (draft.adminBorrowerNoHp) setAdminBorrowerNoHp(draft.adminBorrowerNoHp);
+      if (draft.adminBorrowerEmail) setAdminBorrowerEmail(draft.adminBorrowerEmail);
+      if (draft.adminBorrowerMode) setAdminBorrowerMode(draft.adminBorrowerMode);
+      if (draft.adminInitialStatus) setAdminInitialStatus(draft.adminInitialStatus);
+      setIsDirty(true);
+    } catch {
+      // Draft rusak, abaikan
+    }
+  }, [isOpen]);
+
+  // Reset restoration flag when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      draftRestoredRef.current = false;
+    }
+  }, [isOpen]);
+
+  // Save draft to sessionStorage when form fields change
+  useEffect(() => {
+    if (!isOpen) return;
+    const hasContent = keperluan.trim() || penanggungJawabNama.trim() || adminBorrowerNama.trim();
+    if (!hasContent) return;
+    setIsDirty(true);
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+        tglPinjam, tglRencanaKembali, jamPinjam, jamKembali,
+        jenisKeperluan, keperluan,
+        penanggungJawabNama, penanggungJawabNip,
+        adminBorrowerNama, adminBorrowerTipe, adminBorrowerIdentitas,
+        adminBorrowerUnit, adminBorrowerNoHp, adminBorrowerEmail,
+        adminBorrowerMode, adminInitialStatus,
+      }));
+    } catch {
+      // sessionStorage penuh, abaikan
+    }
+  }, [
+    isOpen, tglPinjam, tglRencanaKembali, jamPinjam, jamKembali,
+    jenisKeperluan, keperluan, penanggungJawabNama, penanggungJawabNip,
+    adminBorrowerNama, adminBorrowerTipe, adminBorrowerIdentitas,
+    adminBorrowerUnit, adminBorrowerNoHp, adminBorrowerEmail,
+    adminBorrowerMode, adminInitialStatus,
+  ]);
 
   // Fetch settings from Firestore
   useEffect(() => {
@@ -202,7 +269,15 @@ export const LoanModal: React.FC<LoanModalProps> = ({
 
     checkAvailability();
 
-    return () => {
+    const handleClose = () => {
+    if (isDirty) {
+      const confirmed = window.confirm('Data formulir belum dikirim. Yakin ingin menutup? Draft akan tetap tersimpan sementara.');
+      if (!confirmed) return;
+    }
+    onClose();
+  };
+
+  return () => {
       isMounted = false;
     };
   }, [isOpen, cart, tglPinjam, tglRencanaKembali, jamPinjam, jamKembali]);
@@ -486,6 +561,8 @@ export const LoanModal: React.FC<LoanModalProps> = ({
       });
 
       onClearCart();
+      sessionStorage.removeItem(DRAFT_KEY);
+      setIsDirty(false);
       onClose();
       onSuccess(result.loanId);
       showToast(
@@ -502,6 +579,14 @@ export const LoanModal: React.FC<LoanModalProps> = ({
     }
   };
 
+  const handleClose = () => {
+    if (isDirty) {
+      const confirmed = window.confirm('Data formulir belum dikirim. Yakin ingin menutup? Draft akan tetap tersimpan sementara.');
+      if (!confirmed) return;
+    }
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
       <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden sm:my-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
@@ -516,7 +601,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
             <p className="text-xs text-indigo-100">Laboratorium Fakultas Ilmu Terapan</p>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Tutup formulir peminjaman"
             title="Tutup formulir peminjaman"
             className="p-2 text-indigo-200 hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -769,7 +854,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                         </span>
                         <span className="text-xs font-semibold text-slate-900">{item.nama}</span>
                         {(item.merek || item.model) && (
-                          <span className="text-[10px] text-indigo-600 font-medium">
+                          <span className="text-xs text-indigo-600 font-medium">
                             ({[item.merek, item.model].filter(Boolean).join(' • ')})
                           </span>
                         )}
@@ -777,11 +862,11 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                       
                       {item.kelengkapan && item.kelengkapan.length > 0 && (
                         <div className="mt-1.5 flex flex-wrap gap-1 items-center">
-                          <span className="text-[10px] font-bold text-slate-500">Kelengkapan:</span>
+                          <span className="text-xs font-bold text-slate-500">Kelengkapan:</span>
                           {item.kelengkapan.map((acc, aIdx) => (
                             <span
                               key={aIdx}
-                              className="inline-flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200/50"
+                              className="inline-flex items-center gap-1 text-xs bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200/50"
                             >
                               <Icon name="Check" size={12} />
                               <span>{acc}</span>
@@ -853,7 +938,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                 <Icon name="ClockHistory" size={16} className="text-indigo-600 shrink-0" />
                 <span>Jadwal Waktu Peminjaman & Pengembalian</span>
               </div>
-              <span className="text-[11px] font-medium text-indigo-700 bg-indigo-50/80 px-2.5 py-0.5 rounded-full border border-indigo-200/80 shadow-xs">
+              <span className="text-xs font-medium text-indigo-700 bg-indigo-50/80 px-2.5 py-0.5 rounded-full border border-indigo-200/80 shadow-xs">
                 Layanan Lab: 08.00 - 16.30 WIB
               </span>
             </div>
@@ -866,11 +951,11 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                     <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
                     <span>Waktu Mulai Pinjam</span>
                   </span>
-                  <span className="text-[10px] text-slate-500 font-medium">Ambil di Lab</span>
+                  <span className="text-xs text-slate-500 font-medium">Ambil di Lab</span>
                 </div>
                 <div className="grid grid-cols-5 gap-2">
                   <div className="col-span-3">
-                    <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
                       Tanggal Pinjam
                     </label>
                     <input
@@ -888,7 +973,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
                       Jam Pinjam
                     </label>
                     <input
@@ -910,7 +995,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                     <span>Waktu Selesai (Kembali)</span>
                   </span>
                   {durationDays > 0 && (
-                    <span className={`text-[10px] font-bold tabular-nums px-2 py-0.5 rounded-full ${
+                    <span className={`text-xs font-bold tabular-nums px-2 py-0.5 rounded-full ${
                       isDurationExceeded
                         ? 'text-rose-700 bg-rose-100 border border-rose-200'
                         : 'text-indigo-700 bg-indigo-100/70 border border-indigo-200'
@@ -921,7 +1006,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                 </div>
                 <div className="grid grid-cols-5 gap-2">
                   <div className="col-span-3">
-                    <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
                       Tanggal Kembali
                     </label>
                     <input
@@ -938,7 +1023,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
                       Jam Selesai
                     </label>
                     <input
@@ -1004,7 +1089,7 @@ export const LoanModal: React.FC<LoanModalProps> = ({
           <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 safe-area-pb shrink-0">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer text-center order-last sm:order-first"
             >
               Batal

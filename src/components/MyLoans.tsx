@@ -147,7 +147,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
   const getStatusBadge = (loan: Loan) => {
     if (loan.status === 'menunggu_persetujuan') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-50 text-sky-800 border border-sky-200">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-800 border border-sky-200">
           <Icon name="HourglassSplit" size={13} className="text-sky-600" />
           Menunggu Persetujuan
         </span>
@@ -156,7 +156,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
 
     if (loan.status === 'disetujui') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200">
           <Icon name="CheckCircle" size={13} className="text-indigo-600" />
           Disetujui (Ambil di Lab)
         </span>
@@ -165,7 +165,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
 
     if (loan.status === 'ditolak' || loan.status === 'dibatalkan') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-800 border border-rose-200">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200">
           <Icon name="XCircle" size={13} className="text-rose-600" />
           {loan.status === 'dibatalkan' ? 'Dibatalkan' : 'Ditolak'}
         </span>
@@ -174,7 +174,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
 
     if (loan.status === 'dikembalikan') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
           <Icon name="CheckCircle" size={13} className="text-emerald-600" />
           Selesai (Dikembalikan)
         </span>
@@ -183,7 +183,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
 
     if (checkIsOverdue(loan)) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-800 border border-rose-200 animate-pulse">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 animate-pulse">
           <Icon name="ExclamationTriangle" size={13} className="text-rose-600" />
           Terlambat
         </span>
@@ -193,7 +193,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
     const returnedCount = loan.items.filter((it) => it.statusItem === 'dikembalikan').length;
     if (returnedCount > 0 && returnedCount < loan.items.length) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-50 text-cyan-800 border border-cyan-300">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-800 border border-cyan-300">
           <Icon name="CheckCircle" size={13} className="text-cyan-600" />
           Sebagian Kembali ({returnedCount}/{loan.items.length})
         </span>
@@ -201,7 +201,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
     }
 
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
         <Icon name="HourglassSplit" size={13} className="text-amber-600" />
         Sedang Dipinjam
       </span>
@@ -250,7 +250,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Aktif</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Aktif</span>
               <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center">
                 <Icon name="HourglassSplit" size={14} />
               </div>
@@ -260,7 +260,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                 {counts.active}
               </span>
               {counts.overdue > 0 && (
-                <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                <span className="text-xs font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
                   {counts.overdue} terlambat
                 </span>
               )}
@@ -278,7 +278,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Selesai</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Selesai</span>
               <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
                 <Icon name="CheckCircle" size={14} />
               </div>
@@ -301,7 +301,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Ditolak</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ditolak</span>
               <div className="w-7 h-7 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center">
                 <Icon name="XCircle" size={14} />
               </div>
@@ -324,7 +324,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</span>
               <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
                 <Icon name="Receipt" size={14} />
               </div>
@@ -491,7 +491,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                     {getStatusBadge(loan)}
                   </div>
 
-                  <div className="flex items-center gap-2 sm:gap-3 text-[11px] text-slate-500 font-normal flex-wrap">
+                  <div className="flex items-center gap-2 sm:gap-3 text-xs text-slate-500 font-normal flex-wrap">
                     <span>
                       Pinjam: <strong className="font-semibold text-slate-700 tabular-nums">{loan.tglPinjam}</strong>
                     </span>
@@ -517,7 +517,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                 {/* Konten Utama Kartu: Keperluan & Daftar Alat */}
                 <div className="pt-3 pb-2">
                   <p className="text-xs text-slate-700 font-normal">
-                    <span className="text-slate-400 font-medium">Keperluan:</span>{' '}
+                    <span className="text-slate-500 font-medium">Keperluan:</span>{' '}
                     <span className="font-semibold text-slate-900">{loan.keperluan}</span>
                   </p>
 
@@ -542,7 +542,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
 
                   {/* Daftar Peralatan yang Dipinjam */}
                   <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                    <span className="text-[11px] font-semibold text-slate-400 mr-1">
+                    <span className="text-xs font-semibold text-slate-500 mr-1">
                       Peralatan ({loan.items.length}):
                     </span>
                     {loan.items.map((it, idx) => {
@@ -556,12 +556,12 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                               : 'bg-slate-50 border-slate-200/90 text-slate-800'
                           }`}
                         >
-                          <span className={`font-mono text-[10px] font-bold tabular-nums ${isItemReturned ? 'text-emerald-700' : 'text-indigo-700'}`}>
+                          <span className={`font-mono text-xs font-bold tabular-nums ${isItemReturned ? 'text-emerald-700' : 'text-indigo-700'}`}>
                             {it.kodeAset}
                           </span>
                           <span className="font-medium text-slate-900">{it.nama}</span>
                           {isItemReturned && loan.status !== 'dikembalikan' && (
-                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1 rounded">
+                            <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-1 rounded">
                               ✓ Kembali
                             </span>
                           )}
@@ -573,7 +573,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
 
                 {/* Footer Kartu: Informasi Tindak Lanjut & Tombol Lihat Invoice */}
                 <div className="pt-3 mt-1 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
-                  <div className="text-xs sm:text-[11px] text-slate-500">
+                  <div className="text-xs text-slate-500">
                     {loan.status === 'menunggu_persetujuan' ? (
                       <span className="text-sky-700 font-medium flex items-center gap-1.5">
                         <Icon name="HourglassSplit" size={13} className="shrink-0" /> Sedang ditinjau oleh staf Laboratorium FIT
@@ -600,7 +600,7 @@ export const MyLoans: React.FC<MyLoansProps> = ({ onViewInvoice, onExploreCatalo
                         );
                       })()
                     ) : (loan.status === 'ditolak' || loan.status === 'dibatalkan') ? (
-                      <span className="text-slate-400">{loan.status === 'dibatalkan' ? 'Peminjaman telah dibatalkan' : 'Peminjaman tidak disetujui'}</span>
+                      <span className="text-slate-500">{loan.status === 'dibatalkan' ? 'Peminjaman telah dibatalkan' : 'Peminjaman tidak disetujui'}</span>
                     ) : (
                       <span className="text-emerald-700 font-medium flex items-center gap-1.5">
                         <Icon name="CheckCircle" size={13} className="shrink-0 text-emerald-600" />
