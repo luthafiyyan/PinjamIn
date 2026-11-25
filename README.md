@@ -25,7 +25,7 @@
 
 **PinjamIn** adalah platform berbasis web modern yang dirancang khusus untuk memfasilitasi dan mendigitalisasi seluruh siklus peminjaman alat dan aset di lingkungan **Laboratorium Fakultas Ilmu Terapan (FIT)**. 
 
-Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas atau spreadsheet yang rentan kesalahan dan sulit dilacak. Dengan **PinjamIn**, seluruh civitas akademika (Mahasiswa, Dosen, dan Tenaga Kependidikan) dapat mencari ketersediaan alat secara *real-time*, mengajukan booking, mendapatkan form bukti peminjaman digital resmi, serta memantau status peminjaman dengan transparansi penuh. Di sisi pengelola, staf laboran memiliki dasbor komprehensif untuk memverifikasi pengguna, mengontrol serah terima dan inspeksi fisik pengembalian barang, mengelola inventaris aset, dan menganalisis tren peminjaman.
+Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas atau spreadsheet yang rentan kesalahan dan sulit dilacak. Dengan **PinjamIn**, seluruh civitas akademika (Mahasiswa, Asisten Lab, Asisten Praktikum, Dosen, dan Tenaga Kependidikan) dapat mencari ketersediaan alat secara *real-time*, mengajukan booking, mendapatkan form bukti peminjaman digital resmi, serta memantau status peminjaman dengan transparansi penuh. Di sisi pengelola, staf laboran memiliki dasbor komprehensif untuk memverifikasi pengguna, mengontrol serah terima dan inspeksi fisik pengembalian barang, mengelola inventaris aset, dan menganalisis tren peminjaman.
 
 ---
 
@@ -55,13 +55,14 @@ Platform ini menggantikan sistem pencatatan peminjaman manual berbasis kertas at
 
 ### 🎒 Pengalaman Peminjam (User Experience)
 * **Single Sign-On (Google Auth):** Masuk cepat menggunakan akun Google dengan pencatatan email terverifikasi.
-* **Lengkapi Profil Terstandarisasi:** Validasi data diri resmi mencakup Tipe Peminjam (Mahasiswa, Dosen, Tendik), Nomor Identitas (NIM / NIP / NIDN), Program Studi / Unit Kerja, Angkatan, serta Nomor WhatsApp aktif.
+* **Lengkapi Profil Terstandarisasi:** Validasi data diri resmi mencakup Tipe Peminjam (Mahasiswa, Aslab, Asprak, Dosen, Tendik), Nomor Identitas (NIM / NIP / NIDN), Program Studi / Unit Kerja, Angkatan, serta Nomor WhatsApp aktif.
 * **Katalog Aset Real-time:** 
   * Pencarian instan dan filter berdasarkan kategori (Kamera, Tripod, Audio, Jaringan, Komputer, VR/AR, dll.).
   * Filter ketersediaan barang (*Tersedia, Dipinjam, Perawatan, Rusak*) dan kondisi fisik (*Baik, Perlu Cek*).
   * **Quick Filter "Hanya Tersedia":** Tombol toggle instan 1-klik untuk menyaring hanya barang yang siap dipinjam saat ini.
   * Modal detail alat komprehensif: spesifikasi teknis, merek & tipe, nomor seri, lokasi penyimpanan, dan kelengkapan bawaan (misal: baterai cadangan, kabel data, tas).
 * **Multi-Item Cart (Keranjang Booking):** Pilih beberapa alat sekaligus dalam satu kali pengajuan peminjaman.
+* **Auto-Save Draft Formulir Peminjaman:** Isian formulir peminjaman (jadwal tanggal & jam, keperluan, data penanggung jawab/peminjam) tersimpan otomatis secara *real-time* ke `sessionStorage` sehingga formulir tidak hilang saat tertutup tidak sengaja, dilengkapi konfirmasi peringatan sebelum membatalkan formulir aktif.
 * **Peminjaman Fleksibel Satu Hari (*Same-Day Loans*):** Dukungan peminjaman non-lintas hari dengan penentuan estimasi Jam Mulai Pinjam dan Jam Rencana Kembali (misal: 08:30 s/d 16:00 WIB). Memungkinkan penjadwalan multi-sesi yang akurat di hari yang sama tanpa bentrok jam, serta tercetak otomatis pada formulir bukti peminjaman.
 * **Validasi Kebijakan Cerdas:** Form peminjaman secara otomatis memeriksa batas maksimal durasi hari dan kuota barang sesuai peran pengguna, serta mewajibkan dosen penanggung jawab untuk mahasiswa.
 * **Global Toast Notification:** Umpan balik mikro (*toast banner*) terpusat dengan transisi halus saat menambah/menghapus alat dari keranjang, mengirim pengajuan peminjaman, maupun memperbarui data profil.
@@ -165,7 +166,7 @@ flowchart TD
 | **Progressive Web App** | **Web App Manifest & Theme Color** | PWA-ready dengan dukungan instalasi langsung ke Home Screen smartphone/desktop dan warna bilah peramban terpadu |
 | **Audit Keamanan** | **[Cloudflare Security Audit](https://github.com/cloudflare/security-audit-skill)** | Metodologi verifikasi keamanan dependensi, proteksi XSS/CSRF, sanitasi aturan Firestore, dan HTTP headers |
 | **Standar UI/UX** | **[UI/UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) & [Superdesign](https://github.com/superdesigndev/superdesign-skill)** | Standar target sentuh jempol 44px, bottom-sheet adaptif, pencegahan CLS (<0.1), dan 100% SVG icons |
-| **Aksesibilitas & UI** | **WCAG 2.1 AA & Antislop** | Rasio kontras AA, ring fokus keyboard (`:focus-visible`), toleransi *prefers-reduced-motion*, dan bebas AI slop |
+| **Aksesibilitas & UI** | **WCAG 2.1 AA & UI Audit** | Rasio kontras AA (≥ 4.5:1), ukuran teks terstandarisasi WCAG (min. 12px desktop & 16px input mobile), ring fokus keyboard (`:focus-visible`), toleransi *prefers-reduced-motion*, dan bebas AI slop |
 | **Deployment** | **Vercel / Cloud Hosting** | Dukungan SPA routing dengan konfigurasi rewrite (`vercel.json`) |
 
 ---
@@ -354,6 +355,8 @@ Aturan peminjaman dapat disesuaikan sewaktu-waktu oleh Admin melalui menu **Peng
 | Tipe Peminjam | Maks. Durasi Peminjaman | Maks. Jumlah Barang | Wajib Dosen Penanggung Jawab |
 | :--- | :---: | :---: | :---: |
 | **Mahasiswa** | 3 Hari | 2 Barang | **Ya** (Nama & NIP Dosen) |
+| **Aslab** | 3 Hari | 3 Barang | Tidak |
+| **Asprak** | 3 Hari | 3 Barang | Tidak |
 | **Dosen** | 7 Hari | 5 Barang | Tidak |
 | **Tendik** | 7 Hari | 5 Barang | Tidak |
 
