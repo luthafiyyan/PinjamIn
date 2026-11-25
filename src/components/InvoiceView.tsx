@@ -61,7 +61,39 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({ loanId, onBack }) => {
     return () => unsubscribe();
   }, [loanId, currentUser, isAdmin]);
 
+  useEffect(() => {
+    if (!loan) return;
+
+    const originalTitle = document.title;
+    const cleanNama = (loan.peminjam?.nama || 'Peminjam').replace(/[\\/:*?"<>|]/g, '').trim();
+    const cleanTgl = (loan.tglPinjam || '').replace(/[\\/:*?"<>|]/g, '-').trim();
+    const invoicePdfTitle = `FORM BUKTI PEMINJAMAN ALAT_${cleanNama}_${cleanTgl}`;
+
+    const handleBeforePrint = () => {
+      document.title = invoicePdfTitle;
+    };
+
+    const handleAfterPrint = () => {
+      // Menjaga judul tetap invoicePdfTitle selama di halaman ini, namun dipastikan siap jika ada perubahan
+    };
+
+    document.title = invoicePdfTitle;
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('afterprint', handleAfterPrint);
+
+    return () => {
+      document.title = originalTitle;
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, [loan]);
+
   const handlePrint = () => {
+    if (loan) {
+      const cleanNama = (loan.peminjam?.nama || 'Peminjam').replace(/[\\/:*?"<>|]/g, '').trim();
+      const cleanTgl = (loan.tglPinjam || '').replace(/[\\/:*?"<>|]/g, '-').trim();
+      document.title = `FORM BUKTI PEMINJAMAN ALAT_${cleanNama}_${cleanTgl}`;
+    }
     window.print();
   };
 
